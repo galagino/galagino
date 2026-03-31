@@ -1,4 +1,4 @@
-#include "Nunchuck.h"
+#include "nunchuck.h"
 
 #ifdef NUNCHUCK_INPUT
 void Nunchuck::setup() {
