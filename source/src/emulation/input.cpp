@@ -3,6 +3,9 @@
 void Input::init(char SingleMachine) {
   singleMachine = SingleMachine;
 #ifndef NUNCHUCK_INPUT
+  #ifdef GALAGINO_CONTROLLER
+  Controller.setup();
+  #else
   pinMode(BTN_START_PIN, INPUT_PULLUP);
   #ifdef BTN_COIN_PIN
     pinMode(BTN_COIN_PIN, INPUT_PULLUP);
@@ -12,6 +15,7 @@ void Input::init(char SingleMachine) {
   pinMode(BTN_DOWN_PIN, INPUT_PULLUP);
   pinMode(BTN_UP_PIN, INPUT_PULLUP);
   pinMode(BTN_FIRE_PIN, INPUT_PULLUP);
+  #endif
 #else
   nunchuck.setup();
 #endif
@@ -22,6 +26,11 @@ void Input::init(char SingleMachine) {
     switchDemoSoundsOff = 1;
     firePressedAtStart = 1;
   }
+  #ifdef SILENT_ATTRACT_MODE
+  printf("Silent attract mode\n");
+  switchDemoSoundsOff = 1;
+  firePressedAtStart = 1;
+  #endif
 }
 
 char Input::demoSoundsOff() {
@@ -32,11 +41,18 @@ void Input::enable() {
 #ifdef NUNCHUCK_INPUT
   nunchuck.enable();
 #endif
+#ifdef GALAGINO_CONTROLLER
+  Controller.enable();
+#endif
 }
 
 void Input::disable() {
 #ifdef NUNCHUCK_INPUT
   nunchuck.disable();
+  vTaskDelay(100);
+#endif
+#ifdef GALAGINO_CONTROLLER
+  Controller.disable();
   vTaskDelay(100);
 #endif
 }
@@ -45,7 +61,9 @@ unsigned char Input::buttons_get(void) {
   // be implemented by the start button. Whenever the start button 
   // is pressed, a virtual coin button will be sent first 
   unsigned char input_states = 0;
-#ifdef NUNCHUCK_INPUT
+#if defined(GALAGINO_CONTROLLER)
+  input_states = Controller.getInput();
+#elif defined(NUNCHUCK_INPUT)
   input_states = nunchuck.getInput();  
 #else
   #ifdef BTN_COIN_PIN
@@ -62,10 +80,12 @@ unsigned char Input::buttons_get(void) {
 #endif
   
   unsigned char startAndCoinState = 0;
-#ifdef BTN_COIN_PIN
+#ifdef BTN_COIN_PIN 
   // there is a coin pin -> coin and start work normal
   startAndCoinState = (digitalRead(BTN_START_PIN) ? 0 : BUTTON_START) |
     (digitalRead(BTN_COIN_PIN) ? 0 : BUTTON_COIN);
+#elif defined(GALAGINO_CONTROLLER)
+  // Coin and Start work normal - no virtual Coin
 #else
   switch(virtual_coin_state)  {
     case 0:  // idle state
@@ -121,6 +141,7 @@ unsigned char Input::buttons_get(void) {
     if (buttonUpRisingEdge | buttonDownRisingEdge | buttonExtraRisingEdge ) {
       if (_doAttractReset_callback)
         _doAttractReset_callback();  
+      //Serial.println("risingEdge AttractReset");
     }
 
     // reset control
@@ -133,6 +154,7 @@ unsigned char Input::buttons_get(void) {
         reset_timer = millis();
         if (_doReset_callback)
           _doReset_callback();
+        Serial.println("reset 3000 millis");
       }
     } 
     else

@@ -6,6 +6,9 @@
 #ifdef NUNCHUCK_INPUT
   #include "nunchuck.h"
 #endif
+#ifdef GALAGINO_CONTROLLER
+#include "i2c-controller.h"
+#endif
 
 // a total of 7 button is needed for most games
 #define BUTTON_LEFT  0x01
@@ -48,6 +51,9 @@ private:
   char firePressedAtStart;
 #ifdef NUNCHUCK_INPUT
   Nunchuck nunchuck;
+#endif
+#ifdef GALAGINO_CONTROLLER
+  ControllerI2C Controller;
 #endif
 };
 

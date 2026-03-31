@@ -49,6 +49,7 @@
 // esp32 model config
 //#define CHEAP_YELLOW_DISPLAY_CONF
 
+#ifndef USE_PIO_CONFIG
 #ifdef CHEAP_YELLOW_DISPLAY_CONF
   #define TFT_CS          15
   #define TFT_DC          2
@@ -102,6 +103,7 @@
     #define NUNCHUCK_SCL  32
     #define NUNCHUCK_MOVE_THRESHOLD 30 // This is the dead-zone for where minor movements on the stick will not be considered valid movements
   #endif
+#endif
 #endif
 
 #endif // _CONFIG_H_

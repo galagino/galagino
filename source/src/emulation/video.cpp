@@ -180,9 +180,17 @@ void Video::flipVertical(char flip) {
  
   writeCommand(0x36); // Row address set, same command for ili9341 and st7789
 #ifdef TFT_ILI9341
+#ifdef TFT_VFLIP
+  write8(flip == 0 ? TFT_MAC ^ 0xc0 : TFT_MAC);
+#else
   write8(flip == 1 ? TFT_MAC ^ 0xc0 : TFT_MAC);
+#endif
+#else
+#ifdef TFT_VFLIP
+  write8(flip == 0 ? 0 : 0xc0);
 #else
   write8(flip == 1 ? 0 : 0xc0);
+#endif
 #endif
   writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789 
 

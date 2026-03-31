@@ -185,6 +185,11 @@ void setup() {
   Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
   Serial.print("Main core: "); Serial.println(xPortGetCoreID());
   Serial.print("Main priority: "); Serial.println(uxTaskPriorityGet(NULL));  
+  
+  #ifdef AUDIO_ENABLE_PIN
+  pinMode(AUDIO_ENABLE_PIN, OUTPUT); // ESP32-E Audio Enable
+  digitalWrite(AUDIO_ENABLE_PIN, 0); // active low
+  #endif
 
   // allocate memory for a single tile/character row
   frame_buffer = (unsigned short*)malloc(224 * 8 * 2);
@@ -234,6 +239,8 @@ void updateAudioVideo(void) {
       audio.start(currentMachine);
       if (currentMachine->videoFlipY())
         video.flipVertical(1);
+      else 
+        video.flipVertical(0);
         
       // start new machine
       emulation_start();
@@ -242,8 +249,7 @@ void updateAudioVideo(void) {
   }
 
   if (doReset || menu.attract_gameTimeout()) {
-    if (currentMachine->videoFlipY())
-      video.flipVertical(0);
+    video.flipVertical(0);
   
     // stop current machine
     emulation_stop();
