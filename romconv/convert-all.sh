@@ -458,6 +458,102 @@ if [[ -f ../romszip/bombjack.zip ]]; then
   cd ..
 fi
 
+#------------------------------------
+# Ms. Pacman
+#------------------------------------
+
+if [[ -f ../romszip/mspacman.zip ]]; then
+  echo MsPacman Unpack roms
+  python ./unpack.py mspacman.zip || die
+
+  echo Converting MsPacman
+  cd mspacman
+  python ./mspacman_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Galaxian
+#------------------------------------
+
+if [[ -f ../romszip/galaxian.zip ]]; then
+  echo Galaxian Unpack roms
+  python ./unpack.py galaxian.zip || die
+  
+  echo Converting Galaxian
+  cd galaxian
+  python ./galaxian_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Lady Bug
+#------------------------------------
+
+if [[ -f ../romszip/ladybug.zip ]]; then
+  echo Ladybug Unpack roms
+  python ./unpack.py ladybug.zip || die
+
+  cd ladybug
+  python ./ladybug_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Time Pilot
+#------------------------------------
+
+if [[ -f ../romszip/timeplt.zip ]]; then
+  echo Time Pilot Unpack roms
+  python ./unpack.py timeplt.zip || die
+
+  echo Converting Time Pilot
+  cd timeplt
+  python ./timeplt_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Space Invaders
+#------------------------------------
+
+if [[ -f ../romszip/invaders.zip ]]; then
+  echo Space Invaders Unpack roms
+  python ./unpack.py invaders.zip || die
+
+  cd invaders
+  python ./invaders_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Gyruss
+#------------------------------------
+
+if [[ -f ../romszip/gyruss.zip ]]; then
+  echo Gyruss Unpack roms
+  python ./unpack.py gyruss.zip || die
+
+  echo Converting Gyruss
+  cd gyruss
+  python ./gyruss_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Tutankhm
+#------------------------------------
+
+if [[ -f ../romszip/tutankhm.zip ]]; then
+  echo Tutankham Unpack roms
+  python ./unpack.py tutankhm.zip || die
+
+  echo Converting Tutankham
+  cd tutankhm
+  python tutankhm_rom_convert.py
+  cd ..
+fi
+
 echo -- -------------------------------------------------
 echo -- END
 echo -- -------------------------------------------------
