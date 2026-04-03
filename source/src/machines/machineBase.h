@@ -20,7 +20,7 @@
 #define LED_WHITE    CRGB::White
 #endif
 
-#if (defined(ENABLE_1942) || defined(ENABLE_MRDO))
+#if (defined(ENABLE_1942) || defined(ENABLE_MRDO) || defined(ENABLE_LADYBUG) || defined(ENABLE_GYRUSS) || defined(ENABLE_TIMEPLT) || defined(ENABLE_PENGO))
   #define RAMSIZE   (8192 + 1024 + 128)
 #else
   #define RAMSIZE   (8192)
@@ -54,7 +54,14 @@ enum {
   MCH_BOMBJACK,
   MCH_MRDO,
   MCH_BAGMAN,
-  MCH_PENGO
+  MCH_PENGO,
+  MCH_MSPACMAN,
+  MCH_GALAXIAN,
+  MCH_LADYBUG,
+  MCH_SPACEINVADERS,
+  MCH_TIMEPLT,
+  MCH_GYRUSS,
+  MCH_TUTANKHM
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
