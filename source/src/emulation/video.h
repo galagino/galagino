@@ -12,6 +12,8 @@ public:
   void begin(void);
   void write(uint16_t *colors, uint32_t len);
   void flipVertical(char flip);
+  void flipHorizontal(char flip); // galagino3
+  bool mirror_x = false;          // galagino3
 
 private:
   void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);

@@ -1,10 +1,6 @@
 #ifndef GYRUSS_H
 #define GYRUSS_H
 
-#ifndef ENABLE_GYRUSS
-#error "ENABLE_GYRUSS missing in config.h!"
-#endif
-
 #include "../machineBase.h"
 #include "../../cpus/m6809/m6809.h"
 #include "gyruss_rom_main.h"

@@ -96,6 +96,8 @@ public:
         for (int c = 0; c < 4; c++) {
           sn_period[chip][c] = 0;
           sn_volume[chip][c] = 15; // Muto
+          sn_min_volume[chip][c] = 15;
+          sn_hold[chip][c] = 0;
         }
       }
       current_cpu = 0;
@@ -104,6 +106,7 @@ public:
 
     virtual signed char machineType() { return MCH_MENU; } 
     virtual signed char videoFlipY() { return 0; } 
+    virtual signed char videoFlipX() { return 0; }
     virtual signed char useVideoHalfRate() { return 0; } 
     
     virtual unsigned char rdZ80(unsigned short Addr) { return 0xff; }
@@ -134,6 +137,9 @@ public:
     //Mr.Do!
     int sn_period[2][4];    // 4 canali per chip (3 tono + 1 rumore)
     int sn_volume[2][4];
+    // galagino3
+    int sn_min_volume[2][4]; // latched min volume per audio render cycle
+    int sn_hold[2][4];       // hold counter: keep sound active for N render cycles
 protected:
     virtual void blit_tile(short row, char col) { }
     virtual void blit_sprite(short row, unsigned char s) { }

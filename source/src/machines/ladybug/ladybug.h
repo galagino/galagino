@@ -1,10 +1,6 @@
 #ifndef LADYBUG_H
 #define LADYBUG_H
 
-#ifndef ENABLE_LADYBUG
-#error "ENABLE_LADYBUG missing config.h!"
-#endif
-
 #include "ladybug_rom.h"
 #include "ladybug_dipswitches.h"
 #include "ladybug_logo.h"
@@ -24,6 +20,7 @@ public:
 
   signed char machineType() override { return MCH_LADYBUG; }
   signed char videoFlipX() override { return 1; }
+  signed char useVideoHalfRate() override { return 1; }
   bool hasNamcoAudio() override { return false; }
 
   unsigned char rdZ80(unsigned short Addr) override;

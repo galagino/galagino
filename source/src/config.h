@@ -18,6 +18,13 @@
 #define ENABLE_MRDO
 #define ENABLE_BAGMAN
 #define ENABLE_PENGO
+#define ENABLE_MSPACMAN
+#define ENABLE_GALAXIAN
+#define ENABLE_LADYBUG
+#define ENABLE_SPACEINVADERS
+#define ENABLE_TIMEPLT
+//#define ENABLE_GYRUSS
+//#define ENABLE_TUTANKHM
 
 // game config
 #define MASTER_ATTRACT_MENU_TIMEOUT  20000      // start games while sitting idle in menu for 20 seconds, undefine to disable

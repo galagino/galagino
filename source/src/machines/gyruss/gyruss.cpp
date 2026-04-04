@@ -1,3 +1,4 @@
+#ifdef ENABLE_GYRUSS
 #include "gyruss.h"
 #include "esp_task_wdt.h"
 
@@ -557,4 +558,5 @@ void gyruss::menuLeds(CRGB *leds) {
 void gyruss::gameLeds(CRGB *leds) {
     memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
 }
+#endif
 #endif

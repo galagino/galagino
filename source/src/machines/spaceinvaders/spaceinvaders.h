@@ -1,10 +1,6 @@
 #ifndef SPACEINVADERS_H
 #define SPACEINVADERS_H
 
-#ifndef ENABLE_SPACEINVADERS
-#error "ENABLE_SPACEINVADERS missing in config.h!"
-#endif
-
 #include <pgmspace.h>
 #include "spaceinvaders_logo.h"
 #include "spaceinvaders_rom.h"
@@ -17,7 +13,7 @@ public:
     spaceinvaders() { }
     ~spaceinvaders() { }
 
-    signed char machineType() override { return MCH_SPACEINVADDERS; }
+    signed char machineType() override { return MCH_SPACEINVADERS; }
     unsigned char rdZ80(unsigned short Addr) override;
     void wrZ80(unsigned short Addr, unsigned char Value) override;
     void outZ80(unsigned short Port, unsigned char Value) override;

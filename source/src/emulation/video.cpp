@@ -180,21 +180,45 @@ void Video::flipVertical(char flip) {
  
   writeCommand(0x36); // Row address set, same command for ili9341 and st7789
 #ifdef TFT_ILI9341
-#ifdef TFT_VFLIP
+  #ifdef TFT_VFLIP
   write8(flip == 0 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-#else
+  #else
   write8(flip == 1 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-#endif
+  #endif
 #else
-#ifdef TFT_VFLIP
+  #ifdef TFT_VFLIP
   write8(flip == 0 ? 0 : 0xc0);
-#else
+  #else
   write8(flip == 1 ? 0 : 0xc0);
-#endif
+  #endif
 #endif
   writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789 
 
   dma_active = 0; 
+}
+
+void Video::flipHorizontal(char flip) {
+  if (dma_active)
+    spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
+
+  writeCommand(0x36);
+#ifdef TFT_ILI9341
+  #ifdef TFT_VFLIP
+  write8(flip == 0 ? TFT_MAC ^ 0xc0 : TFT_MAC);
+  #else
+  write8(flip == 1 ? TFT_MAC ^ 0xc0 : TFT_MAC);
+  #endif
+#else
+  #ifdef TFT_VFLIP
+  write8(flip == 0 ? 0 : 0xc0);
+  #else
+  write8(flip == 1 ? 0 : 0xc0);
+  #endif
+#endif
+  writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789
+
+  mirror_x = (flip == 1);
+  dma_active = 0;
 }
 
 void Video::write(uint16_t *colors, uint32_t len) {
@@ -203,6 +227,20 @@ void Video::write(uint16_t *colors, uint32_t len) {
   }
  
   memcpy(dma_buffer, colors, 2 * len);
+  /* galagino3 - mirror_x */ /* Laddy Bug */
+  if (mirror_x && len == 224 * 8) {
+    uint16_t *buf = (uint16_t*)dma_buffer;
+    for (uint32_t row = 0; row < 8; row++) {
+      uint16_t *line = buf + row * 224;
+      for (int x = 0; x < 112; x++) {
+        uint16_t tmp = line[x];
+        line[x] = line[223 - x];
+        line[223 - x] = tmp;
+      }
+    }
+  }
+  /* galagino3 - mirror_x */
+
   transaction.flags = 0;
   transaction.length = 16 * len; // Length in bits
   transaction.tx_buffer = dma_buffer;

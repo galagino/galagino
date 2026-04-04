@@ -189,3 +189,9 @@ Input &Input::onDoAttractReset(THandlerDoAttractReset fn) {
   _doAttractReset_callback = fn;
   return *this;
 }
+
+// galagino3 - used by Tutankham - needs fixing
+bool Input::button_y_pressed(void) {
+  return false;
+}
+

@@ -27,6 +27,7 @@ public:
   void enable();
   void disable();
   unsigned char buttons_get(void);
+  bool button_y_pressed(void);
   char demoSoundsOff();
 
   typedef std::function<void(bool up, bool down)> THandlerVolume;

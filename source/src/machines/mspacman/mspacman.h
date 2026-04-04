@@ -1,10 +1,6 @@
 #ifndef MSPACMAN_H
 #define MSPACMAN_H
 
-#ifndef ENABLE_MSPACMAN
-#error "ENABLE_MSPACMAN missing in config.h!"
-#endif
-
 // pacman.h includes pacman_cmap.h, pacman_wavetable.h, pacman_dipswitches.h,
 // tileaddr.h and machineBase.h — include it first to avoid duplicate symbols.
 #include "../pacman/pacman.h"

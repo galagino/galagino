@@ -85,6 +85,34 @@
   #include "machines/pengo/pengo.h"
 #endif
 
+#ifdef ENABLE_MSPACMAN
+  #include "machines/mspacman/mspacman.h"
+#endif
+
+#ifdef ENABLE_GALAXIAN
+  #include "machines/galaxian/galaxian.h"
+#endif
+
+#ifdef ENABLE_LADYBUG
+  #include "machines/ladybug/ladybug.h"
+#endif
+
+#ifdef ENABLE_SPACEINVADERS
+  #include "machines/spaceinvaders/spaceinvaders.h"
+#endif
+
+#ifdef ENABLE_TIMEPLT
+  #include "machines/timeplt/timeplt.h"
+#endif
+
+#ifdef ENABLE_GYRUSS
+  #include "machines/gyruss/gyruss.h"
+#endif
+
+#ifdef ENABLE_TUTANKHM
+  #include "machines/tutankhm/tutankhm.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -133,7 +161,28 @@ machineBase *machines[] = {
   new bagman(),
 #endif
 #ifdef ENABLE_PENGO 
-  new pengo()
+  new pengo(),
+#endif
+#ifdef ENABLE_MSPACMAN
+  new mspacman(),
+#endif
+#ifdef ENABLE_GALAXIAN
+  new galaxian(),
+#endif
+#ifdef ENABLE_LADYBUG
+  new ladybug(),
+#endif
+#ifdef ENABLE_SPACEINVADERS
+  new spaceinvaders(),
+#endif
+#ifdef ENABLE_TIMEPLT
+  new timeplt(),
+#endif
+#ifdef ENABLE_GYRUSS
+  new gyruss(),
+#endif
+#ifdef ENABLE_TUTANKHM
+  new tutankhm(),
 #endif
 };
 
@@ -170,7 +219,8 @@ void onDoReset();
 bool doReset = false;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200);  
+  delay(200); // let serial initialize
   Serial.println("Galagino"); 
 
   Serial.print("ESP-IDF "); 
@@ -185,7 +235,28 @@ void setup() {
   Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
   Serial.print("Main core: "); Serial.println(xPortGetCoreID());
   Serial.print("Main priority: "); Serial.println(uxTaskPriorityGet(NULL));  
-  
+
+  Serial.print("TFT Controller: ");
+  #ifdef TFT_ILI9341
+  Serial.println("ILI 9341");
+  #else
+  Serial.println("ST 7789");
+  #endif
+  Serial.print("TFT SPI Clock:  "); Serial.print(TFT_SPICLK); Serial.println(" Hz");
+  Serial.print("TFT_CS:   "); Serial.println(TFT_CS);
+  Serial.print("TFT_DC:   "); Serial.println(TFT_DC);
+  Serial.print("TFT_BL:   "); Serial.println(TFT_BL);
+  Serial.print("TFT_MISO: "); Serial.println(TFT_MISO);
+  Serial.print("TFT_MOSI: "); Serial.println(TFT_MOSI);
+  Serial.print("TFT_SCLK: "); Serial.println(TFT_SCLK);
+  Serial.print("TFT_RST:  "); Serial.println(TFT_RST);
+  Serial.print("TFT_VLIP: "); 
+  #ifdef TFT_VLIP
+  Serial.println("ON");
+  #else
+  Serial.println("OFF");
+  #endif
+
   #ifdef AUDIO_ENABLE_PIN
   pinMode(AUDIO_ENABLE_PIN, OUTPUT); // ESP32-E Audio Enable
   digitalWrite(AUDIO_ENABLE_PIN, 0); // active low
@@ -237,10 +308,16 @@ void updateAudioVideo(void) {
     if (menu.startMachine()) {
       currentMachine = machines[menu.machineIndexSelected()];
       audio.start(currentMachine);
-      if (currentMachine->videoFlipY())
+      if (currentMachine->videoFlipY()) {
         video.flipVertical(1);
-      else 
-        video.flipVertical(0);
+      } else { 
+        if (currentMachine->videoFlipX()) {
+          video.flipHorizontal(1);
+        } else {
+          video.flipVertical(0);
+          video.flipHorizontal(0);
+        }
+      }
         
       // start new machine
       emulation_start();
@@ -250,6 +327,7 @@ void updateAudioVideo(void) {
 
   if (doReset || menu.attract_gameTimeout()) {
     video.flipVertical(0);
+    video.flipHorizontal(0);
   
     // stop current machine
     emulation_stop();
