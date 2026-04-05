@@ -120,7 +120,7 @@ unsigned char timeplt::rdZ80(unsigned short Addr) {
   }
 
   if(Addr == 0xC200)
-    return TIMEPLT_DSW2;
+    return TIMEPLT_DSW2 | (input->demoSoundsOff() ? TIMEPILOT_DSW2_DEMO_SOUND_OFF : TIMEPILOT_DSW2_DEMO_SOUND_ON);
 
   if(Addr == 0xC300) {
     // IN0: coins, start (active-LOW: 0xFF = idle, clear bit = pressed)
