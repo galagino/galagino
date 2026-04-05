@@ -63,7 +63,7 @@ void pacman::wrZ80(unsigned short Addr, unsigned char Value) {
       irq_enable[0] = Value & 1;
     
     if((Addr & 0xffe0) == 0x5040) {
-      if(soundregs[Addr - 0x5040] != Value & 0x0f)
+      if(soundregs[Addr - 0x5040] != (Value & 0x0f))
 	      soundregs[Addr - 0x5040] = Value & 0x0f;
     }    
     return;
