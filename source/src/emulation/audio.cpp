@@ -102,7 +102,7 @@ void Audio::transmit() {
 void Audio::ay_render_buffer(void) {
   char AY = (machineType == MCH_FROGGER) ? 1 : 2;       // frogger has one AY / 1942 has two AYs
   char AY_INC = (machineType == MCH_FROGGER || machineType == MCH_ANTEATER) ? 9 : 8;   // froggger runs at 1.78 MHz -> 223718/24000 = 9,32 / 1942 runs at 1.5 MHz -> 187500/24000 = 7,81
-  char AY_VOL = (machineType == MCH_FROGGER) ? 11 : 4;  // frogger min/max = -/+ 3*15*11 = -/+ 495 / 1942 min/max = -/+ 6*15*11 = -/+ 990
+  char AY_VOL = (machineType == MCH_FROGGER) ? 11 : 5;  // frogger min/max = -/+ 3*15*11 = -/+ 495 / 1942 min/max = -/+ 6*15*11 = -/+ 990
   #ifdef ENABLE_BOMBJACK
   if (machineType == MCH_BOMBJACK) { AY = 3; AY_INC = 8; AY_VOL = 10; }
   #endif
@@ -193,8 +193,12 @@ void Audio::ay_render_buffer(void) {
             machineType == MCH_1942 || 
             machineType == MCH_ANTEATER ||
             machineType == MCH_TIMEPLT ||
+            #ifdef ENABLE_GYRUSS
             machineType == MCH_GYRUSS ||
+            #endif
+            #ifdef ENABLE_TUTANKHM
             machineType == MCH_TUTANKHM ||
+            #endif
             false
            ) {
       for(char ay = 0; ay < AY; ay++) {
