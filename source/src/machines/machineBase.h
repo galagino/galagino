@@ -83,7 +83,7 @@ public:
       this->sprite = spritebuffer;
       this->memory = memorybuffer;
       memset(soundregs, 0, sizeof(soundregs)); 
-     }
+    }
 
     virtual void reset() {
       for(current_cpu = 0; current_cpu < sizeof(cpu) / sizeof(Z80); current_cpu++)

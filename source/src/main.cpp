@@ -21,7 +21,7 @@
   #include "emulation/led.h"
 #endif
 
-#ifdef ENABLE_PACMAN  
+#ifdef ENABLE_PACMAN
   #include "machines/pacman/pacman.h"
 #endif
 
@@ -61,27 +61,27 @@
   #include "machines/theglob/theglob.h"
 #endif
 
-#ifdef ENABLE_CRUSH 
+#ifdef ENABLE_CRUSH
   #include "machines/crush/crush.h"
 #endif
 
-#ifdef ENABLE_ANTEATER 
+#ifdef ENABLE_ANTEATER
   #include "machines/anteater/anteater.h"
 #endif
 
-#ifdef ENABLE_BOMBJACK 
+#ifdef ENABLE_BOMBJACK
   #include "machines/bombjack/bombjack.h"
 #endif
 
-#ifdef ENABLE_MRDO 
+#ifdef ENABLE_MRDO
   #include "machines/mrdo/mrdo.h"
 #endif
 
-#ifdef ENABLE_BAGMAN 
+#ifdef ENABLE_BAGMAN
   #include "machines/bagman/bagman.h"
 #endif
 
-#ifdef ENABLE_PENGO 
+#ifdef ENABLE_PENGO
   #include "machines/pengo/pengo.h"
 #endif
 
@@ -115,52 +115,52 @@
 
 // change machine order is possible here...
 machineBase *machines[] = {
-#ifdef ENABLE_PACMAN  
+#ifdef ENABLE_PACMAN
   new pacman(),
 #endif
-#ifdef ENABLE_GALAGA  
-  new galaga(), 
-#endif  
-#ifdef ENABLE_DIGDUG  
-  new digdug(), 
-#endif  
-#ifdef ENABLE_FROGGER  
-  new frogger(), 
-#endif  
-#ifdef ENABLE_DKONG  
-  new dkong(), 
-#endif  
-#ifdef ENABLE_1942  
-  new _1942(), 
-#endif  
-#ifdef ENABLE_LIZWIZ  
+#ifdef ENABLE_GALAGA
+  new galaga(),
+#endif
+#ifdef ENABLE_DIGDUG
+  new digdug(),
+#endif
+#ifdef ENABLE_FROGGER
+  new frogger(),
+#endif
+#ifdef ENABLE_DKONG
+  new dkong(),
+#endif
+#ifdef ENABLE_1942
+  new _1942(),
+#endif
+#ifdef ENABLE_LIZWIZ
   new lizwiz(),
-#endif  
-#ifdef ENABLE_EYES  
-  new eyes(), 
-#endif  
-#ifdef ENABLE_MRTNT  
-  new mrtnt(), 
-#endif  
-#ifdef ENABLE_THEGLOB 
+#endif
+#ifdef ENABLE_EYES
+  new eyes(),
+#endif
+#ifdef ENABLE_MRTNT
+  new mrtnt(),
+#endif
+#ifdef ENABLE_THEGLOB
   new theglob(),
 #endif
-#ifdef ENABLE_CRUSH 
+#ifdef ENABLE_CRUSH
   new crush(),
 #endif
-#ifdef ENABLE_ANTEATER 
+#ifdef ENABLE_ANTEATER
   new anteater(),
 #endif
-#ifdef ENABLE_BOMBJACK 
+#ifdef ENABLE_BOMBJACK
   new bombjack(),
 #endif
-#ifdef ENABLE_MRDO 
+#ifdef ENABLE_MRDO
   new mrdo(),
 #endif
-#ifdef ENABLE_BAGMAN 
+#ifdef ENABLE_BAGMAN
   new bagman(),
 #endif
-#ifdef ENABLE_PENGO 
+#ifdef ENABLE_PENGO
   new pengo(),
 #endif
 #ifdef ENABLE_MSPACMAN
@@ -219,22 +219,22 @@ void onDoReset();
 bool doReset = false;
 
 void setup() {
-  Serial.begin(115200);  
+  Serial.begin(115200);
   delay(200); // let serial initialize
-  Serial.println("Galagino"); 
+  Serial.println("Galagino");
 
-  Serial.print("ESP-IDF "); 
-  Serial.println(ESP_IDF_VERSION, HEX); 
+  Serial.print("ESP-IDF ");
+  Serial.println(ESP_IDF_VERSION, HEX);
 
 #ifdef WORKAROUND_I2S_APLL_PROBLEM
-  Serial.println("I2S APLL workaround active"); 
+  Serial.println("I2S APLL workaround active");
 #endif
   // this should not be needed as the CPU runs by default on 240Mht nowadays
   setCpuFrequencyMhz(240);
 
   Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
   Serial.print("Main core: "); Serial.println(xPortGetCoreID());
-  Serial.print("Main priority: "); Serial.println(uxTaskPriorityGet(NULL));  
+  Serial.print("Main priority: "); Serial.println(uxTaskPriorityGet(NULL));
 
   Serial.print("TFT Controller: ");
   #ifdef TFT_ILI9341
@@ -250,8 +250,8 @@ void setup() {
   Serial.print("TFT_MOSI: "); Serial.println(TFT_MOSI);
   Serial.print("TFT_SCLK: "); Serial.println(TFT_SCLK);
   Serial.print("TFT_RST:  "); Serial.println(TFT_RST);
-  Serial.print("TFT_VLIP: "); 
-  #ifdef TFT_VLIP
+  Serial.print("TFT_VFLIP: ");
+  #ifdef TFT_VFLIP
   Serial.println("ON");
   #else
   Serial.println("OFF");
@@ -267,7 +267,7 @@ void setup() {
   sprite_buffer = (sprite_S*)malloc(128 * sizeof(sprite_S));
   memory = (uint8_t *)malloc(RAMSIZE);
   currentMachine = machines[0];
-  
+
   for (int i = 0; i < machinesCount; i++)
     machines[i]->init(&input, frame_buffer, sprite_buffer, memory);
 
@@ -288,9 +288,9 @@ void setup() {
   Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
 }
 
-void loop(void) {  
+void loop(void) {
   // run video in main task. This will send signals to the emulation task in the background to synchronize video
-  updateAudioVideo(); 
+  updateAudioVideo();
 
 #ifdef LED_PIN
   led.update(machines, menu.machineIndexPreselection(), menu.machineIndexSelected());
@@ -310,7 +310,7 @@ void updateAudioVideo(void) {
       audio.start(currentMachine);
       if (currentMachine->videoFlipY()) {
         video.flipVertical(1);
-      } else { 
+      } else {
         if (currentMachine->videoFlipX()) {
           video.flipHorizontal(1);
         } else {
@@ -318,7 +318,7 @@ void updateAudioVideo(void) {
           video.flipHorizontal(0);
         }
       }
-        
+
       // start new machine
       emulation_start();
     }
@@ -328,10 +328,10 @@ void updateAudioVideo(void) {
   if (doReset || menu.attract_gameTimeout()) {
     video.flipVertical(0);
     video.flipHorizontal(0);
-  
+
     // stop current machine
     emulation_stop();
-  
+
     menu.show_menu();
     doReset = false;
   }
@@ -346,15 +346,15 @@ void updateAudioVideo(void) {
     for(int c = 0; c < 36; c += 6) {
       for (int i = 0; i < 6; i++) {
         renderRow(c + i, isMenu); video.write(frame_buffer, 224 * 8);
-      }     
+      }
 
       // audio is updated 6 times per 60 Hz frame
       audio.transmit();
-    } 
- 
+    }
+
     // one screen at 60 Hz is 16.6ms
     unsigned long t1 = (micros() - t0) / 1000;  // calculate time in milliseconds
-    if(t1 < 16) 
+    if(t1 < 16)
       vTaskDelay(16 - t1);
     else
       vTaskDelay(1);    // at least 1 ms delay to prevent watchdog timeout
@@ -374,8 +374,8 @@ void updateAudioVideo(void) {
         // every second frame. So audio is refilled 12 times per 30 Hz frame.
         // Audio registers are udated by CPU3 two times per 30hz frame.
         audio.transmit();
-      } 
- 
+      }
+
       // one screen at 60 Hz is 16.6ms
       unsigned long t1 = (micros() - t0) / 1000;  // calculate time in milliseconds
       // printf("uspf %d\n", t1);
@@ -394,7 +394,7 @@ void updateAudioVideo(void) {
 void renderRow(short row, bool isMenu) {
   if(isMenu) {
     menu.render_row(row);
-  } 
+  }
   else {
     memset(frame_buffer, 0, 2 * 224 * 8);
     currentMachine->render_row(row);
@@ -411,6 +411,6 @@ void onDoAttractReset() {
 
 void onDoReset() {
   if(!menu.machineIndexIsMenu()) {
-    doReset = true;    
+    doReset = true;
   }
 }

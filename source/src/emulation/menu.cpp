@@ -28,25 +28,25 @@ void Menu::show_menu() {
   printf("show menu\n");
 }
 
-signed char Menu::machineIndexSelected() { 
-  return machineIndex - 1; 
+signed char Menu::machineIndexSelected() {
+  return machineIndex - 1;
 }
 
 signed char Menu::machineIndexPreselection() {
   return menu_sel - 1;
 }
 
-bool Menu::startMachine() { 
+bool Menu::startMachine() {
   if(machineIndex != machineIndexLast | menuWasSelected) {
     machineIndexLast = machineIndex;
     menuWasSelected = false;
     return true;
   }
-  return false; 
+  return false;
 }
-  
-bool Menu::machineIndexIsMenu() { 
-  return machineIndex == MCH_MENU; 
+
+bool Menu::machineIndexIsMenu() {
+  return machineIndex == MCH_MENU;
 }
 
 bool Menu::attract_gameTimeout() {
@@ -75,8 +75,8 @@ void Menu::attract_resetTimer() {
 
 void Menu::handle() {
   // get a mask of currently pressed keys
-  unsigned char keymask = input->buttons_get();     
-	    
+  unsigned char keymask = input->buttons_get();
+
   if((keymask & BUTTON_UP) && !(last_mask & BUTTON_UP))
     menu_sel--;
 
@@ -85,15 +85,18 @@ void Menu::handle() {
 
   if(((keymask & BUTTON_FIRE) && !(last_mask & BUTTON_FIRE)) || ((keymask & BUTTON_START) && !(last_mask & BUTTON_START))) {
     machineIndex = menu_sel;
-    printf("select machine %d\n", machineIndex);
+    printf("select machine #%d -> %d - %s\n",
+      machineIndex,
+      machines[machineIndexSelected()]->machineType(),
+      mchName(machines[machineIndexSelected()]->machineType()));
   }
 
   if(machinesCount <= 3) {
-    if(menu_sel < 1) 
+    if(menu_sel < 1)
       menu_sel = 1;
-    if(menu_sel > machinesCount) 
+    if(menu_sel > machinesCount)
       menu_sel = machinesCount;
-  } 
+  }
   else {
     if(menu_sel < 1)
       menu_sel = machinesCount;
@@ -108,23 +111,26 @@ void Menu::handle() {
     master_attract_timeout = millis();  // new timeout for running game
 
     machineIndex = menu_sel;
-    printf("MASTER ATTRACT to machine %d!!!\n", machineIndex);
+    printf("MASTER ATTRACT to machine #%d -> %d - %s\n",
+      machineIndex,
+      machines[machineIndexSelected()]->machineType(),
+      mchName(machines[machineIndexSelected()]->machineType()));
   }
 #endif
 }
 
 void Menu::render_row(short row) {
-  if(machinesCount <= 3) {    
+  if(machinesCount <= 3) {
     // non-scrolling menu for 2 or 3 machines
     for(char i = 0; i < machinesCount; i++) {
       char offset = i * 12;
       if(machinesCount == 2) offset += 6;	
-      if(row >= offset && row < offset + 12)  
+      if(row >= offset && row < offset + 12)
 	menu_logo(8 * (row - offset), machines[i]->logo(), menu_sel == i + 1);
     }
-  } 
+  }
   else {
-    // scrolling menu for more than 3 machines    
+    // scrolling menu for more than 3 machines
     // valid offset values range from 0 to MACHINE * 96 - 1
     static int offset = 0;
 
@@ -132,36 +138,34 @@ void Menu::render_row(short row) {
     // two may show up in the same character row when scrolling
     int logo_idx = ((row + offset / 8) / 12) % machinesCount;
     if(logo_idx < 0) logo_idx += machinesCount;
-    
+
     int logo_y = (row * 8 + offset) % 96;  // logo line in this row
-      
+
     // check if logo at logo_y shows up in current row
     menu_logo(logo_y, machines[logo_idx]->logo(), (menu_sel-1) == logo_idx);
-      
+
     // check if a second logo may show up here
     if(logo_y > (96 - 8)) {
       logo_idx = (logo_idx + 1) % machinesCount;
       logo_y -= 96;
       menu_logo(logo_y, machines[logo_idx]->logo(), (menu_sel-1) == logo_idx);
     }
-      
-    if(row == 35) {
-      // finally offset is bound to game, something like 96 * game:    
-      int new_offset = 96 * ((unsigned)(menu_sel - 2) % machinesCount);
-      if(menu_sel == 1) 
-        new_offset = (machinesCount - 1) * 96;
-	
-	    // check if we need to scroll
-	    if(new_offset != offset) {
-	      int diff = (new_offset - offset) % (machinesCount * 96);
-	      if(diff < 0) diff += machinesCount * 96;
 
-	      if(diff < machinesCount * 96 / 2) 
+    if(row == 35) {
+      // finally offset is bound to game, something like 96 * game:
+      int new_offset = 96 * ((unsigned)(menu_sel - 2) % machinesCount);
+      if(menu_sel == 1)
+        new_offset = (machinesCount - 1) * 96;
+
+      // check if we need to scroll
+      if(new_offset != offset) {
+        int diff = (new_offset - offset) % (machinesCount * 96);
+        if(diff < 0) diff += machinesCount * 96;
+        if(diff < machinesCount * 96 / 2)
           offset = (offset + 8) % (machinesCount * 96);
-	      else 
+        else
           offset = (offset - 8) % (machinesCount * 96);
-	        
-        if(offset < 0) 
+        if(offset < 0)
           offset += machinesCount * 96;
       }
     }
@@ -176,10 +180,10 @@ void Menu::menu_logo(short row, const unsigned short *logo, char active) {
 
   // current pixel to be drawn
   unsigned short ipix = 0;
-    
+
   // less than 8 rows in image left?
   unsigned short pix2draw = ((row <= 96 - 8) ? (224 * 8) : ((96 - row) * 224));
-  
+
   if(row >= 0) {
     // skip ahead to row
     unsigned short col = 0;
@@ -194,7 +198,7 @@ void Menu::menu_logo(short row, const unsigned short *logo, char active) {
         data += 3;
       }
     }
-    
+
     // draw pixels remaining from previous run
     if(!active) col = convert_RGB565_to_greyscale(col);
     while(ipix < ((pix - 224 * row < pix2draw) ? (pix - 224 * row) : pix2draw))
@@ -202,7 +206,7 @@ void Menu::menu_logo(short row, const unsigned short *logo, char active) {
   } else
     // if row is negative, then skip target pixel
     ipix -= row * 224;
-    
+
   while(ipix < pix2draw) {
     if(data[0] != marker)
       frame_buffer[ipix++] = active ? *data++ : convert_RGB565_to_greyscale(*data++);
@@ -214,7 +218,7 @@ void Menu::menu_logo(short row, const unsigned short *logo, char active) {
 
       data += 3;
     }
-  }  
+  }
 }
 
 unsigned short Menu::convert_RGB565_to_greyscale(unsigned short in) {
@@ -222,9 +226,42 @@ unsigned short Menu::convert_RGB565_to_greyscale(unsigned short in) {
   unsigned short g = ((in << 3) & 0x38) | ((in >> 13) & 0x07);
   unsigned short b = (in >> 8) & 31;
   unsigned short avg = (2 * r + g + 2 * b) / 4;
-  
+ 
   return (((avg << 13) & 0xe000) |   // g2-g0
           ((avg <<  7) & 0x1f00) |   // b5-b0
           ((avg <<  2) & 0x00f8) |   // r5-r0
           ((avg >>  3) & 0x0007));   // g5-g3
 }
+
+const char *mchName(signed char machineType) {
+
+  switch (machineType) {
+    case MCH_MENU:          return "Menu";
+    case MCH_PACMAN:        return "Pacman";
+    case MCH_GALAGA:        return "Galaga";
+    case MCH_DKONG:         return "Donkey Kong";
+    case MCH_FROGGER:       return "Frogger";
+    case MCH_DIGDUG:        return "Dig Dug";
+    case MCH_1942:          return "1942";
+    case MCH_EYES:          return "Eyes";
+    case MCH_MRTNT:         return "Mr. TNT";
+    case MCH_LIZWIZ:        return "Lizard Wizard";
+    case MCH_THEGLOB:       return "The Glob";
+    case MCH_CRUSH:         return "Crush Roller";
+    case MCH_ANTEATER:      return "Ant Eater";
+    case MCH_BOMBJACK:      return "Bomb Jack";
+    case MCH_MRDO:          return "Mr. Do!";
+    case MCH_BAGMAN:        return "Bagman";
+    case MCH_PENGO:         return "Pengo";
+    case MCH_MSPACMAN:      return "Ms. Pac-Mman";
+    case MCH_GALAXIAN:      return "Galaxian";
+    case MCH_LADYBUG:       return "Lady Bug";
+    case MCH_SPACEINVADERS: return "Space Invaders";
+    case MCH_TIMEPLT:       return "Time Pilot";
+    case MCH_GYRUSS:        return "Gyruss";
+    case MCH_TUTANKHM:      return "Tutankam";
+  }
+
+  return "";
+}
+

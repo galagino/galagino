@@ -39,4 +39,5 @@ private:
   signed char menu_sel;  
 };
 
+const char *mchName(signed char machineType);
 #endif
