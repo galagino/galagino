@@ -132,7 +132,7 @@ public:
     virtual void gameLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };
 #endif
     char game_started;	
-    unsigned char soundregs[48];
+    unsigned char soundregs[80]; // was 48, copied 80 from galagino3
     
     //Mr.Do!
     int sn_period[2][4];    // 4 canali per chip (3 tono + 1 rumore)
