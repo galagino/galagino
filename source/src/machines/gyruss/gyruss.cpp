@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef ENABLE_GYRUSS
 #include "gyruss.h"
 #include "esp_task_wdt.h"

@@ -107,6 +107,7 @@ public:
     virtual signed char machineType() { return MCH_MENU; } 
     virtual signed char videoFlipY() { return 0; } 
     virtual signed char videoFlipX() { return 0; }
+    virtual signed char videoMirrorX() { return 0; }
     virtual signed char useVideoHalfRate() { return 0; } 
     
     virtual unsigned char rdZ80(unsigned short Addr) { return 0xff; }

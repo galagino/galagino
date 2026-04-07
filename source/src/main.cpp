@@ -316,6 +316,10 @@ void updateAudioVideo(void) {
         } else {
           video.flipVertical(0);
           video.flipHorizontal(0);
+          if (currentMachine->videoMirrorX()) 
+            video.setMirrorX(true);
+          else
+            video.setMirrorX(false);
         }
       }
 
@@ -328,6 +332,7 @@ void updateAudioVideo(void) {
   if (doReset || menu.attract_gameTimeout()) {
     video.flipVertical(0);
     video.flipHorizontal(0);
+    video.setMirrorX(false);
 
     // stop current machine
     emulation_stop();
