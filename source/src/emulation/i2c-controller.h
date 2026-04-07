@@ -37,7 +37,7 @@ public:
 private:
   bool enabled;
   bool dead;
-  unsigned long timeout;
+  unsigned long lastUpdate;
   unsigned char lastValue;
 };
 

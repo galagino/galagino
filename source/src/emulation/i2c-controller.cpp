@@ -40,7 +40,7 @@ void ControllerI2C::setup() {
   uint8_t error = Wire.endTransmission();
   Serial.printf("Transmission: %d\n", error);
   delay(1000);
-  timeout = millis();
+  lastUpdate = millis();
   enable();
   scan();
 }
@@ -59,9 +59,11 @@ void ControllerI2C::disable() {
 unsigned char ControllerI2C::getInput() {
 
   unsigned long now = millis();
-  if (!enabled || now - timeout < 50) {
+  if (!enabled || now - lastUpdate < 33) {
+    // i2c updated only every 33ms (2 frames)
     return lastValue;
   } else {
+    lastUpdate = now;
     uint8_t count =  Wire.requestFrom((uint8_t)GALAGINO_CONTROLLER_ADDR, (uint8_t)1);
     if (Wire.available()) lastValue = Wire.read();
     while (Wire.available()) {
@@ -72,4 +74,3 @@ unsigned char ControllerI2C::getInput() {
 }
 
 #endif
-
