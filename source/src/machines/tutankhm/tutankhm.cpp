@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef ENABLE_TUTANKHM
 #include "tutankhm.h"
 #include <string.h>
