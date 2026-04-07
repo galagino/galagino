@@ -109,7 +109,7 @@ void Audio::ay_render_buffer(void) {
   #ifdef ENABLE_TIMEPLT
   if (machineType == MCH_TIMEPLT) { AY = 2; AY_INC = 9; AY_VOL = 5; }
   #endif
-  #ifdef ENABLE__GYRUSS
+  #ifdef ENABLE_GYRUSS
   if (machineType == MCH_GYRUSS) { AY = 5; AY_INC = 9; AY_VOL = 3; }
   #endif
   #ifdef ENABLE_TUTANKHM
