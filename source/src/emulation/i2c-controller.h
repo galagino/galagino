@@ -31,7 +31,7 @@ public:
   void setup();
   void enable();
   void disable();
-  void scan();
+  void scan(uint8_t);
   unsigned char getInput();
 
 private:
