@@ -4,7 +4,7 @@
 void Nunchuck::setup() {
   Wire.begin(NUNCHUCK_SDA, NUNCHUCK_SCL);
   if (!nchuk.connect()) {
-    Serial.println("Nunchuk on bus #1 not detected!");
+    printf("Nunchuk on bus #1 not detected!");
     delay(1000);
   }
 
@@ -31,7 +31,7 @@ unsigned char Nunchuck::getInput() {
   bool success = nchuk.update();  // Get new data from the controller
 
   if (!success) {  // Ruh roh
-    Serial.println("Nunchuck disconnected!");
+    printf("Nunchuck disconnected!\n");
     return 0;
   }
   else {

@@ -75,6 +75,12 @@ static const uint8_t init_cmd[] = {
     0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00,
   0xE1, 15, 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, // Set Gamma
     0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F,
+#ifndef TFT_INVERT
+  0x20, 0, //INV_OFF
+#else
+  0x21, 0, //INV_ON
+#endif
+  0xff, 150,                        // 150ms delay
   0x11, 0,                          // Exit Sleep
   0xff, 150,                        // 150ms delay
   0x29, 0,                          // Display on
@@ -122,8 +128,13 @@ Video::Video() {
   spi_bus_initialize(VSPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
   spi_bus_add_device(VSPI_HOST, &if_cfg, &handle);
 #else  
+#if CONFIG_IDF_TARGET_ESP32S3
+  spi_bus_initialize(SPI2_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
+  spi_bus_add_device(SPI2_HOST, &if_cfg, &handle);
+#else
   spi_bus_initialize(SPI1_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
   spi_bus_add_device(SPI1_HOST, &if_cfg, &handle);
+#endif
 #endif
 
   // trigger hardware reset

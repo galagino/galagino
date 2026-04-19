@@ -219,47 +219,61 @@ void onDoReset();
 bool doReset = false;
 
 void setup() {
+#if CONFIG_IDF_TARGET_ESP32S3
+  delay(2000); // USB delay
+#endif
   Serial.begin(115200);
   delay(200); // let serial initialize
-  Serial.println("Galagino");
+  printf("Galagino\n");
 
-  Serial.print("ESP-IDF ");
-  Serial.println(ESP_IDF_VERSION, HEX);
+  printf("ESP-IDF %0x\n", ESP_IDF_VERSION);
 
 #ifdef WORKAROUND_I2S_APLL_PROBLEM
-  Serial.println("I2S APLL workaround active");
+  printf("I2S APLL workaround active\n");
 #endif
   // this should not be needed as the CPU runs by default on 240Mht nowadays
   setCpuFrequencyMhz(240);
 
-  Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
-  Serial.print("Main core: "); Serial.println(xPortGetCoreID());
-  Serial.print("Main priority: "); Serial.println(uxTaskPriorityGet(NULL));
+  printf("Free heap: %d\n", ESP.getFreeHeap());
+  printf("Main core: %d\n", xPortGetCoreID());
+  printf("Main priority: %d\n", uxTaskPriorityGet(NULL));
 
-  Serial.print("TFT Controller: ");
+  printf("TFT Controller: ");
   #ifdef TFT_ILI9341
-  Serial.println("ILI 9341");
+  printf("ILI9341\n");
   #else
-  Serial.println("ST 7789");
+  printf("ST7789\n");
   #endif
-  Serial.print("TFT SPI Clock:  "); Serial.print(TFT_SPICLK); Serial.println(" Hz");
-  Serial.print("TFT_CS:   "); Serial.println(TFT_CS);
-  Serial.print("TFT_DC:   "); Serial.println(TFT_DC);
-  Serial.print("TFT_BL:   "); Serial.println(TFT_BL);
-  Serial.print("TFT_MISO: "); Serial.println(TFT_MISO);
-  Serial.print("TFT_MOSI: "); Serial.println(TFT_MOSI);
-  Serial.print("TFT_SCLK: "); Serial.println(TFT_SCLK);
-  Serial.print("TFT_RST:  "); Serial.println(TFT_RST);
-  Serial.print("TFT_VFLIP: ");
+  printf("TFT SPI Clock:  %d MHz\n", TFT_SPICLK/1000000);
+  printf("TFT_CS:     %d\n", TFT_CS);
+  printf("TFT_DC:     %d\n", TFT_DC);
+  printf("TFT_BL:     %d\n", TFT_BL);
+  printf("TFT_MISO:   %d\n", TFT_MISO);
+  printf("TFT_MOSI:   %d\n", TFT_MOSI);
+  printf("TFT_SCLK:   %d\n", TFT_SCLK);
+  printf("TFT_RST:    %d\n", TFT_RST);
+  printf("TFT_VFLIP:  %s\n",
   #ifdef TFT_VFLIP
-  Serial.println("ON");
+  "ON"
   #else
-  Serial.println("OFF");
+  "OFF"
+  #endif
+  );
+  printf("TFT_INVERT: %s\n", 
+  #ifdef TFT_INVERT
+  "ON"
+  #else
+  "OFF"
+  #endif
+  );
+  #ifdef AUDIO_ENABLE_PIN
+  printf("AUDIO_ENABLE_PIN: %d\n", AUDIO_ENABLE_PIN);
   #endif
 
   #ifdef AUDIO_ENABLE_PIN
-  pinMode(AUDIO_ENABLE_PIN, OUTPUT); // ESP32-E Audio Enable
-  digitalWrite(AUDIO_ENABLE_PIN, 0); // active low
+  pinMode(AUDIO_ENABLE_PIN, OUTPUT);   // ESP32-E Audio Enable
+  digitalWrite(AUDIO_ENABLE_PIN, LOW); // active low
+  printf("Setting AUDIO_ENABLE %s\n", "LOW");
   #endif
 
   // allocate memory for a single tile/character row
@@ -285,7 +299,7 @@ void setup() {
 #endif
 
   video.begin();
-  Serial.print("Free heap: "); Serial.println(ESP.getFreeHeap());
+  printf("Free heap: %d\n", ESP.getFreeHeap());
 }
 
 void loop(void) {

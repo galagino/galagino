@@ -141,7 +141,7 @@ unsigned char Input::buttons_get(void) {
     if (buttonUpRisingEdge | buttonDownRisingEdge | buttonExtraRisingEdge ) {
       if (_doAttractReset_callback)
         _doAttractReset_callback();  
-      //Serial.println("risingEdge AttractReset");
+      //printf("risingEdge AttractReset\n");
     }
 
     // reset control
@@ -154,7 +154,7 @@ unsigned char Input::buttons_get(void) {
         reset_timer = millis();
         if (_doReset_callback)
           _doReset_callback();
-        Serial.println("reset 3000 millis");
+        printf("reset 3000 millis\n");
       }
     } 
     else

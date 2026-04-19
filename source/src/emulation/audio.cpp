@@ -2,8 +2,87 @@
 #ifdef ENABLE_SPACEINVADERS
 #include "machines/spaceinvaders/spaceinvaders_samples.h"
 #endif
+#ifdef ES8311_AUDIO
+#include <es8311.h>
+#define SND_DIFF
+#endif
 
 void Audio::init() {
+#ifdef ES8311_AUDIO
+  bool isInit = i2cIsInit(0);
+  if (isInit) {
+    printf("es8311: i2c Clock=%d\n", Wire.getClock());
+  }
+  else {
+    bool done = Wire.begin(ES8311_I2C_SDA, ES8311_I2C_SCL, ES8311_I2C_CLK);
+    printf("es8311: i2c_init=%d SDA=%d SCL=%d Clock=%d\n",
+      done, ES8311_I2C_SDA, ES8311_I2C_SCL,
+      Wire.getClock());
+    if (!done) {
+      printf("es8311: i2c failed\n");
+      return;
+    }
+  }
+
+  // check we can talk to es8311
+  Wire.beginTransmission((uint8_t)ES8311_I2C_ADDR);
+  int8_t err = Wire.endTransmission();
+  
+  if (err != 0) {
+    printf("es8311: can't find es8311 in i2c bus at addr=0%02x err=%d\n", ES8311_I2C_ADDR, err);
+    return;
+  }
+
+  es8311_handle_t es8311_h = es8311_create(0, ES8311_I2C_ADDR);
+  es8311_clock_config_t es8311_clock = {
+    .mclk_inverted = false,
+    .sclk_inverted = false,
+    .mclk_from_mclk_pin = true,
+    .mclk_frequency = 24000 * 256,
+    .sample_frequency = 24000
+  };
+
+  esp_err_t es_err;
+  es_err = es8311_init(es8311_h, &es8311_clock, ES8311_RESOLUTION_16, ES8311_RESOLUTION_16);
+  printf("es8311: es8311_init err=%d\n", es_err);
+
+  es_err = es8311_sample_frequency_config(es8311_h, 24000 * 256, 24000);
+  printf("es8311: es8311_sample_frequency_config err=%d\n", es_err);
+
+  es_err = es8311_voice_volume_set(es8311_h, 75, NULL);
+  printf("es8311: es8311_voice_volume_set err=%d\n", es_err);
+
+  const i2s_pin_config_t pin_config = {
+    .mck_io_num = ES8311_I2S_MCK,
+    .bck_io_num = ES8311_I2S_BCK,
+    .ws_io_num = ES8311_I2S_WS,
+    .data_out_num = ES8311_I2S_DOUT,
+    .data_in_num = I2S_PIN_NO_CHANGE,
+  };
+
+  const i2s_config_t i2s_config = {
+    .mode =                 (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+    .sample_rate =          24000,
+    .bits_per_sample =      I2S_BITS_PER_SAMPLE_16BIT,
+    .channel_format =       I2S_CHANNEL_FMT_ONLY_LEFT,
+    //.channel_format = I2S_CHANNEL_ALL_LEFT,
+    .communication_format = I2S_COMM_FORMAT_STAND_MSB,
+    //.communication_format = I2S_COMM_FORMAT_STAND_I2S,
+    .intr_alloc_flags = 0,
+    .dma_buf_count = 4,
+    .dma_buf_len = 64,
+    .use_apll = false,
+    .fixed_mclk = 0
+  };
+
+  esp_err_t i2s_err;
+  i2s_err = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+  printf("es8311: i2s_driver_install err=%d\n", i2s_err);
+
+  i2s_err = i2s_set_pin(I2S_NUM_0, &pin_config);
+  printf("es8311: i2s_set_pin err=%d\n", i2s_err);
+
+#elif CONFIG_IDF_TARGET_ESP32
   // 24 kHz @ 16 bit = 48000 bytes/sec = 800 bytes per 60hz game frame =
   // 1600 bytes per 30hz screen update = ~177 bytes every four tile rows
   const i2s_config_t i2s_config = {
@@ -36,7 +115,11 @@ void Audio::init() {
   i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN); 
 #else
   i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
-#endif  
+#endif
+
+#elif CONFIG_IDF_TARGET_ESP32S3
+// ESP32-S3 doesn't have an internal DAC, so...
+#endif
 
   generateSinusWave(256, sinusWaveBuffer, sizeof(sinusWaveBuffer)  / 2 );
 }
@@ -76,6 +159,7 @@ void Audio::transmit() {
   // (try to) transmit as much audio data as possible. Since we
   // write data in exact the size of the DMA buffers we can be sure
   // that either all or nothing is actually being written
+
   size_t bytesOut = 0;
   do {
     // copy data in i2s dma buffer if possible
@@ -721,8 +805,8 @@ void Audio::valueToBuffer(int index, short value) {
 
 #ifdef SND_DIFF
     // generate differential output
-    snd_buffer[2 * index]   = 0x8000 + (volume / volumeSetting);    // positive signal on GPIO26
-    snd_buffer[2 * index + 1] = 0x8000 - (volume / volumeSetting);    // negatve signal on GPIO25 
+    snd_buffer[2 * index]   = 0x8000 + (value / volumeSetting);    // positive signal on GPIO26
+    snd_buffer[2 * index + 1] = 0x8000 - (value / volumeSetting);    // negatve signal on GPIO25 
 #else
     // work-around weird byte order bug, see 
     // https://github.com/espressif/arduino-esp32/issues/8467#issuecomment-1656616015

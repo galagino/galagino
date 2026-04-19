@@ -1,9 +1,10 @@
 
 DEVICE ?= 0
-DEVICE_BASE := /dev/ttyACM
 DEVICE_BASE := /dev/ttyUSB
+DEVICE_BASE := /dev/ttyACM
 DEVICE_PATH := $(DEVICE_BASE)$(DEVICE)
 DEFAULT_ENV := cyd-2432s028r
+DEFAULT_ENV := cyd-esp32-s3-display-usb-up
 
 ENV ?= $(DEFAULT_ENV)
 
