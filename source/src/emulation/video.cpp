@@ -232,6 +232,14 @@ void Video::flipHorizontal(char flip) {
   dma_active = 0;
 }
 
+// TODO
+void Video::flip(char flipY, char flipX) {
+}
+
+// TODO
+void Video::flipReset(char flipY, char flipX) {
+}
+
 void Video::write(uint16_t *colors, uint32_t len) {
   if(dma_active) {
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);

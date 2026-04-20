@@ -4,7 +4,6 @@
 #endif
 #ifdef ES8311_AUDIO
 #include <es8311.h>
-#define SND_DIFF
 #endif
 
 void Audio::init() {
@@ -27,10 +26,11 @@ void Audio::init() {
   // check we can talk to es8311
   Wire.beginTransmission((uint8_t)ES8311_I2C_ADDR);
   int8_t err = Wire.endTransmission();
+
+  printf("es8311: addr=0x%02x err=%d\n", ES8311_I2C_ADDR, err);
   
   if (err != 0) {
     printf("es8311: can't find es8311 in i2c bus at addr=0%02x err=%d\n", ES8311_I2C_ADDR, err);
-    return;
   }
 
   es8311_handle_t es8311_h = es8311_create(0, ES8311_I2C_ADDR);
@@ -49,7 +49,7 @@ void Audio::init() {
   es_err = es8311_sample_frequency_config(es8311_h, 24000 * 256, 24000);
   printf("es8311: es8311_sample_frequency_config err=%d\n", es_err);
 
-  es_err = es8311_voice_volume_set(es8311_h, 75, NULL);
+  es_err = es8311_voice_volume_set(es8311_h, 80, NULL);
   printf("es8311: es8311_voice_volume_set err=%d\n", es_err);
 
   const i2s_pin_config_t pin_config = {
@@ -136,12 +136,13 @@ void Audio::start(machineBase *machineBase) {
   // DAC connected to port 0.
 
   // The effective sample rate thus is 6M/15/34 = 11764.7 Hz
-  signed char machineType = currentMachine->machineType();
   i2s_set_sample_rates(I2S_NUM_0, machineType == MCH_DKONG ? 11765 : 24000);
 #endif
 }
 
 void Audio::volumeUpDown(bool up, bool down) {
+  auto entry = volumeSetting;
+
   if (up && !volumeUpLast) {
     if (volumeSetting > 1)
       volumeSetting--;
@@ -153,6 +154,9 @@ void Audio::volumeUpDown(bool up, bool down) {
       volumeSetting++;
   }
   volumeDownLast = down;
+
+  if (entry != volumeSetting)
+    printf("VolumeUpDown: %d\n", volumeSetting);
 }
 
 void Audio::transmit() {
@@ -173,6 +177,8 @@ void Audio::transmit() {
         sn76489_render_buffer();
       else if(machineType == MCH_BAGMAN)
         discrete_render_buffer();
+      else if(machineType == MCH_DKONG)
+        i8048_render_buffer();
       else if(machineType == MCH_GALAXIAN)
         galaxian_render_buffer();
       else if(machineType == MCH_SPACEINVADERS)
@@ -392,6 +398,53 @@ void Audio::ay_render_buffer(void) {
       }
       value = value / 3;
     }
+    valueToBuffer(i, value);
+  }
+}
+
+void Audio::i8048_render_buffer(void) {
+  dkong *dkongMachine = dynamic_cast<dkong*>(currentMachine);
+
+  // render first buffer contents
+  for(int i = 0; i < 64; i++) {
+    short value = 0; // silence
+
+    // no buffer available
+    if(dkongMachine->dkong_audio_rptr != dkongMachine->dkong_audio_wptr)
+      // copy data from dkong buffer into tx buffer
+      // 8048 sounds gets 50% of the available volume range
+#ifdef WORKAROUND_I2S_APLL_PROBLEM
+      value = dkongMachine->dkong_audio_transfer_buffer[dkongMachine->dkong_audio_rptr][(dkongMachine->dkong_obuf_toggle ? 32 : 0) + (i / 2)];
+#else
+      value = dkongMachine->dkong_audio_transfer_buffer[dkongMachine->dkong_audio_rptr][i];
+#endif
+
+    // include sample sounds
+    // walk is 6.25% volume, jump is at 12.5% volume and, stomp is at 25%
+    for(char j = 0; j < 3; j++) {
+      if(dkongMachine->dkong_sample_cnt[j]) {
+#ifdef WORKAROUND_I2S_APLL_PROBLEM
+        value += *dkongMachine->dkong_sample_ptr[j] >> (2 - j);
+        if(i & 1) { // advance read pointer every second sample
+          dkongMachine->dkong_sample_ptr[j]++;
+          dkongMachine->dkong_sample_cnt[j]--;
+        }
+#else
+        value += *dkongMachine->dkong_sample_ptr[j]++ >> (2 - j);
+        dkongMachine->dkong_sample_cnt[j]--;
+#endif
+      }
+    }
+#ifdef WORKAROUND_I2S_APLL_PROBLEM
+    if (i == 63) {
+      // advance write pointer. The buffer is a ring
+      if(dkongMachine->dkong_obuf_toggle)
+        dkongMachine->dkong_audio_rptr = (dkongMachine->dkong_audio_rptr + 1) & DKONG_AUDIO_QUEUE_MASK;
+
+      dkongMachine->dkong_obuf_toggle = !dkongMachine->dkong_obuf_toggle;
+    }
+#endif
+
     valueToBuffer(i, value);
   }
 }

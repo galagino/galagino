@@ -55,16 +55,21 @@ void ControllerI2C::setup() {
   int8_t err = WIRE.endTransmission();
   printf("Transmission: err=%d\n", err);
   lastUpdate = millis();
-  scan(GALAGINO_CONTROLLER_ADDR);
+  //scan(GALAGINO_CONTROLLER_ADDR);
+  enable();
 }
 
 void ControllerI2C::enable() {
   WIRE.beginTransmission(GALAGINO_CONTROLLER_ADDR);
   int8_t err = WIRE.endTransmission();
 
-  if (err) dead=true;
+  printf("Addr=0x%0x err=%d\n", GALAGINO_CONTROLLER_ADDR, err);
+  dead = (err != 0);
+  if (dead) {
+    printf("ControllerI2C::enable (dead) \n");
+    return;
+  }
 
-  if (dead) return;
   enabled = true;
   printf("ControllerI2C::enable\n");
 }

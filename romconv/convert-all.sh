@@ -531,6 +531,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/gyruss.zip ]]; then
+  #echo Bombjack Logos
+  #python ./logoconv.py ../logos/gyruss.png ../source/src/machines/gyruss/gyruss_logo.h
+
   echo Gyruss Unpack roms
   python ./unpack.py gyruss.zip || die
 

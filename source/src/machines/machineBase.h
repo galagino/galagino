@@ -85,6 +85,7 @@ public:
       memset(soundregs, 0, sizeof(soundregs)); 
     }
 
+    virtual void start() { }
     virtual void reset() {
       for(current_cpu = 0; current_cpu < sizeof(cpu) / sizeof(Z80); current_cpu++)
         ResetZ80(&cpu[current_cpu]);
@@ -133,10 +134,10 @@ public:
     virtual void gameLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };
 #endif
     char game_started;	
-    unsigned char soundregs[80]; // was 48, copied 80 from galagino3
+    unsigned char soundregs[80];
     
     //Mr.Do!
-    int sn_period[2][4];    // 4 canali per chip (3 tono + 1 rumore)
+    int sn_period[2][4];
     int sn_volume[2][4];
     // galagino3
     int sn_min_volume[2][4]; // latched min volume per audio render cycle

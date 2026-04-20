@@ -4,9 +4,10 @@
 #include "../machines/machineBase.h"
 
 // including of "../machines/machineBase.h" in "emulation.h" not possible
-TaskHandle_t emulationTaskHandle;
 extern machineBase *currentMachine;
 extern Input input;
+TaskHandle_t emulationTaskHandle;
+volatile static char doDeleteEmulationTask;
 
 void emulation_start() {
   currentMachine->reset();
@@ -14,12 +15,15 @@ void emulation_start() {
 }
 
 void emulation_stop() {
-  if (emulationTaskHandle == NULL)
+  if (!emulationTaskHandle)
     return;
   
   input.disable(); // disable input read from nunchuck
-  
-  vTaskDelete(emulationTaskHandle);
+  doDeleteEmulationTask = 1;
+  while (doDeleteEmulationTask) {
+    xTaskNotifyGive(emulationTaskHandle);
+    vTaskDelay(1);
+  }
   emulationTaskHandle = NULL;
   currentMachine->reset();  // clear sound output
 
@@ -27,19 +31,23 @@ void emulation_stop() {
 }
 
 void emulation_notifyGive() {
-  if (emulationTaskHandle == NULL)
+  if (!emulationTaskHandle)
     return;
 
   xTaskNotifyGive(emulationTaskHandle);
 }
 
-void emulation_task(void *p) {  
-  for(;;) {
-    emulation_frame();
-  }
-}
+IRAM_ATTR void emulation_task(void *p) {  
+  currentMachine->start();
 
-void emulation_frame() {
+  for(;;) {
+    currentMachine->run_frame();
+
+    if (doDeleteEmulationTask) {
+      doDeleteEmulationTask = 0;
+      vTaskDelete(emulationTaskHandle);
+    }
+
   // It may happen that the emulation runs too slow. It will then miss the
   // vblank notification and in turn will miss a frame and significantly
   // slow down. This risk is only given with Galaga as the emulation of
@@ -50,16 +58,14 @@ void emulation_frame() {
   static unsigned long time = millis();
   
   if (counter % 10 == 0) {
-    // good time: 160ms
+    // good time: 160ms...170ms
     unsigned long now = millis();
-    printf("%2d: %dms\n", (int)currentMachine->machineType(),  now - time);
+    printf("10 frames: %dms\n",  now - time);
     time = now;
   }
   counter++;
 #endif
    
-  currentMachine->run_frame();
-
   // Wait for signal from video task to emulate a 60Hz frame rate. Don't do
   // this unless the game has actually started to speed up the boot process
   // a little bit.
@@ -67,6 +73,7 @@ void emulation_frame() {
     ulTaskNotifyTake(1, portMAX_DELAY);
   else
     vTaskDelay(1); // give a millisecond delay to make the watchdog happy
+  }
 }
 
 unsigned char OpZ80_INL(unsigned short Addr) {

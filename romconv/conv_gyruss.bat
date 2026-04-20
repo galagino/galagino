@@ -15,6 +15,5 @@ goto end
 
 :error
 echo --- Error #%errorlevel%.
-pause
 
 :end

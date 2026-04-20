@@ -16,6 +16,9 @@ public:
   bool mirror_x = false;          // galagino3
   void setMirrorX(bool v) { mirror_x = v; }
 
+  void flip(char flipY, char flipX);
+  void flipReset(char flipY, char flipX);
+
 private:
   void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void sendCommand(uint8_t commandByte, uint8_t *dataBytes, uint8_t numDataBytes);

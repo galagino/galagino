@@ -30,6 +30,7 @@ public:
     ~gyruss() { }
 
     void init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) override;
+    void start() override;
     void reset() override;
 
     signed char machineType() override { return MCH_GYRUSS; }
@@ -70,30 +71,30 @@ protected:
     void blit_sprite(short row, unsigned char s_idx);
 
 private:
+    void preapre_sprites(unsigned char *sr);
     // M6809 sub-CPU
     m6809_state sub_cpu;
     unsigned char sub_ram[0x800];     // Sub-CPU local RAM (0x4000-0x47FF)
     unsigned char shared_ram[0x800];  // Shared RAM (Z80: 0xA000-0xA7FF, M6809: 0x6000-0x67FF)
-    unsigned char sub_irq_mask;
+    unsigned char multiplexPart1[0xff];
+    //unsigned char sub_irq_mask;
 
     // Audio
     volatile unsigned char sound_latch;
     unsigned char sound_latch_pending;
-    volatile unsigned char sound_irq_pending;  // latched IRQ for audio Z80
-    unsigned char ay_address[5];      // 5 AY address latches (only 3 rendered)
-    volatile unsigned long audio_cycle_approx; // approximate audio Z80 cycle counter
+    volatile unsigned char sound_irq_pending;   // latched IRQ for audio Z80
+    unsigned char ay_address[5];                // 5 AY address latches
+    volatile unsigned long audio_cycle_approx;  // approximate audio Z80 cycle counter
 
     // Audio dual-core
-    TaskHandle_t audio_task_handle;
-    int emu_core_id;
+    TaskHandle_t audio_task_handle = NULL;
+    char emu_core_id;
 
     // Video
     unsigned char flip_screen;
     unsigned char scanline_counter;
-    unsigned char tile_snapshot[0x800]; // CRAM+VRAM snapshot for tearing-free rendering
-
-    // Frame counter for sprite double-buffering
-    unsigned char frame_odd;
+    unsigned char multiplexUsed;
+    unsigned char multiplexUsedPart1 = 0;
 
 #ifdef LED_PIN
     const CRGB menu_leds[7] = { LED_BLUE, LED_CYAN, LED_WHITE, LED_CYAN, LED_WHITE, LED_CYAN, LED_BLUE };

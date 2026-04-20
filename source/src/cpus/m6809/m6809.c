@@ -494,6 +494,13 @@ void m6809_reset(m6809_state *s) {
 
 void m6809_irq(m6809_state *s) {
     s->irq_pending = 1;
+    check_interrupts(s);
+
+    if (s->halted) {
+      s->cycles = 1;
+      s->total_cycles += 1;
+      return; 
+    }
 }
 
 void m6809_firq(m6809_state *s) {
@@ -508,21 +515,20 @@ void m6809_nmi(m6809_state *s) {
  * Main execute step
  * ============================================================ */
 
-int m6809_step(m6809_state *s) {
-    uint8_t op, val8, postbyte;
-    uint16_t ea, val16;
-    int16_t offset;
+int m6809_step(m6809_state *s, char count) {
+  uint8_t op, val8, postbyte;
+  uint16_t ea, val16; 
+  int16_t offset;
+  s->cycles = 0;
 
-    s->cycles = 0;
+  //check_interrupts(s);
+  //if (s->halted) {
+  //    s->cycles = 1;
+  //    s->total_cycles += 1;
+  //    return 1; 
+  //}
 
-    check_interrupts(s);
-
-    if (s->halted) {
-        s->cycles = 1;
-        s->total_cycles += 1;
-        return 1;
-    }
-
+  for (int i=0; i < count; i++) {
     op = FETCH_OP(s);
 
     switch (op) {
@@ -1011,5 +1017,6 @@ int m6809_step(m6809_state *s) {
     }
 
     s->total_cycles += s->cycles;
-    return s->cycles;
+  }
+  return s->cycles;
 }

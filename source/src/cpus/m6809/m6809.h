@@ -54,7 +54,7 @@ typedef struct m6809_state_S {
 void m6809_reset(m6809_state *s);
 
 /* Execute one instruction, returns cycles consumed */
-int m6809_step(m6809_state *s);
+int m6809_step(m6809_state *s, char count);
 
 /* Signal an IRQ (active while pending flag set) */
 void m6809_irq(m6809_state *s);
