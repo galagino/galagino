@@ -1,30 +1,7 @@
 #ifndef _MACHINES_H_
 #define _MACHINES_H_
 
-// disable e.g. if roms are missing
-#define ENABLE_PACMAN
-#define ENABLE_GALAGA
-#define ENABLE_DKONG
-#define ENABLE_FROGGER
-#define ENABLE_DIGDUG
-#define ENABLE_1942
-#define ENABLE_EYES
-#define ENABLE_MRTNT
-#define ENABLE_LIZWIZ
-#define ENABLE_THEGLOB
-#define ENABLE_CRUSH
-#define ENABLE_ANTEATER
-#define ENABLE_BOMBJACK
-#define ENABLE_MRDO
-#define ENABLE_BAGMAN
-#define ENABLE_PENGO
-#define ENABLE_MSPACMAN
-#define ENABLE_GALAXIAN
-#define ENABLE_LADYBUG
-#define ENABLE_SPACEINVADERS
-#define ENABLE_TIMEPLT
-#define ENABLE_GYRUSS
-//#define ENABLE_TUTANKHM
+#include "machines-enabled.h"
 
 #ifdef ENABLE_PACMAN  
   #include "machines/pacman/pacman.h"
