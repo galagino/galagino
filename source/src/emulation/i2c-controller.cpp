@@ -55,6 +55,8 @@ void ControllerI2C::setup() {
   int8_t err = WIRE.endTransmission();
   printf("Transmission: err=%d\n", err);
   lastUpdate = millis();
+  lastValue = 0;
+  lastVal2 = 0;
   //scan(GALAGINO_CONTROLLER_ADDR);
   enable();
 }
@@ -91,11 +93,15 @@ unsigned char ControllerI2C::getInput() {
     return lastValue;
   } else {
     lastUpdate = now;
+    uint16_t val = 0;
     uint8_t count =  WIRE.requestFrom((uint8_t)GALAGINO_CONTROLLER_ADDR, (uint8_t)1);
-    if (WIRE.available()) lastValue = WIRE.read();
+    if (WIRE.available()) val = WIRE.read();
+    if (WIRE.available()) val |= WIRE.read() << 8;
     while (WIRE.available()) {
       WIRE.read();
     }
+    lastVal2  = val;
+    lastValue = val & 0xff;
   }
   return lastValue;
 }

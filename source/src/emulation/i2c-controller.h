@@ -39,6 +39,7 @@ private:
   bool dead;
   unsigned long lastUpdate;
   unsigned char lastValue;
+  uint16_t lastVal2;
 };
 
 #endif
