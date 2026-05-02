@@ -33,8 +33,30 @@ static spi_device_interface_config_t if_cfg {
 
 #endif
 
+// 0x36 - Row address set, same command for ili9341 and st7789
+#define CMD_MADCTL 0x36
+// 0x2C - Write to RAM, same command for ili9341 and st7789
+#define CMD_RAMWR  0x2C
+
 #ifndef TFT_MAC
 #define TFT_MAC 0x48
+#endif
+
+// Use MADCTL macro to simplify TFT FLIPs
+#ifdef TFT_ILI9341
+  #ifdef TFT_VFLIP
+    #define MADCTL_DEFAULT (TFT_MAC ^ 0xc0)
+  #else
+    #define MADCTL_DEFAULT (TFT_MAC)
+  #endif
+#else
+  #ifdef TFT_VFLIP
+    // 0x00 top to bottom + 0x00 left to right
+    #define MADCTL_DEFAULT (0x00)
+  #else
+    // 0x80 bottom to top + 0x40 right to left
+    #define MADCTL_DEFAULT (0xc0)
+  #endif
 #endif
 
 spi_bus_config_t bus_cfg{
@@ -60,11 +82,7 @@ static const uint8_t init_cmd[] = {
   0xC1, 1, 0x10,                    // Power control SAP[2:0];BT[3:0]
   0xC5, 2, 0x3e, 0x28,              // VCM control
   0xC7, 1, 0x86,                    // VCM control2
-#ifdef TFT_VFLIP
-  0x36, 1, TFT_MAC^0xc0,            // Memory Access Control
-#else
-  0x36, 1, TFT_MAC,                 // Memory Access Control, with x/y order reversed
-#endif
+  0x36, 1, MADCTL_DEFAULT,
   0x37, 1, 0x00,                    // Vertical scroll zero
   0x3A, 1, 0x55,
   0xB1, 2, 0x00, 0x18,              // Framerate control
@@ -94,14 +112,14 @@ static const uint8_t init_cmd[] = {
   0xff, 10,                         // 10 ms delay
   0x3a, 1, 0x55,                    // Set color mode 16-bit color
   0xff, 10,                         // 10 ms delay
-#ifdef TFT_VFLIP
-  0x36, 1, 0x00,                    // Mem access ctrl, upside down, RGB
-#else
-  0x36, 1, 0xc0,                    // Mem access ctrl, upside up, RGB
-#endif
+  0x36, 1, MADCTL_DEFAULT,
   0x2a, 4, W16(0), W16(240),        // Column addr set, XSTART = 0, XEND = 240     
   0x2b, 4, W16(0), W16(320),        // Row addr set, YSTART = 0, YEND = 320
-  0x20, 0,                          // INV OFF
+#ifndef TFT_INVERT
+  0x20, 0, //INV_OFF
+#else
+  0x21, 0, //INV_ON
+#endif
   0xff, 10,                         // 10 ms delay
   0x13, 0,                          // Normal display on
   0xff, 10,                         // 10 ms delay
@@ -183,61 +201,36 @@ void Video::begin(void) {
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, TFT_BL_LEVEL);
 #endif
+
+  madctl_last = MADCTL_DEFAULT;
+  printf("madctl = 0x%02x\n", madctl_last);
 }
 
-void Video::flipVertical(char flip) {    
-  if (dma_active)
-    spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
- 
-  writeCommand(0x36); // Row address set, same command for ili9341 and st7789
-#ifdef TFT_ILI9341
-  #ifdef TFT_VFLIP
-  write8(flip == 0 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-  #else
-  write8(flip == 1 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-  #endif
-#else
-  #ifdef TFT_VFLIP
-  write8(flip == 0 ? 0 : 0xc0);
-  #else
-  write8(flip == 1 ? 0 : 0xc0);
-  #endif
-#endif
-  writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789 
+void Video::flip(char flipY, char flipX) {
+  uint8_t madctl = MADCTL_DEFAULT;
 
-  dma_active = 0; 
-}
+  if (flipY) madctl ^= 0xc0; // flip the MY bit
+  if (flipX) madctl ^= 0x40; // flip the MX bit
 
-void Video::flipHorizontal(char flip) {
+  if (madctl_last == madctl)
+    return;
+
+  printf("madctl: flipY=%d flipX=%d last=0x%02x new=0x%02x\n", flipY, flipX, madctl_last, madctl);
+
   if (dma_active)
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
 
-  writeCommand(0x36);
-#ifdef TFT_ILI9341
-  #ifdef TFT_VFLIP
-  write8(flip == 0 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-  #else
-  write8(flip == 1 ? TFT_MAC ^ 0xc0 : TFT_MAC);
-  #endif
-#else
-  #ifdef TFT_VFLIP
-  write8(flip == 0 ? 0 : 0xc0);
-  #else
-  write8(flip == 1 ? 0 : 0xc0);
-  #endif
-#endif
-  writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789
+  writeCommand(CMD_MADCTL);
+  write8(madctl);
+  writeCommand(CMD_RAMWR);
 
-  mirror_x = (flip == 1);
+  madctl_last = madctl;
+
   dma_active = 0;
 }
 
-// TODO
-void Video::flip(char flipY, char flipX) {
-}
-
-// TODO
 void Video::flipReset(char flipY, char flipX) {
+  flip(0, 0);
 }
 
 void Video::write(uint16_t *colors, uint32_t len) {
@@ -246,19 +239,6 @@ void Video::write(uint16_t *colors, uint32_t len) {
   }
  
   memcpy(dma_buffer, colors, 2 * len);
-  /* galagino3 - mirror_x */ /* Laddy Bug */
-  if (mirror_x && len == 224 * 8) {
-    uint16_t *buf = (uint16_t*)dma_buffer;
-    for (uint32_t row = 0; row < 8; row++) {
-      uint16_t *line = buf + row * 224;
-      for (int x = 0; x < 112; x++) {
-        uint16_t tmp = line[x];
-        line[x] = line[223 - x];
-        line[223 - x] = tmp;
-      }
-    }
-  }
-  /* galagino3 - mirror_x */
 
   transaction.flags = 0;
   transaction.length = 16 * len; // Length in bits

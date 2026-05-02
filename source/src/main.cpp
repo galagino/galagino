@@ -154,23 +154,7 @@ void updateAudioVideo(void) {
     if (menu.startMachine()) {
       currentMachine = machines[menu.machineIndexSelected()];
       audio.start(currentMachine);
-      if (currentMachine->videoFlipY()) {
-        video.flipVertical(1);
-      } else {
-        if (currentMachine->videoFlipX()) {
-          video.flipHorizontal(1);
-        } else {
-          video.flipVertical(0);
-          video.flipHorizontal(0);
-          if (currentMachine->videoMirrorX()) 
-            video.setMirrorX(true);
-          else
-            video.setMirrorX(false);
-        }
-      }
-
-      // TODO
-      // video.flip(currentMachine->videoFlipY(), currentMachine->videoFlipX());
+      video.flip(currentMachine->videoFlipY(), currentMachine->videoFlipX());
 
       // start new machine
       emulation_start();
@@ -179,13 +163,9 @@ void updateAudioVideo(void) {
   }
 
   if (doReset || menu.attract_gameTimeout()) {
-    video.flipVertical(0);
-    video.flipHorizontal(0);
-    video.setMirrorX(false);
-
     // stop current machine
     emulation_stop();
-    // video.flipReset(currentMachine->videoFlipY(), currentMachine->videoFlipX());
+    video.flipReset(currentMachine->videoFlipY(), currentMachine->videoFlipX());
 
     menu.show_menu();
     doReset = false;

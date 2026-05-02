@@ -1,41 +1,16 @@
 #include "ladybug.h"
 #include "../../emulation/input.h"
 
-// ============================================================================
-// Lady Bug (Universal, 1981) - Machine Engine for galagino_arduino_BT
-//
-// Ported from oraQuadra Nano arcade emulator.
-// Single Z80 @ 4MHz, 2x SN76489 sound, polled vblank, coin NMI.
-//
-// Hardware:
-//   CPU: Z80A @ 4MHz (single CPU, no audio CPU)
-//   ROM: 24KB (0x0000-0x5FFF)
-//   RAM: 4KB work (0x6000-0x6FFF)
-//   Video RAM: 1KB tiles (0xD000-0xD3FF) + 1KB color (0xD400-0xD7FF)
-//   Sprite RAM: 1KB (0x7000-0x73FF)
-//   Sound: 2x SN76489 at 0xB000 and 0xB001
-//   Interrupts: NO vblank IRQ (polled via IN1 bits 6-7), Coin1 -> NMI
-//   Display: ROT270, tilemap 36x28 with custom scan
-//
-// Memory layout in machineBase::memory[] buffer:
-//   [0x0000-0x0FFF] <- Z80 0x6000-0x6FFF (work RAM, 4KB)
-//   [0x1000-0x13FF] <- Z80 0x7000-0x73FF (sprite RAM, 1KB)
-//   [0x1400-0x17FF] <- Z80 0xD000-0xD3FF (video RAM, 1KB)
-//   [0x1800-0x1BFF] <- Z80 0xD400-0xD7FF (color RAM, 1KB)
-//   [0x1C00-0x23FF] <- Z80 0xD800-0xDFFF (extra RAM, 2KB)
-// ============================================================================
-
-#define MEM_WORK_OFF   0x0000  // memory[] offset for work RAM
-#define MEM_SPRITE_OFF 0x1000  // memory[] offset for sprite RAM
-#define MEM_VIDEO_OFF  0x1400  // memory[] offset for video RAM
-#define MEM_COLOR_OFF  0x1800  // memory[] offset for color RAM
-#define MEM_EXTRA_OFF  0x1C00  // memory[] offset for extra RAM
+void ladybug::reset() {
+  machineBase::reset();
+  startupFrameCount = 0;
+}
 
 // ============================================================================
 // Opcode fetch - direct pointer, NO bounds check (matches galaga pattern)
 // ============================================================================
 unsigned char ladybug::opZ80(unsigned short Addr) {
-  if (Addr < 0x6000) return pRom1[Addr];
+  if (Addr < 0x6000) return ladybug_rom_cpu1[Addr];
   return rdZ80(Addr);
 }
 
@@ -45,7 +20,7 @@ unsigned char ladybug::opZ80(unsigned short Addr) {
 unsigned char ladybug::rdZ80(unsigned short Addr) {
   // ROM: 0x0000-0x5FFF (24KB)
   if (Addr < 0x6000)
-    return pRom1[Addr];
+    return ladybug_rom_cpu1[Addr];
 
   // Work RAM: 0x6000-0x6FFF (4KB)
   if ((Addr & 0xF000) == 0x6000)
@@ -58,6 +33,12 @@ unsigned char ladybug::rdZ80(unsigned short Addr) {
   // I/O read: 0x9000-0x9003 (input ports)
   if ((Addr & 0xF000) == 0x9000) {
     unsigned char keymask = input->buttons_get();
+    unsigned char coinNow = (keymask & BUTTON_COIN) ? 1 : 0;
+
+    // Coin NMI on rising edge
+    if (coinNow && !coinPrev)
+      IntZ80(&cpu[0], INT_NMI);
+    coinPrev = coinNow;
 
     switch (Addr & 0x0003) {
       case 0: {
@@ -82,13 +63,7 @@ unsigned char ladybug::rdZ80(unsigned short Addr) {
         if (keymask & BUTTON_DOWN)  retval &= ~0x02;
         if (keymask & BUTTON_RIGHT) retval &= ~0x04;
         if (keymask & BUTTON_UP)    retval &= ~0x08;
-        if (vblankActive) {
-          retval |= 0x80;   // bit 7 = 1 during vblank
-          // bit 6 stays 0 during vblank
-        } else {
-          retval |= 0x40;   // bit 6 = 1 during active display
-          // bit 7 stays 0 during active display
-        }
+        retval |= vblankActive ? 0x80 :  0x40;   // bit 7 = 1 during vblank
         return retval;
       }
       case 2:
@@ -150,7 +125,7 @@ void ladybug::wrZ80(unsigned short Addr, unsigned char Value) {
   // Video RAM: 0xD000-0xD3FF
   if (Addr >= 0xD000 && Addr <= 0xD3FF) {
     memory[Addr - 0xD000 + MEM_VIDEO_OFF] = Value;
-    if (!game_started && Value != 0 && frameCount > 30)
+    if (!game_started && Value != 0 && startupFrameCount > 300)
       game_started = 1;
     return;
   }
@@ -190,8 +165,8 @@ void ladybug::SN76489_Write_2chip(int chip, unsigned char data) {
           sn_min_volume[chip][reg] = vol;
         // Brief sounds: hold active volume for several render cycles
         if (vol < 15)
-          // sn_hold[chip][reg] = 6;  // ~16ms at 24kHz/64 samples per buffer
-          sn_hold[chip][reg] = 12;  // ~32ms at 24kHz/64 samples per buffer
+          // sn_hold[chip][reg] = 12;  // ~32ms at 24kHz/64 samples per buffer
+          sn_hold[chip][reg] = 6;  // ~16ms at 24kHz/64 samples per buffer
       }
     }
   }
@@ -212,34 +187,18 @@ void ladybug::SN76489_Write_2chip(int chip, unsigned char data) {
 
 // ============================================================================
 // Run one frame of Z80 emulation
-// Lady Bug polls vblank via IN1 bits 6-7 (no IRQ), coin triggers NMI.
-// Split frame into active (75%) and vblank (25%) phases.
 // ============================================================================
 void ladybug::run_frame(void) {
-  current_cpu = 0;
-
-  // Coin NMI on rising edge
-  unsigned char keymask = input->buttons_get();
-  unsigned char coinNow = (keymask & BUTTON_COIN) ? 1 : 0;
-  if (coinNow && !coinPrev)
-    IntZ80(&cpu[0], INT_NMI);
-  coinPrev = coinNow;
-
-  // Active display phase (75% of frame)
+  // Lady Bug polls vblank via IN1 bits 6-7 (no IRQ), coin triggers NMI.
+  // Split frame into active (75%) and vblank (25%) phases.
   vblankActive = 0;
-  for (int i = 0; i < INST_PER_FRAME * 3 / 4; i++) {
-    StepZ80(&cpu[0]); StepZ80(&cpu[0]);
-    StepZ80(&cpu[0]); StepZ80(&cpu[0]);
+  for (int i = 0; i < INST_PER_FRAME; i++) {
+    StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
+    if (i == 936)
+      vblankActive = 1;
   }
 
-  // Vblank phase (25% of frame) - no IRQ, Lady Bug polls vblank via IN1
-  vblankActive = 1;
-  for (int i = 0; i < INST_PER_FRAME / 4; i++) {
-    StepZ80(&cpu[0]); StepZ80(&cpu[0]);
-    StepZ80(&cpu[0]); StepZ80(&cpu[0]);
-  }
-
-  frameCount++;
+  startupFrameCount++;
 }
 
 // ============================================================================

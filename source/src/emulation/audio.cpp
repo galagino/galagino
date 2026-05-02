@@ -449,8 +449,7 @@ void Audio::i8048_render_buffer(void) {
 }
 
 void Audio::sn76489_render_buffer(void) {
-  int sn_inc = 11;  // SN_CLOCK / SAMPLE_RATE
-  static uint32_t noise_lfsr[2] = {0x4000, 0x4000};
+  const int sn_inc = 11;  // SN_CLOCK / SAMPLE_RATE
 
   // Volumi con hold
   int vol[2][4];
@@ -461,7 +460,8 @@ void Audio::sn76489_render_buffer(void) {
         currentMachine->sn_hold[chip][c]--;
         if (currentMachine->sn_hold[chip][c] == 0)
           currentMachine->sn_min_volume[chip][c] = currentMachine->sn_volume[chip][c];
-      } else {
+      } 
+      else {
         vol[chip][c] = currentMachine->sn_volume[chip][c];
         currentMachine->sn_min_volume[chip][c] = currentMachine->sn_volume[chip][c];
       }
@@ -484,7 +484,8 @@ void Audio::sn76489_render_buffer(void) {
               noise_lfsr[chip] = (noise_lfsr[chip] >> 1) | (feedback << 14);
               sn_toggle[chip][c] = (noise_lfsr[chip] & 0x01) ? 1 : -1;
               sn_counter[chip][c] += (period << 3);  // Rallenta noise
-            } else {  // Tone
+            } 
+            else {  // Tone
               sn_counter[chip][c] += period;
               sn_toggle[chip][c] = -sn_toggle[chip][c];
             }
@@ -495,28 +496,6 @@ void Audio::sn76489_render_buffer(void) {
     }
     valueToBuffer(i, sample);
   }
-
-  /* speck */
-  /*
-  for (int i = 0; i < 64; i++) {
-    short sample = 0;
-
-    for (int chip = 0; chip < 2; chip++) {
-      for (int c = 0; c < 4; c++) {
-        if (currentMachine->sn_volume[chip][c] < 15) {
-          // ... (logica di generazione onda identica a prima) ...
-          sn_counter[chip][c] -= 11; //SN_CLOCK (8200000.0f / 2.0f / 16.0f); SAMPLE_RATE 24000.0f; SN_INC (SN_CLOCK / SAMPLE_RATE) = 10.677
-          if (sn_counter[chip][c] <= 0) {
-            sn_counter[chip][c] += currentMachine->sn_period[chip][c];
-            sn_toggle[chip][c] = -sn_toggle[chip][c];
-          }
-          sample += sn_toggle[chip][c] * (15 - currentMachine->sn_volume[chip][c]) * 6;
-        }
-      }
-    }
-    valueToBuffer(i, sample);
-  }
-  */
 }
 
 void Audio::namco_render_buffer(void) {

@@ -11,11 +11,6 @@ public:
 
   void begin(void);
   void write(uint16_t *colors, uint32_t len);
-  void flipVertical(char flip);
-  void flipHorizontal(char flip); // galagino3
-  bool mirror_x = false;          // galagino3
-  void setMirrorX(bool v) { mirror_x = v; }
-
   void flip(char flipY, char flipX);
   void flipReset(char flipY, char flipX);
 
@@ -30,6 +25,7 @@ private:
   spi_transaction_t* r_trans;
   spi_transaction_t transaction;
   unsigned char *dma_buffer;  // use a second buffer for dma transfers
+  uint8_t madctl_last;
 };
 
 #endif // VIDEO_H

@@ -36,7 +36,7 @@ public:
     signed char machineType() override { return MCH_GYRUSS; }
     signed char useVideoHalfRate() override { return 1; }
     signed char videoFlipY() override { return 0; }
-    signed char videoMirrorX() override { return 1; }
+    signed char videoFlipX() override { return 1; }
 
     unsigned char rdZ80(unsigned short Addr) override;
     void wrZ80(unsigned short Addr, unsigned char Value) override;
