@@ -591,7 +591,7 @@ void Audio::spaceinvaders_render_buffer(void) {
     if(p3 & 0x02) {
       if(!si_shot_playing) { si_shot_playing = 1; si_shot_pos = 0; si_shot_toggle = 0; }
       if((si_shot_pos >> 1) < si_sample_shot_LEN) {
-        value += (signed char)pgm_read_byte(&si_sample_shot[si_shot_pos >> 1]) * 3;
+        value += (signed char)si_sample_shot[si_shot_pos >> 1] * 3;
         si_shot_pos++;
       }
     } else {
@@ -642,7 +642,7 @@ void Audio::spaceinvaders_render_buffer(void) {
     if(p3 & 0x08) {
       if(!si_invhit_playing) { si_invhit_playing = 1; si_invhit_pos = 0; }
       if((si_invhit_pos >> 1) < si_sample_invhit_LEN) {
-        value += (signed char)pgm_read_byte(&si_sample_invhit[si_invhit_pos >> 1]) * 3;
+        value += (signed char)si_sample_invhit[si_invhit_pos >> 1] * 3;
         si_invhit_pos++;
       }
     } else {

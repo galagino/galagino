@@ -52,14 +52,14 @@ void spaceinvaders::reset() {
 unsigned char spaceinvaders::opZ80(unsigned short Addr) {
   Addr &= 0x3FFF;  // Mirror: 0x4000+ wraps to 0x0000+
   if(Addr < 0x2000)
-    return pgm_read_byte(&spaceinvaders_rom[Addr]);
+    return spaceinvaders_rom[Addr];
   return memory[Addr - RAM_OFFSET];
 }
 
 unsigned char spaceinvaders::rdZ80(unsigned short Addr) {
   Addr &= 0x3FFF;
   if(Addr < 0x2000)
-    return pgm_read_byte(&spaceinvaders_rom[Addr]);
+    return spaceinvaders_rom[Addr];
   return memory[Addr - RAM_OFFSET];
 }
 
