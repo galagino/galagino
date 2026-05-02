@@ -504,6 +504,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/timeplt.zip ]]; then
+  #echo Time Pilot Logos
+  #python ./logoconv.py ../logos/timeplt.png ../source/src/machines/timeplt/timeplt_logo.h || die
+
   echo Time Pilot Unpack roms
   python ./unpack.py timeplt.zip || die
 
@@ -531,7 +534,7 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/gyruss.zip ]]; then
-  #echo Bombjack Logos
+  #echo Gyruss Logos
   #python ./logoconv.py ../logos/gyruss.png ../source/src/machines/gyruss/gyruss_logo.h || die
 
   echo Gyruss Unpack roms
