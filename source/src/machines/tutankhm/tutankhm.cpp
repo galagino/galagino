@@ -106,7 +106,7 @@ uint8_t tutankhm::main_read(uint16_t addr) {
 
     // DSW2 0x8160 (mirror 0x0F)
     if ((addr & 0xFFF0) == 0x8160)
-        return TUTANKHM_DSW2;
+        return TUTANKHM_DSW2 | (input->demoSoundsOff() ? 0x80 : 0x00);
 
     // IN0 0x8180 (mirror 0x0F) — Coin/Start/Service
     if ((addr & 0xFFF0) == 0x8180) {
