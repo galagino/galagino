@@ -532,7 +532,7 @@ fi
 
 if [[ -f ../romszip/gyruss.zip ]]; then
   #echo Bombjack Logos
-  #python ./logoconv.py ../logos/gyruss.png ../source/src/machines/gyruss/gyruss_logo.h
+  #python ./logoconv.py ../logos/gyruss.png ../source/src/machines/gyruss/gyruss_logo.h || die
 
   echo Gyruss Unpack roms
   python ./unpack.py gyruss.zip || die
@@ -544,10 +544,13 @@ if [[ -f ../romszip/gyruss.zip ]]; then
 fi
 
 #------------------------------------
-# Tutankhm
+# Tutankham
 #------------------------------------
 
 if [[ -f ../romszip/tutankhm.zip ]]; then
+  #echo Tutankham Logos
+  #python ./logoconv.py ../logos/tutankhm.png ../source/src/machines/tutankhm/tutankhm_logo.h || die
+
   echo Tutankham Unpack roms
   python ./unpack.py tutankhm.zip || die
 

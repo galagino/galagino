@@ -1,3 +1,5 @@
+#include "machines-enabled.h"
+#ifdef ENABLE_GYRUSS
 #ifndef GYRUSS_H
 #define GYRUSS_H
 
@@ -77,7 +79,6 @@ private:
     unsigned char sub_ram[0x800];     // Sub-CPU local RAM (0x4000-0x47FF)
     unsigned char shared_ram[0x800];  // Shared RAM (Z80: 0xA000-0xA7FF, M6809: 0x6000-0x67FF)
     unsigned char multiplexPart1[0xff];
-    //unsigned char sub_irq_mask;
 
     // Audio
     volatile unsigned char sound_latch;
@@ -104,4 +105,5 @@ private:
 // Global pointer for M6809 callbacks (only one gyruss instance)
 extern gyruss *g_gyruss_instance;
 
+#endif
 #endif

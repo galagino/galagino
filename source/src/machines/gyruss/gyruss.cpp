@@ -1,4 +1,5 @@
 #include "gyruss.h"
+#ifdef ENABLE_GYRUSS
 #include "esp_task_wdt.h"
 
 // ============================================================
@@ -68,18 +69,6 @@ uint8_t gyruss::sub_read_opcode(uint16_t addr) {
 // ============================================================
 // Audio Z80 dual-core task
 // ============================================================
-
-/*
-static void gyruss_audio_task_fn(void *param) {
-    gyruss *g = (gyruss *)param;
-    esp_task_wdt_delete(NULL);
-    while (g->audio_running) {
-        g->run_audio_batch(100);
-        taskYIELD();
-    }
-    vTaskDelete(NULL);
-}
-*/
 
 static void taskWrapper(void *param) {
   gyruss *gyr = (gyruss *)param;
@@ -172,7 +161,8 @@ unsigned char gyruss::opZ80(unsigned short Addr) {
     if (Addr < 0x6000)
       return gyruss_rom_main[Addr];
     return rdZ80(Addr);
-  } else {
+  } 
+  else {
     if (Addr < 0x4000)
       return gyruss_rom_audio[Addr];
     return rdZ80(Addr);
@@ -533,7 +523,9 @@ const unsigned short *gyruss::logo(void) {
 void gyruss::menuLeds(CRGB *leds) {
   memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
 }
+
 void gyruss::gameLeds(CRGB *leds) {
   memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
 }
+#endif
 #endif

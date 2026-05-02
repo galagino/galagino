@@ -1,10 +1,14 @@
 @echo off
-echo --------- Convert Tutancham ---------
-echo Tutancham Unpack roms
+echo --------- Convert Tutankham ---------
+echo Tutankham Unpack roms
 python ./unpack.py tutankhm.zip
 if errorlevel 1 goto :error
 
-echo Converting Tutancham
+rem echo Tutankham Logos
+rem python ./logoconv.py ../logos/tutankhm.png ../source/src/machines/tutankhm/tutankhm_logo.h
+rem if errorlevel 1 goto :error
+
+echo Converting Tutankham
 cd tutankhm
 python tutankhm_rom_convert.py
 cd ..

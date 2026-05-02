@@ -1,3 +1,5 @@
+#include "machines-enabled.h"
+#ifdef ENABLE_TUTANKHM
 #ifndef TUTANKHM_H
 #define TUTANKHM_H
 
@@ -108,4 +110,5 @@ private:
 // Global pointer for M6809 callbacks
 extern tutankhm *g_tutankhm_instance;
 
+#endif
 #endif

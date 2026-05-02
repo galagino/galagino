@@ -1,4 +1,4 @@
-#include "config.h"
+#include "machines-enabled.h"
 #ifdef ENABLE_TUTANKHM
 #include "tutankhm.h"
 #include <string.h>
@@ -11,7 +11,6 @@ tutankhm *g_tutankhm_instance = nullptr;
 
 // Provide m6809 extern callbacks only when gyruss is not compiled
 // (both use the same global symbol names; only one game runs at a time)
-#if !defined(ENABLE_GYRUSS)
 extern "C" {
     uint8_t m6809_read(m6809_state *s, uint16_t addr) {
         return g_tutankhm_instance->main_read(addr);
@@ -23,7 +22,6 @@ extern "C" {
         return g_tutankhm_instance->main_read(addr);
     }
 }
-#endif
 
 // ============================================================
 // Init / Reset
@@ -354,10 +352,10 @@ void tutankhm::run_frame(void) {
     // Sound CPU: Z80 @ 1.789 MHz
     for (int i = 0; i < TUT_STEPS_PER_FRAME; i++) {
         // Main M6809: ~4 cycles per step
-        m6809_step(&main_cpu);
-        m6809_step(&main_cpu);
-        m6809_step(&main_cpu);
-        m6809_step(&main_cpu);
+        m6809_step(&main_cpu, 1);
+        m6809_step(&main_cpu, 1);
+        m6809_step(&main_cpu, 1);
+        m6809_step(&main_cpu, 1);
 
         // Sound Z80: 5 steps per iteration (1.789/1.5 MHz ratio ≈ 1.19)
         current_cpu = 0;
