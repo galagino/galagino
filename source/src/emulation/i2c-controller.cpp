@@ -94,7 +94,7 @@ unsigned char ControllerI2C::getInput() {
   } else {
     lastUpdate = now;
     uint16_t val = 0;
-    uint8_t count =  WIRE.requestFrom((uint8_t)GALAGINO_CONTROLLER_ADDR, (uint8_t)1);
+    uint8_t count =  WIRE.requestFrom((uint8_t)GALAGINO_CONTROLLER_ADDR, (uint8_t)2);
     if (WIRE.available()) val = WIRE.read();
     if (WIRE.available()) val |= WIRE.read() << 8;
     while (WIRE.available()) {
