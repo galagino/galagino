@@ -54,7 +54,7 @@ void ControllerI2C::setup() {
   WIRE.beginTransmission((uint8_t)GALAGINO_CONTROLLER_ADDR);
   int8_t err = WIRE.endTransmission();
   printf("Transmission: err=%d\n", err);
-  lastUpdate = millis();
+  lastUpdate = 0;
   lastValue = 0;
   lastVal2 = 0;
   //scan(GALAGINO_CONTROLLER_ADDR);
