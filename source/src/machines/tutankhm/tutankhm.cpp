@@ -4,36 +4,16 @@
 #include <string.h>
 
 // ============================================================
-// M6809 callback bridge (extern "C" callbacks for m6809.c)
-// ============================================================
-
-tutankhm *g_tutankhm_instance = nullptr;
-
-// Provide m6809 extern callbacks only when gyruss is not compiled
-// (both use the same global symbol names; only one game runs at a time)
-extern "C" {
-    uint8_t m6809_read(m6809_state *s, uint16_t addr) {
-        return g_tutankhm_instance->main_read(addr);
-    }
-    void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
-        g_tutankhm_instance->main_write(addr, val);
-    }
-    uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr) {
-        return g_tutankhm_instance->main_read(addr);
-    }
-}
-
-// ============================================================
 // Init / Reset
 // ============================================================
 
 void tutankhm::init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) {
     machineBase::init(input, framebuffer, spritebuffer, memorybuffer);
-    g_tutankhm_instance = this;
 
     // Allocate 32KB video RAM from PSRAM
     if (!videoram) {
-        videoram = (uint8_t*)ps_malloc(32768);
+        // psram is slow
+        // videoram = (uint8_t*)ps_malloc(32768);
         if (!videoram) {
             videoram = (uint8_t*)malloc(32768);
         }
@@ -48,9 +28,6 @@ void tutankhm::reset() {
 
     // Reset sound Z80
     ResetZ80(&cpu[0]);
-
-    // Set up M6809 instance pointer (extern "C" callbacks use this)
-    g_tutankhm_instance = this;
 
     // Clear video RAM
     if (videoram) memset(videoram, 0, 32768);
@@ -87,7 +64,7 @@ void tutankhm::reset() {
 // M6809 Main CPU memory map (from MAME tutankhm.cpp)
 // ============================================================
 
-uint8_t tutankhm::main_read(uint16_t addr) {
+uint8_t tutankhm::m6809_read(m6809_state *s, uint16_t addr) {
     // Video RAM 0x0000-0x7FFF (32KB bitmap)
     if (addr < 0x8000)
         return videoram[addr];
@@ -165,7 +142,7 @@ uint8_t tutankhm::main_read(uint16_t addr) {
     return 0xFF;
 }
 
-void tutankhm::main_write(uint16_t addr, uint8_t val) {
+void tutankhm::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
     // Video RAM 0x0000-0x7FFF (32KB bitmap)
     if (addr < 0x8000) {
         if (!game_started) game_started = 1;
@@ -235,6 +212,10 @@ void tutankhm::main_write(uint16_t addr, uint8_t val) {
     }
 
     // Watchdog 0x9800 and other writes — ignored
+}
+
+uint8_t tutankhm::m6809_read_opcode(m6809_state *s, uint16_t addr) {
+  return m6809_read(s, addr);
 }
 
 // ============================================================

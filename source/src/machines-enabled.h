@@ -24,6 +24,6 @@
 #define ENABLE_SPACEINVADERS
 #define ENABLE_TIMEPLT
 #define ENABLE_GYRUSS
-//#define ENABLE_TUTANKHM
+#define ENABLE_TUTANKHM
 
 #endif

@@ -46,6 +46,10 @@ public:
     unsigned char opZ80(unsigned short Addr) override;
     unsigned char inZ80(unsigned short Port) override;
 
+    uint8_t m6809_read(m6809_state *s, uint16_t addr) override;
+    uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr) override;
+    void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) override;
+
     void run_frame(void) override;
     void prepare_frame(void) override;
     void render_row(short row) override;
@@ -55,11 +59,6 @@ public:
     void menuLeds(CRGB *leds) override;
     void gameLeds(CRGB *leds) override;
 #endif
-
-    // M6809 sub-CPU memory access (called from C callbacks)
-    uint8_t sub_read(uint16_t addr);
-    void sub_write(uint16_t addr, uint8_t val);
-    uint8_t sub_read_opcode(uint16_t addr);
 
     // Audio Z80 dual-core support
     void start_audio_task();
