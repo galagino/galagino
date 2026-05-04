@@ -7,7 +7,13 @@
 
 // video config
 //#define TFT_SPICLK  40000000    // 40 Mhz. Some displays cope with 80 Mhz
-//#define TFT_SPICLK	80000000    // 80 Mhz. Some displays cope with 80 Mhz
+//#define TFT_SPICLK  80000000    // 80 Mhz. Some displays cope with 80 Mhz
+
+// ILI9341 don't work reliably above 60 Mhz, ST7789 works fine at 80 Mhz
+
+#ifndef TFT_SPICLK
+#define TFT_SPICLK  40000000 // safe default in not defined on platformio.ini
+#endif
 
 // max possible video rate:
 // 8*224 pixels = 8*224*16 = 28672 bits
