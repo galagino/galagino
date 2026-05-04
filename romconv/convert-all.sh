@@ -22,7 +22,7 @@ echo "Z80 done"
 
 if [[ -f ../romszip/pacman.zip ]]; then
   #echo Pacman Logos
-  #python ./logoconv.py ../logos/pacman.png ../source/src/machines/pacman/pacman_logo.h
+  #python ./logoconv.py ../logos/pacman.png ../source/src/machines/pacman/pacman_logo.h || die
 
   echo Pacman Unpack roms
   python ./unpack.py pacman.zip || die 
@@ -49,7 +49,7 @@ fi
 
 if [[ -f ../romszip/galaga.zip ]]; then
   #echo Galaga Logos
-  #python ./logoconv.py ../logos/galaga.png ../source/src/machines/galaga/galaga_logo.h
+  #python ./logoconv.py ../logos/galaga.png ../source/src/machines/galaga/galaga_logo.h || die
 
   echo Galaga Unpack roms
   python ./unpack.py galaga.zip || die
@@ -79,7 +79,7 @@ fi
 
 if [[ -f ../romszip/digdug.zip ]]; then
   #echo Digdug Logos
-  #python ./logoconv.py ../logos/digdug.png ../source/src/machines/digdug/digdug_logo.h
+  #python ./logoconv.py ../logos/digdug.png ../source/src/machines/digdug/digdug_logo.h || die
 
   echo Digdug Unpack roms
   python ./unpack.py digdug.zip || die
@@ -112,7 +112,7 @@ fi
 
 if [[ -f ../romszip/frogger.zip ]]; then
   #echo Frogger Logos
-  #python ./logoconv.py ../logos/frogger.png ../source/src/machines/frogger/frogger_logo.h
+  #python ./logoconv.py ../logos/frogger.png ../source/src/machines/frogger/frogger_logo.h | die
 
   echo Frogger Unpack roms
   python ./unpack.py frogger.zip || die
@@ -137,7 +137,7 @@ fi
 
 if [[ -f ../romszip/dkong.zip ]]; then
   #echo Dkong Logos
-  #python ./logoconv.py ../logos/dkong.png ../source/src/machines/dkong/dkong_logo.h
+  #python ./logoconv.py ../logos/dkong.png ../source/src/machines/dkong/dkong_logo.h || die
 
   echo Dkong Unpack roms
   python ./unpack.py dkong.zip || die
@@ -162,7 +162,7 @@ fi
 
 if [[ -f ../romszip/1942.zip ]]; then
   #echo 1942 Logos
-  #python ./logoconv.py ../logos/1942.png ../source/src/machines/1942/1942_logo.h
+  #python ./logoconv.py ../logos/1942.png ../source/src/machines/1942/1942_logo.h || die
 
   echo 1942 Unpack roms
   python ./unpack.py 1942.zip || die
@@ -193,7 +193,7 @@ fi
 
 if [[ -f ../romszip/lizwiz.zip ]]; then
   #echo Lizwiz Logos
-  #python ./logoconv.py ../logos/lizwiz.png ../source/src/machines/lizwiz/lizwiz_logo.h
+  #python ./logoconv.py ../logos/lizwiz.png ../source/src/machines/lizwiz/lizwiz_logo.h || die
 
   echo Lizwiz Unpack roms
   python ./unpack.py lizwiz.zip || die
@@ -220,7 +220,7 @@ fi
 
 if [[ -f ../romszip/eyes.zip ]]; then
   #echo Eyes Logos
-  #python ./logoconv.py ../logos/eyes.png ../source/src/machines/eyes/eyes_logo.h
+  #python ./logoconv.py ../logos/eyes.png ../source/src/machines/eyes/eyes_logo.h || die
 
   echo Eyes Unpack roms
   python ./unpack.py eyes.zip || die
@@ -247,7 +247,7 @@ fi
 
 if [[ -f ../romszip/mrtnt.zip ]]; then
   #echo MrTNT Logos
-  #python ./logoconv.py ../logos/mrtnt.png ../source/src/machines/mrtnt/mrtnt_logo.h
+  #python ./logoconv.py ../logos/mrtnt.png ../source/src/machines/mrtnt/mrtnt_logo.h || die
 
   echo MrTNT Unpack roms
   python ./unpack.py mrtnt.zip || die
@@ -274,7 +274,7 @@ fi
 
 if [[ -f ../romszip/theglobp.zip ]]; then
   #echo TheGlob Logos
-  #python ./logoconv.py ../logos/theglob.png ../source/src/machines/theglob/theglob_logo.h
+  #python ./logoconv.py ../logos/theglob.png ../source/src/machines/theglob/theglob_logo.h || die
 
   echo TheGlob Unpack roms
   python ./unpack.py theglobp.zip || die
@@ -301,7 +301,7 @@ fi
 
 if [[ -f ../romszip/crush.zip ]]; then
   #echo Crush Logos
-  #python ./logoconv.py ../logos/crush.png ../source/src/machines/crush/crush_logo.h
+  #python ./logoconv.py ../logos/crush.png ../source/src/machines/crush/crush_logo.h || die
 
   echo Crush Unpack roms
   python ./unpack.py crush.zip || die
@@ -328,7 +328,7 @@ fi
 
 if [[ -f ../romszip/anteater.zip ]]; then
   #echo Anteater Logos
-  #python ./logoconv.py ../logos/anteater.png ../source/src/machines/anteater/anteater_logo.h
+  #python ./logoconv.py ../logos/anteater.png ../source/src/machines/anteater/anteater_logo.h || die
 
   echo Anteater Unpack roms
   python ./unpack.py anteater.zip || die
@@ -353,7 +353,7 @@ fi
 
 if [[ -f ../romszip/bagmanm2.zip ]]; then
   #echo Bagman Logos
-  #python ./logoconv.py ../logos/bagman.png ../source/src/machines/bagman/bagman_logo.h
+  #python ./logoconv.py ../logos/bagman.png ../source/src/machines/bagman/bagman_logo.h || die
 
   echo Bagman Unpack roms
   python ./unpack.py bagmanm2.zip || die
@@ -377,7 +377,7 @@ fi
 
 if [[ -f ../romszip/mrdo.zip ]]; then
   #echo MrDo Logos
-  #python ./logoconv.py ../logos/mrdo.png ../source/src/machines/mrdo/mrdo_logo.h
+  #python ./logoconv.py ../logos/mrdo.png ../source/src/machines/mrdo/mrdo_logo.h || die
 
   echo MrDo Unpack roms
   python ./unpack.py mrdo.zip || die
@@ -407,7 +407,7 @@ fi
 
 if [[ -f ../romszip/pengo2u.zip ]]; then
   #echo Pengo Logos
-  #python ./logoconv.py ../logos/pengo.png ../source/src/machines/pengo/pengo_logo.h
+  #python ./logoconv.py ../logos/pengo.png ../source/src/machines/pengo/pengo_logo.h || die
 
   echo Pengo Unpack roms
   python ./unpack.py pengo2u.zip || die
@@ -436,7 +436,7 @@ fi
 
 if [[ -f ../romszip/bombjack.zip ]]; then
   #echo Bombjack Logos
-  #python ./logoconv.py ../logos/bombjack.png ../source/src/machines/bombjack/bombjack_logo.h
+  #python ./logoconv.py ../logos/bombjack.png ../source/src/machines/bombjack/bombjack_logo.h || die
 
   echo Bombjack Unpack roms
   python ./unpack.py bombjack.zip || die
@@ -463,6 +463,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/mspacman.zip ]]; then
+  #echo MsPacman Logos
+  #python ./logoconv.py ../logos/mspacman.png ../source/src/machines/mspacman/mspacman_logo.h || die
+
   echo MsPacman Unpack roms
   python ./unpack.py mspacman.zip || die
 
@@ -477,6 +480,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/galaxian.zip ]]; then
+  #echo Galaxian Logos
+  #python ./logoconv.py ../logos/galaxian.png ../source/src/machines/galaxian/galaxian_logo.h || die
+
   echo Galaxian Unpack roms
   python ./unpack.py galaxian.zip || die
   
@@ -491,6 +497,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/ladybug.zip ]]; then
+  #echo Ladybug Logos
+  #python ./logoconv.py ../logos/ladybug.png ../source/src/machines/ladybug/ladybug_logo.h || die
+
   echo Ladybug Unpack roms
   python ./unpack.py ladybug.zip || die
 
@@ -521,6 +530,9 @@ fi
 #------------------------------------
 
 if [[ -f ../romszip/invaders.zip ]]; then
+  #echo Invaders Logos
+  #python ./logoconv.py ../logos/invaders.png ../source/src/machines/invaders/invaders_logo.h || die
+
   echo Space Invaders Unpack roms
   python ./unpack.py invaders.zip || die
 
