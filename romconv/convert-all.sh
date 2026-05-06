@@ -571,7 +571,37 @@ if [[ -f ../romszip/tutankhm.zip ]]; then
 
   echo Converting Tutankham
   cd tutankhm
-  python tutankhm_rom_convert.py
+  python tutankhm_rom_convert.py || die
+  cd ..
+fi
+
+#------------------------------------
+# Donkey Kong Jr.
+#------------------------------------
+
+if [[ -f ../romszip/dkongjrj.zip ]]; then
+  #echo Donkey Kong Junior Logos
+  #python ./logoconv.py ../logos/dkongjr.png ../source/src/machines/dkongjr/dkongjr_logo.h || die
+
+  echo Donkey Kong Junior Unpack roms
+  python ./unpack.py dkongjrj.zip || die
+
+  cd dkongjr
+  
+  echo Donkey Kong Junior CPU code
+  python ./cpu_conv.py   || die
+  python ./sound_conv.py || die
+
+  echo Donkey Kong Junior Tiles
+  python ./tilemap_conv.py       || die
+  python ./view_tiles_graphic.py || die
+
+  echo Donkey Kong Junior Colormaps
+  python ./cmap_conv.py || die
+
+  echo Donkey Kong Junior Sprites
+  python ./sprites_conv.py || die
+
   cd ..
 fi
 

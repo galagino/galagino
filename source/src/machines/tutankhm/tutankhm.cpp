@@ -1,5 +1,3 @@
-#include "machines-enabled.h"
-#ifdef ENABLE_TUTANKHM
 #include "tutankhm.h"
 #include <string.h>
 
@@ -431,5 +429,4 @@ void tutankhm::gameLeds(CRGB *leds) {
 void tutankhm::menuLeds(CRGB *leds) {
     memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
 }
-#endif
 #endif

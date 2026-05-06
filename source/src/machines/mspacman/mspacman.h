@@ -1,8 +1,19 @@
 #ifndef MSPACMAN_H
 #define MSPACMAN_H
 
-// pacman.h includes pacman_cmap.h, pacman_wavetable.h, pacman_dipswitches.h,
-// tileaddr.h and machineBase.h — include it first to avoid duplicate symbols.
+// Ms. Pac-Man CPU address map con decode switching (come MAME):
+//   decode=true  (Ms.Pac-Man mode):
+//     0x0000-0x3FFF: mspacman_pacrom (Pac-Man ROMs con 40 patch)
+//     0x8000-0x9FFF: mspacman_auxrom (extension ROM Ms.Pac-Man)
+//     0xA000-0xBFFF: mirror di mspacman_pacrom[0x2000-0x3FFF]
+//   decode=false (Pac-Man mode):
+//     0x0000-0x3FFF: pacman_rom (ROM originale non patchata)
+//     0x8000-0xBFFF: mirror di pacman_rom[addr & 0x3FFF]
+//
+//   ENABLE  trap (decode=true):  lettura/scrittura 0x3FF8-0x3FFF
+//   DISABLE trap (decode=false): lettura/scrittura
+//     0x0038-0x003F, 0x03B0-0x03B7, 0x1600-0x1607,
+//     0x2120-0x2127, 0x3FF0-0x3FF7, 0x8000-0x8007, 0x97F0-0x97F7
 #include "../pacman/pacman.h"
 #include "mspacman_pacrom.h"
 #include "mspacman_auxrom.h"

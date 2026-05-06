@@ -176,7 +176,7 @@ void Audio::transmit() {
         sn76489_render_buffer();
       else if(machineType == MCH_BAGMAN)
         discrete_render_buffer();
-      else if(machineType == MCH_DKONG)
+      else if(machineType == MCH_DKONG || machineType == MCH_DKONGJR)
         i8048_render_buffer();
       else if(machineType == MCH_GALAXIAN)
         galaxian_render_buffer();
@@ -192,18 +192,10 @@ void Audio::ay_render_buffer(void) {
   char AY = (machineType == MCH_FROGGER) ? 1 : 2;       // frogger has one AY / 1942 has two AYs
   char AY_INC = (machineType == MCH_FROGGER || machineType == MCH_ANTEATER) ? 9 : 8;   // froggger runs at 1.78 MHz -> 223718/24000 = 9,32 / 1942 runs at 1.5 MHz -> 187500/24000 = 7,81
   char AY_VOL = (machineType == MCH_FROGGER) ? 11 : 5;  // frogger min/max = -/+ 3*15*11 = -/+ 495 / 1942 min/max = -/+ 6*15*11 = -/+ 990
-  #ifdef ENABLE_BOMBJACK
   if (machineType == MCH_BOMBJACK) { AY = 3; AY_INC = 8; AY_VOL = 10; }
-  #endif
-  #ifdef ENABLE_TIMEPLT
-  if (machineType == MCH_TIMEPLT) { AY = 2; AY_INC = 9; AY_VOL = 5; }
-  #endif
-  #ifdef ENABLE_GYRUSS
-  if (machineType == MCH_GYRUSS) { AY = 5; AY_INC = 9; AY_VOL = 3; }
-  #endif
-  #ifdef ENABLE_TUTANKHM
+  if (machineType == MCH_GYRUSS)   { AY = 5; AY_INC = 9; AY_VOL = 3; }
+  if (machineType == MCH_TIMEPLT)  { AY = 2; AY_INC = 9; AY_VOL = 5; }
   if (machineType == MCH_TUTANKHM) { AY = 2; AY_INC = 7; AY_VOL = 5; }
-  #endif
 
   // up to three AY's
   for(char ay = 0; ay < AY; ay++) {
@@ -211,9 +203,9 @@ void Audio::ay_render_buffer(void) {
 
     // three tone channels
     for(char c = 0; c < 3; c++) {
-	    ay_period[ay][c] = currentMachine->soundregs[ay_off + 2 * c] + 256 * (currentMachine->soundregs[ay_off + 2 * c + 1] & 15);
-	    ay_enable[ay][c] = (((currentMachine->soundregs[ay_off + 7] >> c) & 1) | ((currentMachine->soundregs[ay_off + 7] >> (c + 2)) & 2)) ^ 3;
-	    ay_volume[ay][c] = currentMachine->soundregs[ay_off + 8 + c] & 0x0f;
+            ay_period[ay][c] = currentMachine->soundregs[ay_off + 2 * c] + 256 * (currentMachine->soundregs[ay_off + 2 * c + 1] & 15);
+            ay_enable[ay][c] = (((currentMachine->soundregs[ay_off + 7] >> c) & 1) | ((currentMachine->soundregs[ay_off + 7] >> (c + 2)) & 2)) ^ 3;
+            ay_volume[ay][c] = currentMachine->soundregs[ay_off + 8 + c] & 0x0f;
     }
     // noise channel
     ay_period[ay][3] = currentMachine->soundregs[ay_off + 6] & 0x1f;
@@ -223,7 +215,7 @@ void Audio::ay_render_buffer(void) {
 
     // --- LOGICA INVILUPPO: Leggi registri R11, R12, R13 ---
     ay_envelope_period[ay] = currentMachine->soundregs[ay_off + 11] + 256 * currentMachine->soundregs[ay_off + 12];
-    
+
     // Rileva un cambio di forma d'onda (R13) per triggerare l'inviluppo
     uint8_t new_shape = currentMachine->soundregs[ay_off + 13];
     if (new_shape != ay_envelope_shape[ay]) {
@@ -239,86 +231,36 @@ void Audio::ay_render_buffer(void) {
   for(int i = 0; i < 64; i++) {
     short value = 0; // silence
 
-    if(machineType == MCH_DKONG) {
-      dkong *dkongMachine = dynamic_cast<dkong*>(currentMachine);
-      
-      // no buffer available
-      if(dkongMachine->dkong_audio_rptr != dkongMachine->dkong_audio_wptr)
-        // copy data from dkong buffer into tx buffer
-        // 8048 sounds gets 50% of the available volume range
-#ifdef WORKAROUND_I2S_APLL_PROBLEM
-        value = dkongMachine->dkong_audio_transfer_buffer[dkongMachine->dkong_audio_rptr][(dkongMachine->dkong_obuf_toggle ? 32 : 0) + (i / 2)];
-#else
-        value = dkongMachine->dkong_audio_transfer_buffer[dkongMachine->dkong_audio_rptr][i];
-#endif
-
-      // include sample sounds
-      // walk is 6.25% volume, jump is at 12.5% volume and, stomp is at 25%
-      for(char j = 0; j < 3; j++) {
-        if(dkongMachine->dkong_sample_cnt[j]) {
-#ifdef WORKAROUND_I2S_APLL_PROBLEM
-          value += *dkongMachine->dkong_sample_ptr[j] >> (2 - j); 
-          if(i & 1) { // advance read pointer every second sample
-            dkongMachine->dkong_sample_ptr[j]++;
-            dkongMachine->dkong_sample_cnt[j]--;
-          }
-#else
-          volume += *dkongMachine->dkong_sample_ptr[j]++ >> (2 - j); 
-          dkongMachine->dkong_sample_cnt[j]--;
-#endif
-        }
-      }
-#ifdef WORKAROUND_I2S_APLL_PROBLEM
-      if (i == 63) {
-        // advance write pointer. The buffer is a ring
-        if(dkongMachine->dkong_obuf_toggle)
-          dkongMachine->dkong_audio_rptr = (dkongMachine->dkong_audio_rptr + 1) & DKONG_AUDIO_QUEUE_MASK;
-        
-        dkongMachine->dkong_obuf_toggle = !dkongMachine->dkong_obuf_toggle;
-      }
-#endif
-    }
-    else if(machineType == MCH_FROGGER || 
-            machineType == MCH_1942 || 
-            machineType == MCH_ANTEATER ||
-            machineType == MCH_TIMEPLT ||
-            #ifdef ENABLE_GYRUSS
-            machineType == MCH_GYRUSS ||
-            #endif
-            #ifdef ENABLE_TUTANKHM
-            machineType == MCH_TUTANKHM ||
-            #endif
-            false
-           ) {
+    if(machineType == MCH_FROGGER || machineType == MCH_1942 || machineType == MCH_ANTEATER || machineType == MCH_GYRUSS || 
+       machineType == MCH_TIMEPLT || machineType == MCH_TUTANKHM) {
       for(char ay = 0; ay < AY; ay++) {
         // frogger can acually skip the noise generator as
-        // it doesn't use it      
+        // it doesn't use it
         if(ay_period[ay][3]) {
-	        // process noise generator
-	        audio_cnt[ay][3] += AY_INC; // for 24 khz
-	        if(audio_cnt[ay][3] > ay_period[ay][3]) {
-	          audio_cnt[ay][3] -= ay_period[ay][3];
-	          // progress rng
-	          ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
-	          ay_noise_rng[ay] >>= 1;
-	        }
+                // process noise generator
+                audio_cnt[ay][3] += AY_INC; // for 24 khz
+                if(audio_cnt[ay][3] > ay_period[ay][3]) {
+                  audio_cnt[ay][3] -= ay_period[ay][3];
+                  // progress rng
+                  ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
+                  ay_noise_rng[ay] >>= 1;
+                }
         }
-	
         for(char c = 0; c < 3; c++) {
-	        // a channel is on if period != 0, vol != 0 and tone bit == 0
-	        if(ay_period[ay][c] && ay_volume[ay][c] && ay_enable[ay][c]) {
-	          short bit = 1;
-	          if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1 : 0;  // tone
-	          if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1 : 0;     // noise
-	  
-	          if(bit == 0) bit = -1;
-	          value += AY_VOL * bit * ay_volume[ay][c];
-	          audio_cnt[ay][c] += AY_INC; // for 24 khz
-	          if(audio_cnt[ay][c] > ay_period[ay][c]) {
-	            audio_cnt[ay][c] -= ay_period[ay][c];
-	            audio_toggle[ay][c] = -audio_toggle[ay][c];
-	          }
-	        }
+                // a channel is on if period != 0, vol != 0 and tone bit == 0
+                if(ay_period[ay][c] && ay_volume[ay][c] && ay_enable[ay][c]) {
+                  short bit = 1;
+                  if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1 : 0;  // tone
+                  if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1 : 0;     // noise
+
+                  if(bit == 0) bit = -1;
+                  value += AY_VOL * bit * ay_volume[ay][c];
+                  audio_cnt[ay][c] += AY_INC; // for 24 khz
+                  if(audio_cnt[ay][c] > ay_period[ay][c]) {
+                    audio_cnt[ay][c] -= ay_period[ay][c];
+                    audio_toggle[ay][c] = -audio_toggle[ay][c];
+                  }
+                }
         }
       }
     }
@@ -334,23 +276,23 @@ void Audio::ay_render_buffer(void) {
               ay_envelope_step[ay]++;
               if (ay_envelope_step[ay] > 15) {
                 // Se la forma è "alternata" (bit 0 settato), riparte da 0, altrimenti rimane a 15
-                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 0 : 15; 
+                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 0 : 15;
                 // Se la forma è "hold" (bit 1 settato), si ferma qui
-                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1; 
+                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
               }
-            } 
+            }
             else { // Forme di decadimento (volume decresce da 15 a 0)
               ay_envelope_step[ay]--;
               if (ay_envelope_step[ay] < 0) {
                 // Se la forma è "alternata" (bit 0 settato), riparte da 15, altrimenti rimane a 0
-                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 15 : 0; 
+                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 15 : 0;
                 // Se la forma è "hold" (bit 1 settato), si ferma qui
-                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1; 
+                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
               }
             }
           }
         }
-      
+
         // Elabora il generatore di rumore (R6)
         if(ay_period[ay][3]) {
           audio_cnt[ay][3] += AY_INC;
@@ -361,7 +303,7 @@ void Audio::ay_render_buffer(void) {
             ay_noise_rng[ay] = (ay_noise_rng[ay] >> 1) | (b << 16);
           }
         }
-  
+
         // Elabora i 3 canali di tono e li mixa con il rumore
         for(char c = 0; c < 3; c++) {
           // Controlla se il canale è abilitato nel mixer (R7) e ha un periodo valido
@@ -370,7 +312,7 @@ void Audio::ay_render_buffer(void) {
             int current_channel_volume = 0;
             if (ay_volume[ay][c] & 0x10) { // Se il bit 4 del registro volume è 1, usa l'inviluppo
               current_channel_volume = ay_envelope_step[ay];
-            } 
+            }
             else { // Altrimenti, usa il volume fisso (bit 0-3)
               current_channel_volume = ay_volume[ay][c] & 0x0F;
             }
@@ -380,12 +322,12 @@ void Audio::ay_render_buffer(void) {
               // Applica il mixing Tono/Rumore in base ai bit di ay_enable (ottenuti da R7)
               if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1:0; // Bit 0 di ay_enable -> Tono
               if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1:0;     // Bit 1 di ay_enable -> Rumore
-    
+
               // Se il bit risultante è 0, il segnale è invertito per l'onda quadra
               if(bit == 0) bit = -1;
               value += AY_VOL * bit * current_channel_volume;
             }
-    
+
             // Avanza il contatore del tono (R0-R5)
             audio_cnt[ay][c] += AY_INC;
             if(audio_cnt[ay][c] > ay_period[ay][c]) {
@@ -419,17 +361,16 @@ void Audio::i8048_render_buffer(void) {
 #endif
 
     // include sample sounds
-    // walk is 6.25% volume, jump is at 12.5% volume and, stomp is at 25%
-    for(char j = 0; j < 3; j++) {
+    for(char j = 0; j < sizeof(dkongMachine->dkong_sample_cnt) / 2; j++) {
       if(dkongMachine->dkong_sample_cnt[j]) {
 #ifdef WORKAROUND_I2S_APLL_PROBLEM
-        value += *dkongMachine->dkong_sample_ptr[j] >> (2 - j);
+        value += *dkongMachine->dkong_sample_ptr[j];
         if(i & 1) { // advance read pointer every second sample
           dkongMachine->dkong_sample_ptr[j]++;
           dkongMachine->dkong_sample_cnt[j]--;
         }
 #else
-        value += *dkongMachine->dkong_sample_ptr[j]++ >> (2 - j);
+        value += *dkongMachine->dkong_sample_ptr[j]++;
         dkongMachine->dkong_sample_cnt[j]--;
 #endif
       }
@@ -443,6 +384,11 @@ void Audio::i8048_render_buffer(void) {
       dkongMachine->dkong_obuf_toggle = !dkongMachine->dkong_obuf_toggle;
     }
 #endif
+    value = value << 1;
+    if (value > 384)
+      value = 384;
+    else if (value < -384)
+      value = -384;
 
     valueToBuffer(i, value);
   }
@@ -691,7 +637,6 @@ void Audio::spaceinvaders_render_buffer(void) {
 }
 
 void Audio::galaxian_render_buffer(void) {
-#ifdef ENABLE_GALAXIAN
   // Galaxian discrete sound hardware emulation (MAME galaxian_a.cpp)
   // SOUND_CLOCK = 18.432MHz/6/2 = 1.536MHz
   //
@@ -780,7 +725,6 @@ void Audio::galaxian_render_buffer(void) {
 
     valueToBuffer(i, value);
   }
-#endif
 }
 
 void Audio::generateSinusWave(int32_t amplitude, short* buffer, uint16_t length) { 
@@ -837,7 +781,7 @@ void Audio::valueToBuffer(int index, short value) {
 #ifdef SND_DIFF
     // generate differential output
     snd_buffer[2 * index]   = 0x8000 + (value / volumeSetting);    // positive signal on GPIO26
-    snd_buffer[2 * index + 1] = 0x8000 - (value / volumeSetting);    // negatve signal on GPIO25 
+    snd_buffer[2 * index + 1] = 0x8000 - (value / volumeSetting);    // negative signal on GPIO25 
 #else
     // work-around weird byte order bug, see 
     // https://github.com/espressif/arduino-esp32/issues/8467#issuecomment-1656616015

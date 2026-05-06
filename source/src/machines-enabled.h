@@ -25,5 +25,6 @@
 #define ENABLE_TIMEPLT
 #define ENABLE_GYRUSS
 #define ENABLE_TUTANKHM
+#define ENABLE_DKONGJR
 
 #endif

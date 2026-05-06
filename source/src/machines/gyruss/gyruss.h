@@ -1,5 +1,3 @@
-#include "machines-enabled.h"
-#ifdef ENABLE_GYRUSS
 #ifndef GYRUSS_H
 #define GYRUSS_H
 
@@ -101,8 +99,4 @@ private:
 #endif
 };
 
-// Global pointer for M6809 callbacks (only one gyruss instance)
-extern gyruss *g_gyruss_instance;
-
-#endif
 #endif

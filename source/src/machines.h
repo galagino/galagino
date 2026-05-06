@@ -95,6 +95,10 @@
   #include "machines/tutankhm/tutankhm.h"
 #endif
 
+#ifdef ENABLE_DKONGJR
+  #include "machines/dkongjr/dkongjr.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -165,6 +169,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_TUTANKHM
   new tutankhm(),
+#endif
+#ifdef ENABLE_DKONGJR
+  new dkongjr(),
 #endif
 };
 
