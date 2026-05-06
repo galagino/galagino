@@ -49,9 +49,9 @@ unsigned char _1942::rdZ80(unsigned short Addr) {
     if(Addr == 0xc000) {
       unsigned char keymask = input->buttons_get();
       unsigned char retval = 0xff;
-      static unsigned char last_coin = 0;
-      if(keymask & BUTTON_COIN && !last_coin)  retval &= ~0x80;
-      if(keymask & BUTTON_START) retval &= ~0x01;
+      if ((keymask & BUTTON_COIN) && (last_coin==0)) retval &= ~0x80;
+      if (keymask & BUTTON_START) retval &= ~0x01;
+      // if (keymask & BUTTON_COIN) printf("last_coin=0x%02x retval=0x%02x\n", last_coin, retval);
       last_coin = keymask & BUTTON_COIN;
       return retval;
     }
@@ -66,6 +66,7 @@ unsigned char _1942::rdZ80(unsigned short Addr) {
       if(keymask & BUTTON_UP)    retval &= ~0x08;
       if(keymask & BUTTON_FIRE)  retval &= ~0x10;
       if(keymask & BUTTON_START) retval &= ~0x20;
+      last_coin = keymask & BUTTON_COIN;
       return retval;
     }
     

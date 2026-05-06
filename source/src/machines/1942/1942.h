@@ -20,7 +20,7 @@
 class _1942 : public machineBase
 {
 public:
-	_1942() { }
+	_1942() { last_coin = 0; }
 	~_1942() { }
 
 	signed char machineType() override { return MCH_1942; } 
@@ -56,6 +56,8 @@ private:
 	unsigned char _1942_sound_latch = 0;
 	unsigned char _1942_ay_addr[2];
 	char sub_cpu_reset = 1;
+
+	unsigned char last_coin = 0;
 };
 
 #endif
