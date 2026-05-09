@@ -25,14 +25,16 @@ public:
     flip_screen = 0;
     soundlatch = 0;
     scanline_counter = 0;
-    frame_progress = 0;
     snd_irq_pending = 0;
     snd_irq_last = 0;
     ay_timer_counter = 0;
     snd_icnt = 0;
+    odd_frame = 0;
     memset(snd_ram, 0, sizeof(snd_ram));
     memset(ay_addr, 0, sizeof(ay_addr));
     memset(ay_regs, 0, sizeof(ay_regs));
+    memset(multiplexBank0, 0, sizeof(multiplexBank0));
+    memset(multiplexBank1, 0, sizeof(multiplexBank1));
   }
   unsigned char rdZ80(unsigned short Addr) override;
   void wrZ80(unsigned short Addr, unsigned char Value) override;
@@ -62,7 +64,11 @@ private:
   unsigned char flip_screen;
   unsigned char soundlatch;
   unsigned char scanline_counter;
-  int frame_progress;  // current iteration within run_frame (0..INST_PER_FRAME-1)
+  unsigned char odd_frame;
+  unsigned char multiplexUsed;
+  unsigned char multiplexUsedCopy;
+  unsigned char multiplexBank0[0x100];
+  unsigned char multiplexBank1[0x100];
 
   // Sound CPU state
   Z80 snd_cpu;

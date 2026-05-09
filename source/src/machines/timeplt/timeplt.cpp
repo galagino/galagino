@@ -109,13 +109,7 @@ unsigned char timeplt::rdZ80(unsigned short Addr) {
 
   // I/O reads
   if(Addr == 0xC000) {
-    // Scanline counter — MAME returns m_screen->vpos() (0-255).
-    // Hybrid: base value tracks frame progress, +1 per read for busy loops.
-    {
-      unsigned char base = (unsigned char)((frame_progress * 256) / INST_PER_FRAME);
-      if(scanline_counter < base) scanline_counter = base;
-      else scanline_counter++;
-    }
+    multiplexUsed = 1;
     return scanline_counter;
   }
 
@@ -270,8 +264,18 @@ unsigned char timeplt::inZ80(unsigned short Port) {
 
 // Time Pilot: Main Z80 @ 3.072 MHz + Sound Z80 @ 1.789 MHz + 2x AY-3-8910
 void timeplt::run_frame(void) {
-  for(int i = 0; i < INST_PER_FRAME; i++) {
-    frame_progress = i;
+  multiplexUsed = 0;
+  multiplexUsedCopy = 0;
+  scanline_counter = 0;
+  odd_frame = (odd_frame + 1 ) % 2;
+  if (odd_frame == 1) { 
+    memset(multiplexBank0, 0, sizeof(multiplexBank0));
+    memset(multiplexBank1, 0, sizeof(multiplexBank1));
+  }
+
+  for(int i = 0; i < 1280; i++) {
+    if ((i % 5) == 0) scanline_counter++;
+
     current_cpu = 0;
     StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
 
@@ -285,6 +289,12 @@ void timeplt::run_frame(void) {
       IntZ80(&cpu[1], INT_RST38);
       snd_irq_pending = 0;
     }
+
+    if (odd_frame == 1 && multiplexUsed && !multiplexUsedCopy) {
+      multiplexUsedCopy=1;
+      memcpy(multiplexBank0, &memory[MEM_SPRITES0], 0x100);
+      memcpy(multiplexBank1, &memory[MEM_SPRITES1], 0x100);
+    }
   }
 
   // Main CPU: NMI at VBlank
@@ -292,8 +302,6 @@ void timeplt::run_frame(void) {
     current_cpu = 0;
     IntZ80(&cpu[0], INT_NMI);
   }
-
-  scanline_counter = 0;
 }
 
 // Helper: extract sprites from a sprite RAM buffer pair into the sprite list
@@ -301,7 +309,7 @@ void timeplt::run_frame(void) {
 // Transposed rendering in blit_sprite handles the ROT90 display rotation.
 // Coordinates derived from: MAME portrait → frame buffer with 180° MADCTL display flip.
 void timeplt::extract_sprites(const unsigned char *bank0, const unsigned char *bank1) {
-  for(int offs = 0x3E; offs >= 0x10 && active_sprites < 92; offs -= 2) {
+  for(int offs = 0x3E; offs >= 0x10 && active_sprites < 128; offs -= 2) {
     struct sprite_S spr;
 
     unsigned char sx_raw = bank0[offs];           // landscape X position
@@ -345,7 +353,9 @@ void timeplt::prepare_frame(void) {
 
   if(!video_enable) return;
 
-  // Single pass: read current sprite RAM state
+  // saved sprites
+  extract_sprites(multiplexBank0, multiplexBank1);
+  // current sprites
   extract_sprites(&memory[MEM_SPRITES0], &memory[MEM_SPRITES1]);
 }
 
