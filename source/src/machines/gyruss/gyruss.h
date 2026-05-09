@@ -70,7 +70,7 @@ protected:
     void blit_sprite(short row, unsigned char s_idx);
 
 private:
-    void preapre_sprites(unsigned char *sr);
+    void prepare_sprites(unsigned char *sr);
     // M6809 sub-CPU
     m6809_state sub_cpu;
     unsigned char sub_ram[0x800];     // Sub-CPU local RAM (0x4000-0x47FF)

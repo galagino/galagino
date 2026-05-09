@@ -353,14 +353,14 @@ void gyruss::prepare_frame(void) {
 
   // Sprite RAM at sub CPU address 0x4040-0x40FF (confirmed from MAME)
   unsigned char *sr = &sub_ram[0x40];
-  preapre_sprites(sr);
+  prepare_sprites(sr);
 
   // Has the effect, that not anymore used sprites will appear. But better than missing sprites...
   sr = &multiplexPart1[0x40];
-  preapre_sprites(sr);
+  prepare_sprites(sr);
 }
 
-void gyruss::preapre_sprites(unsigned char *sr) {
+void gyruss::prepare_sprites(unsigned char *sr) {
   for (int offs = 0xBC; offs >= 0; offs -= 4) {
     // MAME bitmap: drawgfx at (sr[offs], 241-sr[offs+3]), 8w×16h
     // ROT90 tile-derived mapping: frame_x = bitmap_y - 16, frame_y = bitmap_x + 16
