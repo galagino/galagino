@@ -68,7 +68,7 @@ def write_header(filename, varname, data, comment=""):
     path = os.path.join(OUT_DIR, filename)
     with open(path, "w") as f:
         f.write(f"// {comment}\n")
-        f.write(f"const unsigned char {varname}[] PROGMEM = {{\n")
+        f.write(f"const unsigned char {varname}[] = {{\n")
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
             f.write("  " + ", ".join(f"0x{b:02X}" for b in chunk) + ",\n")

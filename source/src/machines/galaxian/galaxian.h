@@ -1,7 +1,6 @@
 #ifndef GALAXIAN_H
 #define GALAXIAN_H
 
-#include <pgmspace.h>
 #include "galaxian_logo.h"
 #include "galaxian_rom.h"
 #include "galaxian_dipswitches.h"

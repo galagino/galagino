@@ -145,7 +145,7 @@ def convert_sprites(plane0, plane1):
 def write_rom(filename, name, data):
     with open(filename, 'w') as f:
         f.write("// Galaxian program ROM ({} bytes)\n".format(len(data)))
-        f.write("const unsigned char {}[] PROGMEM = {{\n".format(name))
+        f.write("const unsigned char {}[] = {{\n".format(name))
         for i in range(0, len(data), 16):
             line = ", ".join(hex8(data[j]) for j in range(i, min(i+16, len(data))))
             f.write("  " + line)
@@ -158,7 +158,7 @@ def write_rom(filename, name, data):
 def write_tilemap(filename, tiles):
     with open(filename, 'w') as f:
         f.write("// Galaxian tilemap: {} tiles, 8x8, 2bpp\n".format(len(tiles)))
-        f.write("const unsigned short galaxian_tilemap[][8] PROGMEM = {\n")
+        f.write("const unsigned short galaxian_tilemap[][8] = {\n")
         for t, rows in enumerate(tiles):
             f.write("  { " + ", ".join(hex16(r) for r in rows) + " }")
             if t < len(tiles) - 1:
@@ -171,7 +171,7 @@ def write_spritemap(filename, all_orientations):
     num_sprites = len(all_orientations[0])
     with open(filename, 'w') as f:
         f.write("// Galaxian spritemap: {} sprites, 16x16, 2bpp, 4 orientations\n".format(num_sprites))
-        f.write("const unsigned long galaxian_spritemap[][%d][16] PROGMEM = {\n" % num_sprites)
+        f.write("const unsigned long galaxian_spritemap[][%d][16] = {\n" % num_sprites)
         for o, sprites in enumerate(all_orientations):
             f.write("  { // orientation %d\n" % o)
             for s, rows in enumerate(sprites):
@@ -189,7 +189,7 @@ def write_spritemap(filename, all_orientations):
 def write_colormap(filename, rgb565):
     with open(filename, 'w') as f:
         f.write("// Galaxian colormap: 8 palettes x 4 colors, RGB565\n")
-        f.write("const unsigned short galaxian_colormap[][4] PROGMEM = {\n")
+        f.write("const unsigned short galaxian_colormap[][4] = {\n")
         for pal in range(8):
             colors = rgb565[pal*4 : pal*4+4]
             f.write("  { " + ", ".join(hex16(c) for c in colors) + " }")

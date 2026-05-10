@@ -338,7 +338,12 @@ def generate_palette_and_colormaps(pr3, pr1, pr2):
     for group in range(16):
         colors = []
         for px in range(4):
-            idx = group * 4 + px
+            c = px
+            if px == 1:
+              c = 2
+            elif px == 2:
+              c = 1
+            idx = group * 4 + c
             pal_idx = (pr2[idx] & 0x0F) + 0x10
             if pal_idx >= 32:
                 pal_idx = 0
@@ -357,9 +362,8 @@ def generate_palette_and_colormaps(pr3, pr1, pr2):
 # ============================================================
 
 def write_array_h(filepath, array_name, data, bytes_per_line=16, type_str="unsigned char"):
-    """Write a byte array as a PROGMEM C header."""
     with open(filepath, "w") as f:
-        f.write(f"const {type_str} {array_name}[] PROGMEM = {{\n")
+        f.write(f"const {type_str} {array_name}[] = {{\n")
         for i in range(len(data)):
             if i % bytes_per_line == 0:
                 f.write("  ")
@@ -376,7 +380,7 @@ def write_main_rom_h(rom, filepath):
     with open(filepath, "w") as f:
         f.write("// Gyruss main Z80 CPU ROM (24KB: 0x0000-0x5FFF)\n")
         f.write("// Generated from gyrussk.1 + gyrussk.2 + gyrussk.3\n\n")
-        f.write("const unsigned char gyruss_rom_main[] PROGMEM = {\n")
+        f.write("const unsigned char gyruss_rom_main[] = {\n")
         for i in range(len(rom)):
             if i % 16 == 0:
                 f.write("  ")
@@ -395,7 +399,7 @@ def write_sub_rom_h(raw, decrypted, filepath):
         f.write("// Generated from gyrussk.9\n")
         f.write("// Raw data for operand reads, decrypted for opcode fetches (Konami-1)\n\n")
 
-        f.write("const unsigned char gyruss_rom_sub_raw[] PROGMEM = {\n")
+        f.write("const unsigned char gyruss_rom_sub_raw[] = {\n")
         for i in range(len(raw)):
             if i % 16 == 0:
                 f.write("  ")
@@ -407,7 +411,7 @@ def write_sub_rom_h(raw, decrypted, filepath):
         f.write("};\n\n")
 
         f.write("// Decrypted opcodes (Konami-1 XOR scheme)\n")
-        f.write("const unsigned char gyruss_rom_sub_decrypt[] PROGMEM = {\n")
+        f.write("const unsigned char gyruss_rom_sub_decrypt[] = {\n")
         for i in range(len(decrypted)):
             if i % 16 == 0:
                 f.write("  ")
@@ -424,7 +428,7 @@ def write_audio_rom_h(rom, filepath):
     with open(filepath, "w") as f:
         f.write("// Gyruss audio Z80 CPU ROM (16KB: 0x0000-0x3FFF)\n")
         f.write("// Generated from gyrussk.1a + gyrussk.2a\n\n")
-        f.write("const unsigned char gyruss_rom_audio[] PROGMEM = {\n")
+        f.write("const unsigned char gyruss_rom_audio[] = {\n")
         for i in range(len(rom)):
             if i % 16 == 0:
                 f.write("  ")
@@ -441,7 +445,7 @@ def write_tilemap_h(tiles, filepath):
     with open(filepath, "w") as f:
         f.write("// Gyruss character tiles (512 tiles, 8x8, 2bpp)\n")
         f.write("// Generated from gyrussk.4\n\n")
-        f.write("const unsigned short gyruss_tilemap[][8] PROGMEM = {\n")
+        f.write("const unsigned short gyruss_tilemap[][8] = {\n")
         for t_idx, tile in enumerate(tiles):
             f.write("  { ")
             f.write(",".join("0x{:04x}".format(v) for v in tile))
@@ -455,7 +459,7 @@ def write_tilemap_h(tiles, filepath):
 def generate_temp_tilemap(tiles, temp_file):
     """Genera il file tilemap temporaneo."""
     with open(temp_file, 'w', encoding='utf-8') as f:
-        f.write("const unsigned short gyruss_tilemap[][8] PROGMEM = {\n")
+        f.write("const unsigned short gyruss_tilemap[][8] = {\n")
         for t_idx, tile in enumerate(tiles):
             f.write("  { ")
             f.write(",".join("0x{:04x}".format(v) for v in tile))
@@ -473,7 +477,7 @@ def write_spritemap_h(sprites, filepath):
         f.write("// Gyruss sprites (512 sprites, 8x16, 4bpp, 4 flip variants)\n")
         f.write("// Generated from gyrussk.6 + gyrussk.5 + gyrussk.8 + gyrussk.7\n")
         f.write("// Variant 0=normal, 1=Y-flip, 2=X-flip, 3=XY-flip\n\n")
-        f.write("const unsigned long gyruss_sprites[][512][16] PROGMEM = {\n")
+        f.write("const unsigned long gyruss_sprites[][512][16] = {\n")
         for v in range(4):
             f.write("  {\n")
             for s in range(512):
@@ -493,7 +497,7 @@ def write_spritemap_h(sprites, filepath):
 def generate_temp_spritemap(sprites, temp_file):
     """Genera il file spritemap temporaneo."""
     with open(temp_file, 'w', encoding='utf-8') as f:
-        f.write("const unsigned long gyruss_sprites[][512][16] PROGMEM = {\n")
+        f.write("const unsigned long gyruss_sprites[][512][16] = {\n")
         for v in range(4):
             f.write("  {\n")
             for s in range(512):
@@ -519,13 +523,13 @@ def write_palette_h(palette_565, sprite_cmap, char_cmap, filepath):
 
         # Master palette (32 colors)
         f.write("// Master palette (32 entries, RGB565 byte-swapped)\n")
-        f.write("const unsigned short gyruss_palette[] PROGMEM = {\n  ")
+        f.write("const unsigned short gyruss_palette[] = {\n  ")
         f.write(",".join("0x{:04x}".format(c) for c in palette_565))
         f.write("\n};\n\n")
 
         # Sprite colormap (16 groups x 16 colors)
         f.write("// Sprite color lookup (16 groups x 16 colors, RGB565)\n")
-        f.write("const unsigned short gyruss_sprite_colormap[][16] PROGMEM = {\n")
+        f.write("const unsigned short gyruss_sprite_colormap[][16] = {\n")
         for i, colors in enumerate(sprite_cmap):
             f.write("  { ")
             f.write(",".join("0x{:04x}".format(c) for c in colors))
@@ -537,7 +541,7 @@ def write_palette_h(palette_565, sprite_cmap, char_cmap, filepath):
 
         # Character colormap (16 groups x 4 colors)
         f.write("// Character color lookup (16 groups x 4 colors, RGB565)\n")
-        f.write("const unsigned short gyruss_char_colormap[][4] PROGMEM = {\n")
+        f.write("const unsigned short gyruss_char_colormap[][4] = {\n")
         for i, colors in enumerate(char_cmap):
             f.write("  { ")
             f.write(",".join("0x{:04x}".format(c) for c in colors))

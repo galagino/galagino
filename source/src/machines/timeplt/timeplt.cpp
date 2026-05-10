@@ -1,42 +1,11 @@
 #include "timeplt.h"
 
-// Time Pilot (Konami 1982) memory map:
-//   Main CPU (Z80 @ 3.072 MHz):
-//     0x0000-0x5FFF: ROM (24KB: tm1+tm2+tm3)
-//     0xA000-0xA3FF: Color RAM (1KB)
-//     0xA400-0xA7FF: Video RAM (1KB)
-//     0xA800-0xAFFF: Work RAM (2KB)
-//     0xB000-0xB0FF: Sprite RAM bank 0
-//     0xB400-0xB4FF: Sprite RAM bank 1
-//     0xC000 read: Scanline counter
-//     0xC200 read: DSW2
-//     0xC300 read: IN0 (coins, start)
-//     0xC320 read: IN1 (P1 joystick + fire)
-//     0xC340 read: IN2 (P2 controls)
-//     0xC360 read: DSW1
-//     0xC000 write: Sound latch
-//     0xC200 write: Watchdog
-//     0xC300 write: LS259 latch (NMI enable, flip, sound IRQ, video enable)
-
-// Memory layout in our buffer:
-//   0x0000-0x03FF: Color RAM (1KB) [from 0xA000]
-//   0x0400-0x07FF: Video RAM (1KB) [from 0xA400]
-//   0x0800-0x0FFF: Work RAM (2KB) [from 0xA800]
-//   0x1000-0x10FF: Sprite RAM bank 0 [from 0xB000]
-//   0x1100-0x11FF: Sprite RAM bank 1 [from 0xB400]
-//   Total: 0x1200 = 4608 bytes (fits in RAMSIZE 9344)
-
-#define MEM_COLORRAM  0x0000
-#define MEM_VIDEORAM  0x0400
-#define MEM_WORKRAM   0x0800
-#define MEM_SPRITES0  0x1000
-#define MEM_SPRITES1  0x1100
-
 unsigned char timeplt::opZ80(unsigned short Addr) {
   if(current_cpu == 0) {
     if(Addr < 0x6000)
       return timeplt_rom[Addr];
-  } else {
+  }
+  else {
     // Sound CPU ROM 0x0000-0x0FFF (4KB data)
     if(Addr < 0x1000)
       return timeplt_snd_rom[Addr];
@@ -51,6 +20,7 @@ unsigned char timeplt::rdZ80(unsigned short Addr) {
     // ROM 0x0000-0x2FFF (only 0x0000-0x0FFF has data)
     if(Addr < 0x1000)
       return timeplt_snd_rom[Addr];
+
     if(Addr < 0x3000)
       return 0xFF;  // unmapped ROM space
 
@@ -254,34 +224,21 @@ void timeplt::wrZ80(unsigned short Addr, unsigned char Value) {
   }
 }
 
-void timeplt::outZ80(unsigned short Port, unsigned char Value) {
-  // Time Pilot doesn't use I/O ports for main CPU
-}
-
-unsigned char timeplt::inZ80(unsigned short Port) {
-  return 0x00;
-}
-
 // Time Pilot: Main Z80 @ 3.072 MHz + Sound Z80 @ 1.789 MHz + 2x AY-3-8910
 void timeplt::run_frame(void) {
   multiplexUsed = 0;
   multiplexUsedCopy = 0;
   scanline_counter = 0;
-  odd_frame = (odd_frame + 1 ) % 2;
-  if (odd_frame == 1) { 
-    memset(multiplexBank0, 0, sizeof(multiplexBank0));
-    memset(multiplexBank1, 0, sizeof(multiplexBank1));
-  }
 
   for(int i = 0; i < 1280; i++) {
-    if ((i % 5) == 0) scanline_counter++;
-
     current_cpu = 0;
     StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
 
     current_cpu = 1;
     StepZ80(&cpu[1]); snd_icnt++;
     StepZ80(&cpu[1]); snd_icnt++;
+
+    if ((i % 5) == 0) scanline_counter++;
 
     // "latch" IRQ: only deliver when sound CPU has interrupts enabled (EI)
     // Same pattern as Frogger — prevents lost IRQs during DI periods
@@ -290,11 +247,16 @@ void timeplt::run_frame(void) {
       snd_irq_pending = 0;
     }
 
-    if (odd_frame == 1 && multiplexUsed && !multiplexUsedCopy) {
+    if (multiplexUsed && !multiplexUsedCopy) {
       multiplexUsedCopy=1;
       memcpy(multiplexBank0, &memory[MEM_SPRITES0], 0x100);
       memcpy(multiplexBank1, &memory[MEM_SPRITES1], 0x100);
     }
+  }
+
+  if (!multiplexUsed) {
+    memset(multiplexBank0, 0, sizeof(multiplexBank0));
+    memset(multiplexBank1, 0, sizeof(multiplexBank1));
   }
 
   // Main CPU: NMI at VBlank

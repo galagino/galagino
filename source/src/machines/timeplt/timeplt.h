@@ -1,7 +1,6 @@
 #ifndef TIMEPLT_H
 #define TIMEPLT_H
 
-#include <pgmspace.h>
 #include "timeplt_logo.h"
 #include "timeplt_rom.h"
 #include "timeplt_snd_rom.h"
@@ -10,6 +9,38 @@
 #include "timeplt_spritemap.h"
 #include "../tileaddr.h"
 #include "../machineBase.h"
+
+// Time Pilot (Konami 1982) memory map:
+//   Main CPU (Z80 @ 3.072 MHz):
+//     0x0000-0x5FFF: ROM (24KB: tm1+tm2+tm3)
+//     0xA000-0xA3FF: Color RAM (1KB)
+//     0xA400-0xA7FF: Video RAM (1KB)
+//     0xA800-0xAFFF: Work RAM (2KB)
+//     0xB000-0xB0FF: Sprite RAM bank 0
+//     0xB400-0xB4FF: Sprite RAM bank 1
+//     0xC000 read: Scanline counter
+//     0xC200 read: DSW2
+//     0xC300 read: IN0 (coins, start)
+//     0xC320 read: IN1 (P1 joystick + fire)
+//     0xC340 read: IN2 (P2 controls)
+//     0xC360 read: DSW1
+//     0xC000 write: Sound latch
+//     0xC200 write: Watchdog
+//     0xC300 write: LS259 latch (NMI enable, flip, sound IRQ, video enable)
+
+// Memory layout in our buffer:
+//   0x0000-0x03FF: Color RAM (1KB) [from 0xA000]
+//   0x0400-0x07FF: Video RAM (1KB) [from 0xA400]
+//   0x0800-0x0FFF: Work RAM (2KB) [from 0xA800]
+//   0x1000-0x10FF: Sprite RAM bank 0 [from 0xB000]
+//   0x1100-0x11FF: Sprite RAM bank 1 [from 0xB400]
+//   Total: 0x1200 = 4608 bytes (fits in RAMSIZE 9344)
+
+#define MEM_COLORRAM  0x0000
+#define MEM_VIDEORAM  0x0400
+#define MEM_WORKRAM   0x0800
+#define MEM_SPRITES0  0x1000
+#define MEM_SPRITES1  0x1100
 
 class timeplt : public machineBase
 {
@@ -29,18 +60,13 @@ public:
     snd_irq_last = 0;
     ay_timer_counter = 0;
     snd_icnt = 0;
-    odd_frame = 0;
     memset(snd_ram, 0, sizeof(snd_ram));
     memset(ay_addr, 0, sizeof(ay_addr));
     memset(ay_regs, 0, sizeof(ay_regs));
-    memset(multiplexBank0, 0, sizeof(multiplexBank0));
-    memset(multiplexBank1, 0, sizeof(multiplexBank1));
   }
   unsigned char rdZ80(unsigned short Addr) override;
   void wrZ80(unsigned short Addr, unsigned char Value) override;
-  void outZ80(unsigned short Port, unsigned char Value) override;
   unsigned char opZ80(unsigned short Addr) override;
-  unsigned char inZ80(unsigned short Port) override;
 
   void run_frame(void) override;
   void prepare_frame(void) override;
@@ -64,7 +90,6 @@ private:
   unsigned char flip_screen;
   unsigned char soundlatch;
   unsigned char scanline_counter;
-  unsigned char odd_frame;
   unsigned char multiplexUsed;
   unsigned char multiplexUsedCopy;
   unsigned char multiplexBank0[0x100];

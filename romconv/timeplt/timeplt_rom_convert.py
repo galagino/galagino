@@ -213,7 +213,7 @@ def convert_sprites(gfx_data):
 def write_rom(filename, name, data):
     with open(filename, 'w') as f:
         f.write("// Time Pilot program ROM ({} bytes)\n".format(len(data)))
-        f.write("const unsigned char {}[] PROGMEM = {{\n".format(name))
+        f.write("const unsigned char {}[] = {{\n".format(name))
         for i in range(0, len(data), 16):
             line = ", ".join(hex8(data[j]) for j in range(i, min(i+16, len(data))))
             f.write("  " + line)
@@ -226,7 +226,7 @@ def write_rom(filename, name, data):
 def write_sound_rom(filename, name, data):
     with open(filename, 'w') as f:
         f.write("// Time Pilot sound ROM ({} bytes)\n".format(len(data)))
-        f.write("const unsigned char {}[] PROGMEM = {{\n".format(name))
+        f.write("const unsigned char {}[] = {{\n".format(name))
         for i in range(0, len(data), 16):
             line = ", ".join(hex8(data[j]) for j in range(i, min(i+16, len(data))))
             f.write("  " + line)
@@ -239,7 +239,7 @@ def write_sound_rom(filename, name, data):
 def write_tilemap(filename, tiles, char_colors):
     with open(filename, 'w') as f:
         f.write("// Time Pilot tilemap: {} tiles, 8x8, 2bpp\n".format(len(tiles)))
-        f.write("const unsigned short timeplt_tilemap[][8] PROGMEM = {\n")
+        f.write("const unsigned short timeplt_tilemap[][8] = {\n")
         for t, rows in enumerate(tiles):
             f.write("  { " + ", ".join(hex16(r) for r in rows) + " }")
             if t < len(tiles) - 1:
@@ -249,7 +249,7 @@ def write_tilemap(filename, tiles, char_colors):
 
         # Char color palettes (32 palettes x 4 colors)
         f.write("// Time Pilot char color palettes: 32 palettes x 4 colors, RGB565 byte-swapped\n")
-        f.write("const unsigned short timeplt_char_colormap[][4] PROGMEM = {\n")
+        f.write("const unsigned short timeplt_char_colormap[][4] = {\n")
         for pal in range(32):
             colors = char_colors[pal*4 : pal*4+4]
             f.write("  { " + ", ".join(hex16(c) for c in colors) + " }")
@@ -263,7 +263,7 @@ def write_spritemap(filename, all_orientations, sprite_colors):
     num_sprites = len(all_orientations[0])
     with open(filename, 'w') as f:
         f.write("// Time Pilot spritemap: {} sprites, 16x16, 2bpp, 4 orientations\n".format(num_sprites))
-        f.write("const unsigned long timeplt_spritemap[][%d][16] PROGMEM = {\n" % num_sprites)
+        f.write("const unsigned long timeplt_spritemap[][%d][16] = {\n" % num_sprites)
         for o, sprites in enumerate(all_orientations):
             f.write("  { // orientation %d\n" % o)
             for s, rows in enumerate(sprites):
@@ -279,7 +279,7 @@ def write_spritemap(filename, all_orientations, sprite_colors):
 
         # Sprite color palettes (64 palettes x 4 colors)
         f.write("// Time Pilot sprite color palettes: 64 palettes x 4 colors, RGB565 byte-swapped\n")
-        f.write("const unsigned short timeplt_sprite_colormap[][4] PROGMEM = {\n")
+        f.write("const unsigned short timeplt_sprite_colormap[][4] = {\n")
         for pal in range(64):
             colors = sprite_colors[pal*4 : pal*4+4]
             f.write("  { " + ", ".join(hex16(c) for c in colors) + " }")
