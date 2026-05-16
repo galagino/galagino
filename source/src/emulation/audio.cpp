@@ -178,7 +178,7 @@ void Audio::transmit() {
         discrete_render_buffer();
       else if(machineType == MCH_DKONG || machineType == MCH_DKONGJR)
         i8048_render_buffer();
-      else if(machineType == MCH_GALAXIAN)
+      else if(machineType == MCH_GALAXIAN || machineType == MCH_MOONCRESTA)
         galaxian_render_buffer();
       else if(machineType == MCH_SPACEINVADERS)
         spaceinvaders_render_buffer();

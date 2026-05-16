@@ -26,5 +26,6 @@
 #define ENABLE_GYRUSS
 #define ENABLE_TUTANKHM
 #define ENABLE_DKONGJR
+#define ENABLE_MOONCRESTA
 
 #endif
