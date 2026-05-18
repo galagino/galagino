@@ -126,7 +126,39 @@ void Audio::init() {
 void Audio::start(machineBase *machineBase) {
   currentMachine = machineBase;
   machineType = currentMachine->machineType();
-    
+
+  AY = 0;
+  if (machineType == MCH_FROGGER)       { AY = 1; AY_INC = 9; AY_VOL = 11; }
+  else if (machineType == MCH_1942)     { AY = 2; AY_INC = 8; AY_VOL = 5;  }
+  else if (machineType == MCH_ANTEATER) { AY = 2; AY_INC = 9; AY_VOL = 5;  }
+  else if (machineType == MCH_BOMBJACK) { AY = 3; AY_INC = 8; AY_VOL = 4;  }
+  else if (machineType == MCH_GYRUSS)   { AY = 5; AY_INC = 9; AY_VOL = 3;  }
+  else if (machineType == MCH_TIMEPLT)  { AY = 2; AY_INC = 9; AY_VOL = 5;  }
+  else if (machineType == MCH_TUTANKHM) { AY = 2; AY_INC = 7; AY_VOL = 7;  }
+
+  for(char ay = 0; ay < NUM_AY_CHIPS; ay++) {
+    for (int c = 0; c < 4; c++) {
+      audio_cnt[ay][c] = 1;
+    }
+
+    for (int c = 0; c < 3; c++) {
+      audio_toggle[ay][c] = 1;
+    }
+    ay_noise_rng[ay] = 1;
+
+    ay_envelope_period[ay] = 0;
+    ay_envelope_shape[ay] = 0;
+    ay_envelope_counter[ay] = 0;
+    ay_envelope_step[ay] = 0;
+    ay_envelope_holding[ay] = 0;
+  }
+
+  for (int sn = 0; sn < NUM_SN_CHIPS; sn++) {
+    for (int c = 0; c < 4; c++) {
+      sn_counter[sn][c] = 0;
+      sn_toggle[sn][c] = 1;
+    }
+  }
 #ifndef WORKAROUND_I2S_APLL_PROBLEM
   // The audio CPU of donkey kong runs at 6Mhz. A full bus
   // cycle needs 15 clocks which results in 400k cycles
@@ -170,8 +202,8 @@ void Audio::transmit() {
 
     // render the next audio chunk if data has actually been sent
     if(bytesOut) {      
-      if (currentMachine->hasNamcoAudio())
-        namco_render_buffer();
+      if (AY > 0)
+        ay_render_buffer();
       else if(machineType == MCH_MRDO || machineType == MCH_LADYBUG) 
         sn76489_render_buffer();
       else if(machineType == MCH_BAGMAN)
@@ -182,42 +214,30 @@ void Audio::transmit() {
         galaxian_render_buffer();
       else if(machineType == MCH_SPACEINVADERS)
         spaceinvaders_render_buffer();
-      else
-        ay_render_buffer();
+      else if (currentMachine->hasNamcoAudio())
+        namco_render_buffer();
     }
   } while(bytesOut);
 }
 
 void Audio::ay_render_buffer(void) {
-  char AY = 2;     // 1942 has two AYs
-  char AY_INC = 8; // 1942 runs at 1.5 MHz -> 187500/24000 = 7,81
-  char AY_VOL = 5; // 1942 min/max = -/+ 6*15*11 = -/+ 990
-
-  if      (machineType == MCH_FROGGER)  { AY = 1; AY_INC = 9; AY_VOL = 11; }
-  else if (machineType == MCH_ANTEATER) { AY = 2; AY_INC = 9; AY_VOL = 5; }
-  else if (machineType == MCH_BOMBJACK) { AY = 3; AY_INC = 8; AY_VOL = 10; }
-  else if (machineType == MCH_GYRUSS)   { AY = 5; AY_INC = 9; AY_VOL = 3; }
-  else if (machineType == MCH_TIMEPLT)  { AY = 2; AY_INC = 9; AY_VOL = 5; }
-  else if (machineType == MCH_TUTANKHM) { AY = 2; AY_INC = 7; AY_VOL = 5; }
-
-  // up to three AY's
   for(char ay = 0; ay < AY; ay++) {
     int ay_off = 16 * ay;
 
     // three tone channels
     for(char c = 0; c < 3; c++) {
-            ay_period[ay][c] = currentMachine->soundregs[ay_off + 2 * c] + 256 * (currentMachine->soundregs[ay_off + 2 * c + 1] & 15);
-            ay_enable[ay][c] = (((currentMachine->soundregs[ay_off + 7] >> c) & 1) | ((currentMachine->soundregs[ay_off + 7] >> (c + 2)) & 2)) ^ 3;
-            ay_volume[ay][c] = currentMachine->soundregs[ay_off + 8 + c] & 0x0f;
+      ay_period[ay][c] = currentMachine->soundregs[ay_off + (2 * c)] + (256 * (currentMachine->soundregs[ay_off + (2 * c) + 1] & 0x0f)); // 12bit
+      ay_enable[ay][c] = (((currentMachine->soundregs[ay_off + 7] >> c) & 1) | ((currentMachine->soundregs[ay_off + 7] >> (c + 2)) & 2)) ^ 3; // 1=Tone; 2=Noise
+      ay_volume[ay][c] = currentMachine->soundregs[ay_off + 8 + c];
+      // envelope is used by Anteater and Tutankhm. Gyruss envelope not working, because it is updated multiple during one vblank.
+      ay_envelope[ay][c] = ((ay_volume[ay][c] & 0x10) == 0x10) && machineType != MCH_GYRUSS;
     }
-    // noise channel
-    ay_period[ay][3] = currentMachine->soundregs[ay_off + 6] & 0x1f;
 
-    if (machineType != MCH_BOMBJACK)
-      continue;
+    // R6 noise channel. Noise is used by 1942, Anteater and Bombjack
+    ay_period[ay][3] = currentMachine->soundregs[ay_off + 6] & 0x1f; // 5bit
 
-    // --- LOGICA INVILUPPO: Leggi registri R11, R12, R13 ---
-    ay_envelope_period[ay] = currentMachine->soundregs[ay_off + 11] + 256 * currentMachine->soundregs[ay_off + 12];
+    // --- LOGICA INVILUPPO: Leggi registri R11, R12 ---
+    ay_envelope_period[ay] = currentMachine->soundregs[ay_off + 11] + 256 * currentMachine->soundregs[ay_off + 12]; //16bit
 
     // Rileva un cambio di forma d'onda (R13) per triggerare l'inviluppo
     uint8_t new_shape = currentMachine->soundregs[ay_off + 13];
@@ -234,41 +254,7 @@ void Audio::ay_render_buffer(void) {
   for(int i = 0; i < 64; i++) {
     short value = 0; // silence
 
-    if(machineType == MCH_FROGGER || machineType == MCH_1942 || machineType == MCH_ANTEATER || machineType == MCH_GYRUSS || 
-       machineType == MCH_TIMEPLT || machineType == MCH_TUTANKHM) {
-      for(char ay = 0; ay < AY; ay++) {
-        // frogger can acually skip the noise generator as
-        // it doesn't use it
-        if(ay_period[ay][3]) {
-                // process noise generator
-                audio_cnt[ay][3] += AY_INC; // for 24 khz
-                if(audio_cnt[ay][3] > ay_period[ay][3]) {
-                  audio_cnt[ay][3] -= ay_period[ay][3];
-                  // progress rng
-                  ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
-                  ay_noise_rng[ay] >>= 1;
-                }
-        }
-        for(char c = 0; c < 3; c++) {
-                // a channel is on if period != 0, vol != 0 and tone bit == 0
-                if(ay_period[ay][c] && ay_volume[ay][c] && ay_enable[ay][c]) {
-                  short bit = 1;
-                  if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1 : 0;  // tone
-                  if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1 : 0;     // noise
-
-                  if(bit == 0) bit = -1;
-                  value += AY_VOL * bit * ay_volume[ay][c];
-                  audio_cnt[ay][c] += AY_INC; // for 24 khz
-                  if(audio_cnt[ay][c] > ay_period[ay][c]) {
-                    audio_cnt[ay][c] -= ay_period[ay][c];
-                    audio_toggle[ay][c] = -audio_toggle[ay][c];
-                  }
-                }
-        }
-      }
-    }
-    else if (machineType == MCH_BOMBJACK) {
-      for(char ay = 0; ay < AY; ay++) {
+    for(char ay = 0; ay < AY; ay++) {
         // --- LOGICA INVILUPPO: Esegui un passo di emulazione ---
         if (!ay_envelope_holding[ay] && ay_envelope_period[ay] > 0) {
           ay_envelope_counter[ay] += AY_INC;
@@ -301,16 +287,16 @@ void Audio::ay_render_buffer(void) {
           audio_cnt[ay][3] += AY_INC;
           if(audio_cnt[ay][3] > ay_period[ay][3]) {
             audio_cnt[ay][3] -= ay_period[ay][3];
-            // --- CORREZIONE LFSR RUMORE (Standard AY-3-8910 17-bit LFSR) ---
-            uint32_t b = (((ay_noise_rng[ay] >> 0) ^ (ay_noise_rng[ay] >> 3)) & 1);
-            ay_noise_rng[ay] = (ay_noise_rng[ay] >> 1) | (b << 16);
+            // progress rng
+            ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
+            ay_noise_rng[ay] >>= 1;
           }
         }
 
         // Elabora i 3 canali di tono e li mixa con il rumore
         for(char c = 0; c < 3; c++) {
-          // Controlla se il canale è abilitato nel mixer (R7) e ha un periodo valido
-          if(ay_period[ay][c] && ay_enable[ay][c]) {
+          // For a tone to be heard, the corresponding channel must have its volume set, and the tone must be enabled in the Mixer R7
+          if((ay_period[ay][c] || ay_envelope[ay][c]) && ay_volume[ay][c] && ay_enable[ay][c]) {
             // --- LOGICA INVILUPPO: Scegli il volume corretto ---
             int current_channel_volume = 0;
             if (ay_volume[ay][c] & 0x10) { // Se il bit 4 del registro volume è 1, usa l'inviluppo
@@ -340,8 +326,6 @@ void Audio::ay_render_buffer(void) {
           }
         }
       }
-      value = value / 3;
-    }
     valueToBuffer(i, value);
   }
 }
@@ -401,8 +385,8 @@ void Audio::sn76489_render_buffer(void) {
   const int sn_inc = 11;  // SN_CLOCK / SAMPLE_RATE
 
   // Volumi con hold
-  int vol[2][4];
-  for (int chip = 0; chip < 2; chip++) {
+  int vol[NUM_SN_CHIPS][4];
+  for (int chip = 0; chip < NUM_SN_CHIPS; chip++) {
     for (int c = 0; c < 4; c++) {
       if (currentMachine->sn_hold[chip][c] > 0) {
         vol[chip][c] = currentMachine->sn_min_volume[chip][c];
@@ -420,7 +404,7 @@ void Audio::sn76489_render_buffer(void) {
   for (int i = 0; i < 64; i++) {
     short sample = 0;
 
-    for (int chip = 0; chip < 2; chip++) {
+    for (int chip = 0; chip < NUM_SN_CHIPS; chip++) {
       for (int c = 0; c < 4; c++) {
         int period = currentMachine->sn_period[chip][c];
 

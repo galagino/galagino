@@ -2,7 +2,6 @@
 #define GYRUSS_H
 
 #include "../machineBase.h"
-#include "../../cpus/m6809/m6809.h"
 #include "gyruss_rom_main.h"
 #include "gyruss_rom_sub.h"
 #include "gyruss_rom_audio.h"
@@ -29,7 +28,6 @@ public:
     gyruss() { }
     ~gyruss() { }
 
-    void init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) override;
     void start() override;
     void reset() override;
 
@@ -44,9 +42,9 @@ public:
     unsigned char opZ80(unsigned short Addr) override;
     unsigned char inZ80(unsigned short Port) override;
 
-    uint8_t m6809_read(m6809_state *s, uint16_t addr) override;
-    uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr) override;
+    unsigned char m6809_read(m6809_state *s, uint16_t addr) override;
     void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) override;
+    unsigned char  m6809_read_opcode(m6809_state *s, uint16_t addr) override;
 
     void run_frame(void) override;
     void prepare_frame(void) override;

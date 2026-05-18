@@ -17,4 +17,7 @@
 // Default: 0x02|0x00|0x08|0x20|0x40|0x00 = 0x6A (5 lives)
 #define TUTANKHM_DSW2  0x6A
 
+#define TUTANKHM_DSW2_DEMO_SOUND_ON  0x00
+#define TUTANKHM_DSW2_DEMO_SOUND_OFF 0x80
+
 #endif

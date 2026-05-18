@@ -1,224 +1,181 @@
 #include "tutankhm.h"
-#include <string.h>
-
-// ============================================================
-// Init / Reset
-// ============================================================
-
-void tutankhm::init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) {
-    machineBase::init(input, framebuffer, spritebuffer, memorybuffer);
-
-    // Allocate 32KB video RAM from PSRAM
-    if (!videoram) {
-        // psram is slow
-        // videoram = (uint8_t*)ps_malloc(32768);
-        if (!videoram) {
-            videoram = (uint8_t*)malloc(32768);
-        }
-    }
-}
 
 void tutankhm::reset() {
-    memset(memory, 0, 2064);
-    memset(soundregs, 0, sizeof(soundregs));
-    current_cpu = 0;
-    game_started = 0;
+  machineBase::reset();
+  m6809_reset(&main_cpu);
 
-    // Reset sound Z80
-    ResetZ80(&cpu[0]);
-
-    // Clear video RAM
-    if (videoram) memset(videoram, 0, 32768);
-
-    // Clear palette cache
-    for (int i = 0; i < 16; i++)
-        palette_rgb565[i] = 0;
-
-    // Reset control registers
-    irq_enable = 0;
-    irq_toggle = 0;
-    soundlatch = 0;
-    sound_mute = 0;
-    bank_select = 0;
-    scroll_reg = 0;
-    extra_hold_start = 0;
-    extra_flash_active = false;
-    shot_timer = 0;
-    last_fire_state = false;
-
-    // Reset sound state
-    memset(snd_ram, 0, sizeof(snd_ram));
-    snd_irq_pending = 0;
-    snd_irq_last = 0;
-    memset(ay_addr, 0, sizeof(ay_addr));
-    memset(ay_regs, 0, sizeof(ay_regs));
-    snd_icnt = 0;
-
-    // Reset M6809 (reads reset vector from 0xFFFE → 0xA000)
-    m6809_reset(&main_cpu);
+  if(videoram) {
+    free(videoram);
+    videoram = nullptr;
+  }
 }
 
-// ============================================================
-// M6809 Main CPU memory map (from MAME tutankhm.cpp)
-// ============================================================
+void tutankhm::start() {
+  // Allocate 32KB video RAM from PSRAM
+  if (!videoram) {
+    videoram = (uint8_t*)ps_malloc(32768);
+    if (!videoram)
+      videoram = (uint8_t*)malloc(32768);
 
-uint8_t tutankhm::m6809_read(m6809_state *s, uint16_t addr) {
-    // Video RAM 0x0000-0x7FFF (32KB bitmap)
-    if (addr < 0x8000)
-        return videoram[addr];
+    memset(videoram, 0, 32768);
+  }
 
-    // Palette RAM 0x8000-0x800F (mirror 0x00F0)
-    if (addr >= 0x8000 && addr <= 0x80FF)
-        return memory[TUT_PALETTE + (addr & 0x0F)];
-
-    // Scroll register 0x8100 (mirror 0x0F)
-    if ((addr & 0xFFF0) == 0x8100)
-        return scroll_reg;
-
-    // Watchdog 0x8120 (mirror 0x0F) - return 0xFF
-    if ((addr & 0xFFF0) == 0x8120)
-        return 0xFF;
-
-    // DSW2 0x8160 (mirror 0x0F)
-    if ((addr & 0xFFF0) == 0x8160)
-        return TUTANKHM_DSW2 | (input->demoSoundsOff() ? 0x80 : 0x00);
-
-    // IN0 0x8180 (mirror 0x0F) — Coin/Start/Service
-    if ((addr & 0xFFF0) == 0x8180) {
-        unsigned char keymask = input->buttons_get();
-        unsigned char retval = 0xFF;
-        if (keymask & BUTTON_COIN)   retval &= ~0x01;  // Coin 1
-        if (keymask & BUTTON_START)  retval &= ~0x08;  // Start 1
-        return retval;
-    }
-
-    // IN1 0x81A0 (mirror 0x0F) — P1 controls
-    if ((addr & 0xFFF0) == 0x81A0) {
-        unsigned char keymask = input->buttons_get();
-        unsigned char retval = 0xFF;
-        if (keymask & BUTTON_LEFT)   retval &= ~0x01;  // Move Left
-        if (keymask & BUTTON_RIGHT)  retval &= ~0x02;  // Move Right
-        if (keymask & BUTTON_UP)     retval &= ~0x04;  // Move Up
-        if (keymask & BUTTON_DOWN)   retval &= ~0x08;  // Move Down
-        if (keymask & BUTTON_FIRE)  retval &= ~0x10;  // Shoot Left
-        if (keymask & BUTTON_EXTRA) retval &= ~0x20;  // Shoot Right
-        // Flash Bomb: Y on BT gamepad, or EXTRA held 2s on PCF
-        if (input->button_y_pressed()) {
-            retval &= ~0x40;
-        } else if (keymask & BUTTON_EXTRA) {
-            unsigned long now = millis();
-            if (!extra_hold_start) extra_hold_start = now;
-            if (now - extra_hold_start >= 2000) extra_flash_active = true;
-        } else {
-            extra_hold_start = 0;
-            extra_flash_active = false;
-        }
-        if (extra_flash_active) retval &= ~0x40;
-        return retval;
-    }
-
-    // IN2 0x81C0 (mirror 0x0F) — P2 controls (idle)
-    if ((addr & 0xFFF0) == 0x81C0)
-        return 0xFF;
-
-    // DSW1 0x81E0 (mirror 0x0F)
-    if ((addr & 0xFFF0) == 0x81E0)
-        return TUTANKHM_DSW1;
-
-    // Work RAM 0x8800-0x8FFF (2KB)
-    if (addr >= 0x8800 && addr <= 0x8FFF)
-        return memory[TUT_WORKRAM + (addr - 0x8800)];
-
-    // Banked ROM 0x9000-0x9FFF (4KB, selected by write to 0x8300)
-    if (addr >= 0x9000 && addr <= 0x9FFF)
-        return tutankhm_bank_rom[bank_select * 0x1000 + (addr - 0x9000)];
-
-    // Fixed ROM 0xA000-0xFFFF (24KB: m1+m2+3j+m4+m5+j6)
-    if (addr >= 0xA000)
-        return tutankhm_rom[addr - 0xA000];
-
-    return 0xFF;
+  memset(palette_rgb565, 0, sizeof(palette_rgb565) / 2);
+  memset(snd_ram, 0, sizeof(snd_ram));
+  irq_toggle = 0;
 }
 
-void tutankhm::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
-    // Video RAM 0x0000-0x7FFF (32KB bitmap)
-    if (addr < 0x8000) {
-        if (!game_started) game_started = 1;
-        videoram[addr] = val;
-        return;
-    }
-
-    // Palette RAM 0x8000-0x800F (mirror 0x00F0)
-    if (addr >= 0x8000 && addr <= 0x80FF) {
-        unsigned char idx = addr & 0x0F;
-        memory[TUT_PALETTE + idx] = val;
-        palette_rgb565[idx] = palette_to_rgb565(val);
-        return;
-    }
-
-    // Scroll register 0x8100 (mirror 0x0F)
-    if ((addr & 0xFFF0) == 0x8100) {
-        scroll_reg = val;
-        return;
-    }
-
-    // LS259 latch 0x8200-0x8207 (mirror 0x00F8)
-    // Q0=IRQ enable, Q1=payout(nop), Q2=coin2, Q3=coin1,
-    // Q4=stars, Q5=audio mute, Q6=flipX, Q7=flipY
-    if (addr >= 0x8200 && addr <= 0x82FF) {
-        unsigned char bit = (addr & 0x07);
-        unsigned char state = val & 1;
-        switch (bit) {
-            case 0:  // IRQ enable
-                irq_enable = state;
-                if (!irq_enable)
-                    main_cpu.irq_pending = 0;
-                break;
-            case 1: break;  // Payout (not used)
-            case 2: break;  // Coin counter 2
-            case 3: break;  // Coin counter 1
-            case 4: break;  // Stars enable
-            case 5: sound_mute = state; break;  // Audio mute
-            case 6: break;  // Flip screen X (ignored)
-            case 7: break;  // Flip screen Y (ignored)
-        }
-        return;
-    }
-
-    // Bank select 0x8300 (mirror 0x00FF)
-    if ((addr & 0xFF00) == 0x8300) {
-        bank_select = val & 0x0F;
-        return;
-    }
-
-    // Sound trigger 0x8600 (mirror 0x00FF) — pulse IRQ to sound CPU
-    if ((addr & 0xFF00) == 0x8600) {
-        snd_irq_pending = 1;
-        return;
-    }
-
-    // Sound data latch 0x8700 (mirror 0x00FF)
-    if ((addr & 0xFF00) == 0x8700) {
-        soundlatch = val;
-        return;
-    }
-
-    // Work RAM 0x8800-0x8FFF
-    if (addr >= 0x8800 && addr <= 0x8FFF) {
-        memory[TUT_WORKRAM + (addr - 0x8800)] = val;
-        return;
-    }
-
-    // Watchdog 0x9800 and other writes — ignored
-}
-
-uint8_t tutankhm::m6809_read_opcode(m6809_state *s, uint16_t addr) {
+unsigned char tutankhm::m6809_read_opcode(m6809_state *s, uint16_t addr) {
   return m6809_read(s, addr);
 }
 
-// ============================================================
-// Palette conversion: RRRGGGBB → RGB565 byte-swapped
-// ============================================================
+unsigned char tutankhm::m6809_read(m6809_state *s, uint16_t addr) {
+  // Video RAM 0x0000-0x7FFF (32KB bitmap)
+  if (addr < 0x8000)
+    return videoram[addr];
+
+  // Palette RAM 0x8000-0x800F (mirror 0x00F0)
+  if (addr >= 0x8000 && addr <= 0x80FF)
+    return memory[TUT_PALETTE + (addr & 0x0F)];
+
+  // Scroll register 0x8100 (mirror 0x0F)
+  if ((addr & 0xFFF0) == 0x8100)
+    return scroll_reg;
+
+  // Watchdog 0x8120 (mirror 0x0F) - return 0xFF
+  if ((addr & 0xFFF0) == 0x8120)
+    return 0xFF;
+
+  // DSW2 0x8160 (mirror 0x0F)
+  if ((addr & 0xFFF0) == 0x8160)
+    return TUTANKHM_DSW2 | (input->demoSoundsOff() ? TUTANKHM_DSW2_DEMO_SOUND_OFF : TUTANKHM_DSW2_DEMO_SOUND_ON);
+
+  // IN0 0x8180 (mirror 0x0F) — Coin/Start/Service
+  if ((addr & 0xFFF0) == 0x8180) {
+    unsigned char keymask = input->buttons_get();
+    unsigned char retval = 0xFF;
+    if (keymask & BUTTON_COIN)   retval &= ~0x01;  // Coin 1
+    if (keymask & BUTTON_START)  retval &= ~0x08;  // Start 1
+      return retval;
+  }
+
+  // IN1 0x81A0 (mirror 0x0F) — P1 controls
+  if ((addr & 0xFFF0) == 0x81A0) {
+    unsigned char keymask = input->buttons_get();
+    unsigned char retval = 0xFF;
+    if (keymask & BUTTON_LEFT)   retval &= ~0x01;  // Move Left
+    if (keymask & BUTTON_RIGHT)  retval &= ~0x02;  // Move Right
+    if (keymask & BUTTON_UP)     retval &= ~0x04;  // Move Up
+    if (keymask & BUTTON_DOWN)   retval &= ~0x08;  // Move Down
+    if (keymask & BUTTON_FIRE)   retval &= ~0x10;  // Shoot Left
+    if (keymask & BUTTON_FIRE)   retval &= ~0x20;  // Shoot Right
+    if (keymask & BUTTON_EXTRA)  retval &= ~0x40;  // Flash Bomb
+      return retval;
+  }
+
+  // IN2 0x81C0 (mirror 0x0F) — P2 controls (idle)
+  if ((addr & 0xFFF0) == 0x81C0)
+    return 0xFF;
+
+  // DSW1 0x81E0 (mirror 0x0F)
+  if ((addr & 0xFFF0) == 0x81E0)
+    return TUTANKHM_DSW1;
+
+  // Work RAM 0x8800-0x8FFF (2KB)
+  if (addr >= 0x8800 && addr <= 0x8FFF)
+    return memory[TUT_WORKRAM + (addr - 0x8800)];
+
+  // Banked ROM 0x9000-0x9FFF (4KB, selected by write to 0x8300)
+  if (addr >= 0x9000 && addr <= 0x9FFF)
+    return tutankhm_bank_rom[bank_select * 0x1000 + (addr - 0x9000)];
+
+  // Fixed ROM 0xA000-0xFFFF (24KB: m1+m2+3j+m4+m5+j6)
+  if (addr >= 0xA000)
+    return tutankhm_rom[addr - 0xA000];
+
+  return 0xFF;
+}
+
+void tutankhm::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
+  // Video RAM 0x0000-0x7FFF (32KB bitmap)
+  if (addr < 0x8000) {
+    if (!game_started) game_started = 1;
+    videoram[addr] = val;
+    return;
+  }
+
+  // Palette RAM 0x8000-0x800F (mirror 0x00F0)
+  if (addr >= 0x8000 && addr <= 0x80FF) {
+    unsigned char idx = addr & 0x0F;
+    memory[TUT_PALETTE + idx] = val;
+    palette_rgb565[idx] = palette_to_rgb565(val);
+    return;
+  }
+
+  // Scroll register 0x8100 (mirror 0x0F)
+  if ((addr & 0xFFF0) == 0x8100) {
+    scroll_reg = val;
+    return;
+  }
+
+  // LS259 latch 0x8200-0x8207 (mirror 0x00F8)
+  // Q0=IRQ enable, Q1=payout(nop), Q2=coin2, Q3=coin1,
+  // Q4=stars, Q5=audio mute, Q6=flipX, Q7=flipY
+  if (addr >= 0x8200 && addr <= 0x82FF) {
+    unsigned char bit = (addr & 0x07);
+    unsigned char state = val & 1;
+    switch (bit) {
+      case 0: irq_enable = state; break;  // IRQ enable
+      case 1: break;  // Payout (not used)
+      case 2: break;  // Coin counter 2
+      case 3: break;  // Coin counter 1
+      case 4: break;  // Stars enable
+      case 5: break;  // Audio mute
+      case 6: break;  // Flip screen X (ignored)
+      case 7: break;  // Flip screen Y (ignored)
+    }
+    return;
+  }
+
+  // Bank select 0x8300 (mirror 0x00FF)
+  if ((addr & 0xFF00) == 0x8300) {
+    bank_select = val & 0x0F;
+    return;
+  }
+
+  // Sound trigger 0x8600 (mirror 0x00FF) — pulse IRQ to sound CPU
+  if ((addr & 0xFF00) == 0x8600) {
+    unsigned char bit_val = val & 1;
+    if(bit_val && !snd_irq_last) snd_irq_pending = 1;
+    snd_irq_last = bit_val;
+    return;
+  }
+
+  // Sound data latch 0x8700 (mirror 0x00FF)
+  if ((addr & 0xFF00) == 0x8700) {
+    // Some sounds are multiple updated during one vblank. Not possible with gagaino. So, take other sounds...
+
+    if (val == 71) // Game Over
+      val = 3;
+    else if (val == 74) // Appear //2
+      val = 8;
+    else if (val == 77) // Die //13
+      val = 4;
+    else if (val == 76) // Flash //5
+      val = 2;
+
+    soundlatch = val;
+    return;
+  }
+
+  // Work RAM 0x8800-0x8FFF
+  if (addr >= 0x8800 && addr <= 0x8FFF) {
+    memory[TUT_WORKRAM + (addr - 0x8800)] = val;
+    return;
+  }
+
+  // Watchdog 0x9800 and other writes — ignored
+}
 
 unsigned short tutankhm::palette_to_rgb565(uint8_t val) {
     static const uint8_t pal3bit[8] = { 0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
@@ -237,130 +194,112 @@ unsigned short tutankhm::palette_to_rgb565(uint8_t val) {
     return ((rgb565 >> 8) & 0xFF) | ((rgb565 & 0xFF) << 8);
 }
 
-// ============================================================
-// Sound CPU (Z80) — timeplt_audio clone
-// ============================================================
-
 unsigned char tutankhm::opZ80(unsigned short Addr) {
-    if (Addr < 0x2000)
-        return tutankhm_snd_rom[Addr];
-    return 0xFF;
+  if (Addr < 0x2000)
+    return tutankhm_snd_rom[Addr];
+
+  return 0xFF;
 }
 
 unsigned char tutankhm::rdZ80(unsigned short Addr) {
-    if (Addr < 0x2000)
-        return tutankhm_snd_rom[Addr];
-    if (Addr < 0x3000)
-        return 0xFF;
+  if (Addr < 0x2000)
+    return tutankhm_snd_rom[Addr];
 
-    // RAM 0x3000-0x3FFF (1KB mirrored)
-    if (Addr >= 0x3000 && Addr <= 0x3FFF)
-        return snd_ram[Addr & 0x3FF];
+  // RAM 0x3000-0x3FFF (1KB mirrored)
+  if (Addr >= 0x3000 && Addr <= 0x33FF)
+    return snd_ram[Addr & 0x3FF];
 
-    // AY#1 data read (0x4000)
-    if ((Addr & 0xF000) == 0x4000) {
-        unsigned char reg = ay_addr[0] & 0x0F;
-        if (reg == 14) return soundlatch;
-        if (reg == 15) {
-            static const unsigned char timeplt_timer[10] = {
-                0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
-            };
-            return timeplt_timer[(snd_icnt / 114) % 10];
-        }
-        return ay_regs[0][reg];
+  // AY#1 data read (0x4000)
+  if ((Addr & 0xF000) == 0x4000) {
+    unsigned char reg = ay_addr[0] & 0x0F;
+    if (reg == 14) {
+      return soundlatch;
     }
-
-    // AY#2 data read (0x6000)
-    if ((Addr & 0xF000) == 0x6000) {
-        unsigned char reg = ay_addr[1] & 0x0F;
-        return ay_regs[1][reg];
+    if (reg == 15) {
+      static const unsigned char timer[10] = {
+        0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
+      };
+      return timer[(snd_icnt / 24) % 10];
     }
+    return ay_regs[0][reg];
+  }
 
-    return 0xFF;
+  // AY#2 data read (0x6000)
+  if ((Addr & 0xF000) == 0x6000) {
+    unsigned char reg = ay_addr[1] & 0x0F;
+    return ay_regs[1][reg];
+  }
+
+  return 0x00;
 }
 
 void tutankhm::wrZ80(unsigned short Addr, unsigned char Value) {
-    // RAM 0x3000-0x3FFF
-    if (Addr >= 0x3000 && Addr <= 0x3FFF) {
-        snd_ram[Addr & 0x3FF] = Value;
-        return;
-    }
+  // RAM 0x3000-0x3FFF
+  if (Addr >= 0x3000 && Addr <= 0x33FF) {
+    snd_ram[Addr & 0x3FF] = Value;
+    return;
+  }
 
-    // AY#1 data write (0x4000)
-    if ((Addr & 0xF000) == 0x4000) {
-        unsigned char reg = ay_addr[0] & 0x0F;
-        ay_regs[0][reg] = Value;
-        if (reg < 14) soundregs[reg] = Value;
-        return;
-    }
+  // AY#1 data write (0x4000). Some sound is multiple updated between 2 vblanks. Not possible with galagino...
+  if ((Addr & 0xF000) == 0x4000) {
+    unsigned char reg = ay_addr[0] & 0x0F;
+    ay_regs[0][reg] = Value;
+    if (reg < 14) soundregs[reg] = Value;
+    return;
+  }
 
-    // AY#1 address write (0x5000)
-    if ((Addr & 0xF000) == 0x5000) {
-        ay_addr[0] = Value & 0x0F;
-        return;
-    }
+  // AY#1 address write (0x5000)
+  if ((Addr & 0xF000) == 0x5000) {
+    ay_addr[0] = Value & 0x0F;
+    return;
+  }
 
-    // AY#2 data write (0x6000)
-    if ((Addr & 0xF000) == 0x6000) {
-        unsigned char reg = ay_addr[1] & 0x0F;
-        ay_regs[1][reg] = Value;
-        if (reg < 14) soundregs[16 + reg] = Value;
-        return;
-    }
+  // AY#2 data write (0x6000). Some sound is multiple updated between 2 vblanks. Not possible with galagino...
+  if ((Addr & 0xF000) == 0x6000) {
+    unsigned char reg = ay_addr[1] & 0x0F;
+    ay_regs[1][reg] = Value;
+    if (reg < 14) soundregs[16 + reg] = Value;
+    return;
+  }
 
-    // AY#2 address write (0x7000)
-    if ((Addr & 0xF000) == 0x7000) {
-        ay_addr[1] = Value & 0x0F;
-        return;
-    }
+  // AY#2 address write (0x7000)
+  if ((Addr & 0xF000) == 0x7000) {
+    ay_addr[1] = Value & 0x0F;
+    return;
+  }
+
+  // Filter
+  if (Addr >= 0x8000) {
+    return;
+  }
 }
-
-void tutankhm::outZ80(unsigned short Port, unsigned char Value) {
-}
-
-unsigned char tutankhm::inZ80(unsigned short Port) {
-    return 0xFF;
-}
-
-// ============================================================
-// Frame execution
-// ============================================================
 
 void tutankhm::run_frame(void) {
-    // Main CPU: M6809E @ 1.5 MHz = ~25000 cycles/frame at 60Hz
-    // Sound CPU: Z80 @ 1.789 MHz
-    for (int i = 0; i < TUT_STEPS_PER_FRAME; i++) {
-        // Main M6809: ~4 cycles per step
-        m6809_step(&main_cpu, 1);
-        m6809_step(&main_cpu, 1);
-        m6809_step(&main_cpu, 1);
-        m6809_step(&main_cpu, 1);
+  // Main CPU: M6809E @ 1.5 MHz = ~25000 cycles/frame at 60Hz
+  // Sound CPU: Z80 @ 1.789 MHz
+  for (int i = 0; i < INST_PER_FRAME / 2; i++) {
+    m6809_step(&main_cpu, 8);
 
-        // Sound Z80: 5 steps per iteration (1.789/1.5 MHz ratio ≈ 1.19)
-        current_cpu = 0;
-        StepZ80(&cpu[0]); snd_icnt++;
-        StepZ80(&cpu[0]); snd_icnt++;
-        StepZ80(&cpu[0]); snd_icnt++;
-        StepZ80(&cpu[0]); snd_icnt++;
-        StepZ80(&cpu[0]); snd_icnt++;
+    StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
+    snd_icnt += 2;
 
-        // Deliver sound IRQ when pending
-        if (snd_irq_pending && (cpu[0].IFF & IFF_1)) {
-            IntZ80(&cpu[0], INT_RST38);
-            snd_irq_pending = 0;
-        }
+    // "latch" IRQ: only deliver when sound CPU has interrupts enabled (EI)
+    // Same pattern as Frogger — prevents lost IRQs during DI periods
+    if (snd_irq_pending && (cpu[0].IFF & IFF_1)) {
+      IntZ80(&cpu[0], INT_RST38);
+      snd_irq_pending = 0;
     }
+  }
 
-    // VBlank IRQ: fires every OTHER frame (toggle flip-flop, per MAME)
-    irq_toggle ^= 1;
-    if (irq_toggle && irq_enable) {
-        m6809_irq(&main_cpu);
-    }
+  // VBlank IRQ: fires every OTHER frame (toggle flip-flop, per MAME)
+  irq_toggle ^= 1;
+  if (irq_toggle && irq_enable) {
+    m6809_irq(&main_cpu);
+  }
 }
 
 void tutankhm::prepare_frame(void) {
-    // No sprite extraction needed — Tutankham is purely bitmap-based
-    active_sprites = 0;
+  // No sprite extraction needed — Tutankham is purely bitmap-based
 }
 
 // ============================================================
@@ -397,7 +336,8 @@ void tutankhm::render_row(short row) {
                 int bmp_y = (sx + y_base) & 0xFF;
                 dst[sx] = palette_rgb565[vram_col[bmp_y << 7] >> 4];
             }
-        } else {
+        }
+        else {
             // Low nibble path
             for (int sx = 0; sx < 224; sx++) {
                 int bmp_y = (sx + y_base) & 0xFF;

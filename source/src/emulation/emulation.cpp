@@ -58,7 +58,7 @@ IRAM_ATTR void emulation_task(void *p) {
   static unsigned long time = millis();
   
   if (counter % 10 == 0) {
-    // good time: 160ms...170ms
+    // good time: 160...170ms
     unsigned long now = millis();
     printf("10 frames: %dms\n",  now - time);
     time = now;
@@ -118,7 +118,7 @@ unsigned char i8048_xdm_read(i8048_state_S *state, unsigned char addr) {
 void i8048_xdm_write(i8048_state_S *state, unsigned char addr, unsigned char data) {
 }
 
-uint8_t m6809_read(m6809_state *s, uint16_t addr) {
+unsigned char m6809_read(m6809_state *s, uint16_t addr) {
   return currentMachine->m6809_read(s, addr);
 }
 
@@ -126,8 +126,7 @@ void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
   currentMachine->m6809_write(s, addr, val);
 }
 
-/* Separate opcode read for Konami-1 decryption support */
-uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr) {
+unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr) {
   return currentMachine->m6809_read_opcode(s, addr);
 }
 

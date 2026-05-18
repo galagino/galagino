@@ -1,11 +1,10 @@
 #include "gyruss.h"
-#include "esp_task_wdt.h"
 
 // ============================================================
 // M6809 sub-CPU memory map
 // ============================================================
 
-uint8_t gyruss::m6809_read(m6809_state *s, uint16_t addr) {
+unsigned char gyruss::m6809_read(m6809_state *s, uint16_t addr) {
   if (addr == 0x0000) {
     multiplexUsed = 1;
     return scanline_counter;
@@ -39,7 +38,7 @@ void gyruss::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
   }
 }
 
-uint8_t gyruss::m6809_read_opcode(m6809_state *s, uint16_t addr) {
+unsigned char gyruss::m6809_read_opcode(m6809_state *s, uint16_t addr) {
   // Konami-1 decrypted opcodes at 0xE000-0xFFFF only (no mirror)
   if (addr >= 0xE000) {
     return gyruss_rom_sub_decrypt[addr - 0xE000];
@@ -103,16 +102,12 @@ void gyruss::run_audio_batch(int steps) {
       sound_irq_pending = 0;
     }
   }
-  audio_cycle_approx += steps * 7;
+  audio_cycle_approx += steps * 8;
 }
 
 // ============================================================
 // Init and Reset
 // ============================================================
-
-void gyruss::init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) {
-  machineBase::init(input, framebuffer, spritebuffer, memorybuffer);
-}
 
 void gyruss::start() {
   start_audio_task();

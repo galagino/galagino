@@ -2,7 +2,6 @@
 #define TUTANKHM_H
 
 #include "../machineBase.h"
-#include "../../cpus/m6809/m6809.h"
 #include "tutankhm_rom.h"
 #include "tutankhm_bank_rom.h"
 #include "tutankhm_snd_rom.h"
@@ -24,32 +23,24 @@
 #define TUT_WORKRAM   0x0000
 #define TUT_PALETTE   0x0800
 
-// M6809 runs at ~1.5 MHz, ~25000 cycles/frame at 60Hz
-// Using step count similar to other games
-#define TUT_STEPS_PER_FRAME  600
-
 class tutankhm : public machineBase
 {
 public:
-    tutankhm() { videoram = nullptr; }
-    ~tutankhm() { if(videoram) free(videoram); }
+    tutankhm() { }
+    ~tutankhm() { }
 
-    void init(Input *input, unsigned short *framebuffer, sprite_S *spritebuffer, unsigned char *memorybuffer) override;
+    void start() override;
     void reset() override;
 
     signed char machineType() override { return MCH_TUTANKHM; }
 
-    // Tutankham doesn't use Z80 for main CPU, but the base class has rdZ80/wrZ80
-    // These are used by the sound CPU (Z80)
     unsigned char rdZ80(unsigned short Addr) override;
     void wrZ80(unsigned short Addr, unsigned char Value) override;
-    void outZ80(unsigned short Port, unsigned char Value) override;
     unsigned char opZ80(unsigned short Addr) override;
-    unsigned char inZ80(unsigned short Port) override;
 
-    uint8_t m6809_read(m6809_state *s, uint16_t addr) override;
-    uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr) override;
+    unsigned char m6809_read(m6809_state *s, uint16_t addr) override;
     void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) override;
+    unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr) override;
 
     void run_frame(void) override;
     void prepare_frame(void) override;
@@ -62,11 +53,14 @@ public:
 #endif
 
 private:
+    // Helper: convert palette byte to RGB565 (byte-swapped for SPI)
+    unsigned short palette_to_rgb565(uint8_t val);
+
     // M6809 main CPU
     m6809_state main_cpu;
 
     // Video RAM (32KB bitmap, allocated from PSRAM)
-    uint8_t *videoram;
+    uint8_t *videoram = nullptr;
 
     // Palette cache (16 entries, pre-computed RGB565 byte-swapped)
     unsigned short palette_rgb565[16];
@@ -76,29 +70,17 @@ private:
     unsigned char irq_toggle;   // fires IRQ every other frame
     unsigned char scroll_reg;   // scroll register at 0x8100
     unsigned char soundlatch;
-    unsigned char sound_mute;
 
     // Sound CPU state (timeplt_audio clone)
     unsigned char snd_ram[1024];
     unsigned char snd_irq_pending;
-    unsigned char snd_irq_last;
     unsigned char ay_addr[2];
     unsigned char ay_regs[2][16];
     unsigned long snd_icnt;
+    unsigned char snd_irq_last;
 
     // ROM bank select
     unsigned char bank_select;
-
-    // Flash bomb: EXTRA held 2 seconds on PCF triggers flash
-    unsigned long extra_hold_start;
-    bool extra_flash_active;
-
-    // Gunshot sound effect
-    unsigned char shot_timer;       // frames remaining for shot sound
-    bool last_fire_state;
-
-    // Helper: convert palette byte to RGB565 (byte-swapped for SPI)
-    unsigned short palette_to_rgb565(uint8_t val);
 
 #ifdef LED_PIN
     const CRGB menu_leds[7] = { LED_YELLOW, LED_WHITE, LED_YELLOW, LED_WHITE, LED_YELLOW, LED_WHITE, LED_YELLOW };

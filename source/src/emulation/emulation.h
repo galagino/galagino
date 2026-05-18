@@ -32,9 +32,8 @@ extern "C" unsigned char i8048_rom_read(i8048_state_S *state, unsigned short add
 #endif
 
 #ifdef __cplusplus
-extern "C" uint8_t m6809_read(m6809_state *s, uint16_t addr);
+extern "C" unsigned char m6809_read(m6809_state *s, uint16_t addr);
 extern "C" void m6809_write(m6809_state *s, uint16_t addr, uint8_t val);
-extern "C" uint8_t m6809_read_opcode(m6809_state *s, uint16_t addr);
+extern "C" unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr);
 #endif
-
 #endif
