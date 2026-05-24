@@ -98,17 +98,21 @@ def convert_colors(prom):
         green = ((bits >> 3) & 0x07)
         blue  = ((bits >> 6) & 0x03)
 
-        #        0b000  0  0b001  1  0b010  2  0b011  3  0b100  4  0b101  5  0b110  6  0b111  7
-        mapR = [ 0b000000, 0b000011, 0b000100, 0b001100, 0b010000, 0b010011, 0b011100, 0b011111 ]
-        mapG = [ 0b000000, 0b000111, 0b010000, 0b010111, 0b100000, 0b100111, 0b110000, 0b111111 ]
-        mapB = [ 0b000000, 0b010000, 0b011000, 0b011111,                                        ]
+        # pallete 0 - 00..03
+        # pallete 1 - 04..07
+        # pallete 2 - 08..11
+        # pallete 3 - 12..15
+        # pallete 4 - 16..19
+        # pallete 5 - 20..23
+        # pallete 6 - 24..27
+        # pallete 7 - 28..31
+        # patch pallete #5 - fixes ship III colors and credits line
+        if i == 20: val = 0b0000000000000000 # transparent
+        if i == 21: val = 0b1101011010000000 # yellow  - III 
+        if i == 22: val = 0b0000011100000000 # green   - outline 
+        if i == 23: val = 0b0110101101011110 # magenta - body
+        #                   rrrrrggggggbbbbb
 
-        val2 = (mapR[red] << 11) | (mapG[green] << 5) | (mapB[blue])
-
-        #print(f"{red:03b} {green:03b} {blue:02b} | {mapR[red]:05b} {mapG[green]:06b} {mapB[blue]:05b} | {val:04x}  {val2:04x}")
-        #print(f"{bits:08b} {val2:016b} {val:04x}  {val2:04x}")
-        # Byte-swap for ESP32 SPI display (matches Frogger/Pac-Man format)
-        # val = val2
         rgb565.append(((val & 0xFF) << 8) | ((val >> 8) & 0xFF))
     return rgb565
 

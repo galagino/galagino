@@ -197,6 +197,15 @@ void mooncresta::prepare_frame(void) {
   }
 }
 
+/*
+#define SPRITE_LO 0x013
+#define SPRITE_HI 0x014
+#define SPRITE_CC 0x05
+#define TILE_LO (SPRITE_LO * 4)
+#define TILE_HI (SPRITE_HI * 4 + 3)
+#define TILE_CC SPRITE_CC
+*/
+
 void mooncresta::blit_tile(short row, char col) {
   if((row < 2) || (row >= 34))
     return;
@@ -216,6 +225,13 @@ void mooncresta::blit_tile(short row, char col) {
   const unsigned short *tile = mooncresta_tilemap[ tile_code ];
 
   int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 0x1f) + 1] & 0x07;
+  /*
+  if (tile_code >= TILE_LO && tile_code <= TILE_HI) {
+     c=TILE_CC;
+     //printf("tile_code 0x%02x c 0x%02x\n", tile_code, c);
+  }
+  */
+
   const unsigned short *colors = mooncresta_colormap[c];
 
   unsigned short *ptr = frame_buffer + 8 * col;
@@ -258,6 +274,13 @@ void mooncresta::blit_tile_scroll(short row, signed char col, unsigned char scro
   }
   const unsigned short *tile = mooncresta_tilemap[ tile_code ];
   int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 0x1f) + 1] & 0x07;
+  /*
+  if (tile_code >= TILE_LO && tile_code <= TILE_HI) {
+     c=TILE_CC;
+     //printf("tile_code 0x%02x c 0x%02x\n", tile_code, c);
+  }
+  */
+
   const unsigned short *colors = mooncresta_colormap[c];
   unsigned short *ptr = frame_buffer + 8 * col + sub;
 
@@ -273,6 +296,13 @@ void mooncresta::blit_tile_scroll(short row, signed char col, unsigned char scro
 void mooncresta::blit_sprite(short row, unsigned char s) {
   const unsigned long *spr = mooncresta_spritemap[sprite[s].flags & 3][sprite[s].code];
   const unsigned short *colors = mooncresta_colormap[sprite[s].color];
+
+  /*
+  if (sprite[s].code >= SPRITE_LO && sprite[s].code <= SPRITE_HI) {
+    printf("sprite 0x%02x c 0x%02x\n", sprite[s].code, sprite[s].color);
+    colors = mooncresta_colormap[SPRITE_CC];
+  }
+  */
 
   unsigned long mask = 0xffffffff;
   if(sprite[s].x < 0)        mask <<= -2 * sprite[s].x;
