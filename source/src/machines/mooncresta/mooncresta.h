@@ -12,26 +12,45 @@
 
 // ============================================================
 // Moon Cresta (Nichibutsu 1980) memory map:
-//   Main CPU (Z80 @ 3.072 MHz):                     Galaxian ADDR
-//     0x0000-0x3fff: ROM (16KB: ...)                (was 0x0000)
-//     0x8000-0x83ff: Work   RAM (1KB)               (was 0x4000)
-//     0x9000-0x93ff: Video  RAM (1KB)               (was 0x5000)
-//     0x9800-0x98ff: Sprite RAM (1KB)               (was 0x5800)
-//     0xa000-0xa000: IN0                            (was 0x6000)
-//     0xa800-0xa800: IN1                            (was 0x6800)
-//     0xb000-0xb000: IN2                            (was 0x7000)
-//     0xb000-0xb000: irq_enable_w                   (was 0x7001)
-//     0xb004-0xb004: galaxian_stars_enable_w        (was 0x7004)
-//     0xb006-0xb006: galaxian_flip_screen_x_w       (was 0x7006)
-//     0xb007-0xb007: galaxian_flip_screen_y_w       (was 0x7007)
+//   Main CPU (Z80 @ 3.072 MHz):                       Galaxian ADDR
+//     0x0000-0x3fff: ROM (16KB: ...)                  (was 0x0000) 0000 0000 0000 0000 - 0011 1111 1111 1111
+//     0x8000-0x83ff: Work   RAM (1KB)  mirror(0x0400) (was 0x4000) 1000 0000 0000 0000 - 1000 0011 1111 1111
+//     0x9000-0x93ff: Video  RAM (1KB)  mirror(0x0400) (was 0x5000) 1001 0000 0000 0000 - 1001 0011 1111 1111
+//     0x9800-0x98ff: Sprite RAM (256B) mirror(0x0700) (was 0x5800) 1001 1000 0000 0000 - 1001 1000 1111 1111
+//     0xa000-0xa000: IN0                              (was 0x6000) 1010 0000 0000 0000 - 1010 0000 0000 0000
+//     0xa800-0xa800: IN1                              (was 0x6800) 
+//     0xb000-0xb000: IN2                              (was 0x7000)
+//     0xb000-0xb000: irq_enable_w                     (was 0x7001)
+//     0xb004-0xb004: galaxian_stars_enable_w          (was 0x7004)
+//     0xb006-0xb006: galaxian_flip_screen_x_w         (was 0x7006)
+//     0xb007-0xb007: galaxian_flip_screen_y_w         (was 0x7007)
 //     0xb800-0xb800: watchdog_timer_device::reset_r
+//
+//     0xa000-0xa002: galaxian_gfxbank_w mirror(0x07f8)     1010 0000 0000 0000 - 1010 0000 0000 0010
+//     0xa003-0xa003: coin_count_0_w     mirror(0x07f8)     1010 0000 0000 0011 - 1010 0000 0000 0011
+//     0xa004-0xa007: lfo_freq_w         mirror(0x07f8)     1010 0000 0000 0100 - 1010 0000 0000 0111
+//     0xa800-0xa807: sound_w            mirror(0x07f8)     1010 1000 0000 0000 - 1010 1000 0000 0111
+//     0xb000-0xb000: GalIrqFire         mirror(0x07f8)     1011 0000 0000 0000 - 1011 0000 0000 0000
+//     0xb004-0xb004: GalStarsEnable
+//     0xb006-0xb006: GalFlipScreenX
+//     0xb007-0xb007: GalFlipScreenY
+//     0xb800-0xb800: pitch_w            mirror(0x07ff)     1011 1000 0000 0000 - 1011 1000 0000 0000
+//
+//     0xa000-0xa000: bit 0 - gfx_bank_bit0
+//     0xa001-0xa001: bit 0 - gfx_bank_bit1
+//     0xa002-0xa002: bit 0 - gfx_bank_enable
+//
+//     mirror(0x0400) -> mask 0xfbff              0xf800 -> 1111 1000 0000 0000
+//     mirror(0x0700) -> mask 0xf8ff
+//     mirror(0x07f8) -> mask 0xf807
+//     mirror(0x07ff) -> mask 0xf800
 // ============================================================
 //
 
 // Memory layout in our buffer:
-// 0x0000-0x03ff - Work   RAM from 0x8000
-// 0x0400-0x07ff - Video  RAM from 0x9000
-// 0x0800-0x0bff - Sprite RAM from 0x9800
+// 0x0000-0x03ff - Work   RAM from 0x8000 (addr - MC_BASE_WORKRAM  + MC_OFF_WORKRAM)
+// 0x0400-0x07ff - Video  RAM from 0x9000 (addr - MC_BASE_VIDEORAM + MC_OFF_VIDEORAM)
+// 0x0800-0x0bff - Sprite RAM from 0x9800 (addr - MC_OFF_SPRITERAM + MC_OFF_SPRITERAM)
 
 #define MC_BASE_WORKRAM   0x8000 // was 0x4000
 #define MC_BASE_VIDEORAM  0x9000 // was 0x5000
@@ -86,6 +105,9 @@ private:
   bool stars_enabled = false;
   bool stars_initialized = false;
   void stars_init();
+
+  uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
+  uint8_t gfx_scroll;
 
 #ifdef LED_PIN
   const CRGB menu_leds[7] = { LED_BLUE, LED_YELLOW, LED_BLUE, LED_YELLOW, LED_BLUE, LED_YELLOW, LED_BLUE };

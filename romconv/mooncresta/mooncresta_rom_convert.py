@@ -83,15 +83,32 @@ def hex32(v):
 def convert_colors(prom):
     rgb565 = []
     for i in range(32):
-        b = prom[i]
-        r = 0x21 * ((b >> 0) & 1) + 0x47 * ((b >> 1) & 1) + 0x97 * ((b >> 2) & 1)
-        g = 0x21 * ((b >> 3) & 1) + 0x47 * ((b >> 4) & 1) + 0x97 * ((b >> 5) & 1)
-        bl = 0x4F * ((b >> 6) & 1) + 0xA8 * ((b >> 7) & 1)
+        bits = prom[i]
+        r = 0x21 * ((bits >> 0) & 1) + 0x47 * ((bits >> 1) & 1) + 0x97 * ((bits >> 2) & 1)
+        g = 0x21 * ((bits >> 3) & 1) + 0x47 * ((bits >> 4) & 1) + 0x97 * ((bits >> 5) & 1)
+        b = 0x4F * ((bits >> 6) & 1) + 0xA8 * ((bits >> 7) & 1)
         r5 = (r >> 3) & 0x1F
         g6 = (g >> 2) & 0x3F
-        b5 = (bl >> 3) & 0x1F
+        b5 = (b >> 3) & 0x1F
         val = (r5 << 11) | (g6 << 5) | b5
+
+        # PROM: 7 6 5 4 3 2 1 0
+        #     : b b g g g r r r
+        red   = ((bits >> 0) & 0x07)
+        green = ((bits >> 3) & 0x07)
+        blue  = ((bits >> 6) & 0x03)
+
+        #        0b000  0  0b001  1  0b010  2  0b011  3  0b100  4  0b101  5  0b110  6  0b111  7
+        mapR = [ 0b000000, 0b000011, 0b000100, 0b001100, 0b010000, 0b010011, 0b011100, 0b011111 ]
+        mapG = [ 0b000000, 0b000111, 0b010000, 0b010111, 0b100000, 0b100111, 0b110000, 0b111111 ]
+        mapB = [ 0b000000, 0b010000, 0b011000, 0b011111,                                        ]
+
+        val2 = (mapR[red] << 11) | (mapG[green] << 5) | (mapB[blue])
+
+        #print(f"{red:03b} {green:03b} {blue:02b} | {mapR[red]:05b} {mapG[green]:06b} {mapB[blue]:05b} | {val:04x}  {val2:04x}")
+        #print(f"{bits:08b} {val2:016b} {val:04x}  {val2:04x}")
         # Byte-swap for ESP32 SPI display (matches Frogger/Pac-Man format)
+        # val = val2
         rgb565.append(((val & 0xFF) << 8) | ((val >> 8) & 0xFF))
     return rgb565
 

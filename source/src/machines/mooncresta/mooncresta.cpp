@@ -1,10 +1,7 @@
 #include "mooncresta.h"
 #include "../../emulation/input.h"
 
-
 unsigned char mooncresta::opZ80(unsigned short Addr) {
-  // Galaxian hardware ignores A15 — 0x8000-0xFFFF mirrors 0x0000-0x7FFF
-  Addr &= 0x7FFF;
   if(Addr < 0x4000)
     return mooncresta_rom[Addr];
   return 0x00;
@@ -15,16 +12,16 @@ unsigned char mooncresta::rdZ80(unsigned short Addr) {
   if (Addr < 0x4000)
     return mooncresta_rom[Addr];
 
-  if ((Addr & 0xf800) == MC_BASE_WORKRAM)
+  if (Addr >= MC_BASE_WORKRAM && Addr <= MC_BASE_WORKRAM + 0x03ff)
     return memory[Addr - MC_BASE_WORKRAM + MC_OFF_WORKRAM];
 
-  if ((Addr & 0xfc00) == MC_BASE_VIDEORAM)
+  if (Addr >= MC_BASE_VIDEORAM && Addr <= MC_BASE_VIDEORAM + 0x03ff)
     return memory[Addr - MC_BASE_VIDEORAM + MC_OFF_VIDEORAM];
 
-  if((Addr & 0xf800) == MC_BASE_SPRITERAM)
+  if (Addr >= MC_BASE_SPRITERAM && Addr <= MC_BASE_SPRITERAM + 0x00ff)
     return memory[Addr - MC_BASE_SPRITERAM + MC_OFF_SPRITERAM];
 
-  if ((Addr & 0xf800) == MC_IN0) {
+  if (Addr == MC_IN0) {
     unsigned char keymask = input->buttons_get();
     unsigned char retval = MOONCRESTA_DIP_IN0;
     if(keymask & BUTTON_COIN)   retval |= 0x01;
@@ -34,67 +31,87 @@ unsigned char mooncresta::rdZ80(unsigned short Addr) {
     return retval;
   }
 
-  if((Addr & 0xf800) == MC_IN1) {
+  if (Addr == MC_IN1) {
     unsigned char keymask = input->buttons_get();
     unsigned char retval = MOONCRESTA_DIP_IN1;
     if(keymask & BUTTON_START)  retval |= 0x01;
     return retval;
   }
 
-  if((Addr & 0xf800) == MC_IN2) {
+  if (Addr == MC_IN2) {
     return MOONCRESTA_DIP_IN2;
   }
 
+  if (Addr == 0xb800) {
+    return 0xff;
+  }
+
+  printf("rdZ80: 0x%04x\n", Addr);
   return 0x00;
 }
 
 void mooncresta::wrZ80(unsigned short Addr, unsigned char Value) {
 
-  if((Addr & 0xf800) == MC_BASE_WORKRAM) {
-    memory[Addr - MC_BASE_WORKRAM + MC_OFF_WORKRAM] = Value;
+  if(Addr >= MC_BASE_WORKRAM && Addr <= MC_BASE_WORKRAM + 0x03ff) {
+    memory[(Addr & 0xfbff) - MC_BASE_WORKRAM + MC_OFF_WORKRAM] = Value;
+    return;
+  }
+  
+  if(Addr >= MC_BASE_VIDEORAM && Addr <= MC_BASE_VIDEORAM + 0x03ff) {
+    memory[(Addr & 0xfbff) - MC_BASE_VIDEORAM + MC_OFF_VIDEORAM] = Value;
     return;
   }
 
-  if ((Addr & 0xfc00) == MC_BASE_VIDEORAM) {
-    memory[Addr - MC_BASE_VIDEORAM + MC_OFF_VIDEORAM] = Value;
-  }
-
-  if((Addr & 0xf800) == MC_BASE_SPRITERAM) {
-    memory[Addr - MC_BASE_SPRITERAM + MC_OFF_SPRITERAM] = Value;
+  if(Addr >= MC_BASE_SPRITERAM && Addr <= MC_BASE_SPRITERAM + 0xff) {
+    memory[(Addr & 0xf8ff) - MC_BASE_SPRITERAM + MC_OFF_SPRITERAM] = Value;
     return;
   }
 
-  if((Addr & 0xfff8) == 0xa000) {
-    // 0xa004-0xa007: LFO DAC bits (4-bit value for background march sound)
-    if(Addr >= 0xa004) {
+  switch (Addr) {
+    case 0xa000:
+    case 0xa001:
+    case 0xa002:
+      gfx_bank[Addr - 0xa000] = Value;
+      //printf("gfx: Addr=0x%04x Value=0x%02x\n", Addr, Value);
+      return;
+    case 0xa004:
+    case 0xa005:
+    case 0xa006:
+    case 0xa007:
+      // 0xa004-0xa007: LFO DAC bits (4-bit value for background march sound)
       soundregs[1 + (Addr & 0x03)] = Value & 1;  // soundregs[1-4] = LFO DAC bits
-    }
-    return;
-  }
-
-  if((Addr & 0xfff8) == 0xa800) {
-    // 0xa800-0xa807: sound latches (bit 0 only)
-    // FS1,FS2,FS3,HIT,n/c,FIRE,VOL1,VOL2
-    soundregs[8 + (Addr & 0x07)] = Value & 1;
-    return;
-  }
-
-  if((Addr & 0xfff8) == 0xb000) {
-    unsigned char offset = Addr & 0x07;
-    if(offset == 0) {
+      return;
+    case 0xa800:
+    case 0xa801:
+    case 0xa802:
+    case 0xa803:
+    case 0xa804:
+    case 0xa805:
+    case 0xa806:
+    case 0xa807:
+      // 0xa800-0xa807: sound latches (bit 0 only)
+      // FS1,FS2,FS3,HIT,n/c,FIRE,VOL1,VOL2
+      soundregs[8 + (Addr & 0x07)] = Value & 1;
+      return;
+    case 0xb000:
       irq_enable[0] = Value & 1;  // NMI enable at 0xb000
-    }
-    if(offset == 4) {
+      return;
+    case 0xb004:
       stars_enabled = (Value & 1);  // stars enable at 0xb004
-    }
-    return;
+      return;
+    case 0xb006:
+      // galaxian_flip_screen_x_w
+      return;
+    case 0xb007:
+      // galaxian_flip_screen_y_w
+      return;
+    case 0xb800:
+      // 0xb800: pitch register for VCO (tone frequency, always active)
+      soundregs[0] = Value;
+      return;
   }
 
-  if((Addr & 0xf800) == 0xb800) {
-    // 0xb800: pitch register for VCO (tone frequency, always active)
-    soundregs[0] = Value;
-    return;
-  }
+  printf("wrZ80: 0x%04x=0x%02x\n", Addr, Value);
 }
 
 void mooncresta::run_frame(void) {
@@ -128,7 +145,15 @@ void mooncresta::prepare_frame(void) {
 
     unsigned char *base = memory + MC_OFF_SPRITERAM + 0x0040 + idx * 4;
 
+    /*
+    if (GalGfxBank[2] && (*Code & 0x30) == 0x20) 
+      *Code = (*Code & 0x0f) | (GalGfxBank[0] << 4) | (GalGfxBank[1] << 5) | 0x40;
+    */
+
     spr.code = base[1] & 0x3f;
+    if (gfx_bank[2] && (spr.code & 0x030) == 0x20) {
+      spr.code = (spr.code & 0x0f) | (gfx_bank[0] << 4) | gfx_bank[1] << 5 | 0x40;
+    }
     spr.flags = (base[1] >> 6) & 3;
     spr.color = base[2] & 7;
 
@@ -141,6 +166,16 @@ void mooncresta::prepare_frame(void) {
       sprite[active_sprites++] = spr;
     }
   }
+
+  /*
+    static uint8_t last_en   = 0x0;
+    static uint8_t last_bank = 0x0;
+
+    if (last_en != gfx_bank_enable || last_bank != gfx_bank)
+      printf("enable=%d bank=%d\n", gfx_bank_enable, gfx_bank);
+    last_en   = gfx_bank_enable;
+    last_bank = gfx_bank;
+  */
 
   // Bullet data at spriteram + 0x60 (HW 0x9860), 4 bytes per bullet
   // MAME format: base[1]=Y complement, base[3]=X position
@@ -163,14 +198,24 @@ void mooncresta::prepare_frame(void) {
 }
 
 void mooncresta::blit_tile(short row, char col) {
-  unsigned short addr = tileaddr[row][col];
-
   if((row < 2) || (row >= 34))
     return;
 
-  const unsigned short *tile = mooncresta_tilemap[memory[MC_OFF_VIDEORAM + addr]];
+  unsigned short addr = tileaddr[row][col];
 
-  int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 31) + 1] & 7;
+  /*
+  if (GalGfxBank[2] && (*Code & 0xc0) == 0x80) 
+    *Code = (*Code & 0x3f) | (GalGfxBank[0] << 6) | (GalGfxBank[1] << 7) | 0x0100;
+  */
+
+  unsigned short tile_code = memory[MC_OFF_VIDEORAM + addr];
+  if (gfx_bank[2] && (tile_code & 0xc0) == 0x80) {
+    tile_code = (tile_code & 0x3f) | (gfx_bank[0] << 6) | (gfx_bank[1] << 7) | 0x0100;
+  }
+
+  const unsigned short *tile = mooncresta_tilemap[ tile_code ];
+
+  int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 0x1f) + 1] & 0x07;
   const unsigned short *colors = mooncresta_colormap[c];
 
   unsigned short *ptr = frame_buffer + 8 * col;
@@ -207,8 +252,12 @@ void mooncresta::blit_tile_scroll(short row, signed char col, unsigned char scro
     mask = 0xffff << (2 * (8 - sub));
   }
 
-  const unsigned short *tile = mooncresta_tilemap[memory[MC_OFF_VIDEORAM + addr]];
-  int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 31) + 1] & 7;
+  unsigned short tile_code = memory[MC_OFF_VIDEORAM + addr];
+  if (gfx_bank[2] && (tile_code & 0xc0) == 0x80) {
+    tile_code = (tile_code & 0x3f) | (gfx_bank[0] << 6) | (gfx_bank[1] << 7) | 0x0100;
+  }
+  const unsigned short *tile = mooncresta_tilemap[ tile_code ];
+  int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 0x1f) + 1] & 0x07;
   const unsigned short *colors = mooncresta_colormap[c];
   unsigned short *ptr = frame_buffer + 8 * col + sub;
 
