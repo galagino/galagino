@@ -1,7 +1,6 @@
 #include "spaceinvaders.h"
 
 void spaceinvaders::reset() {
-  // Call base reset (clears memory, resets Z80)
   machineBase::reset();
 
   // Init shift register
@@ -13,6 +12,7 @@ unsigned char spaceinvaders::opZ80(unsigned short Addr) {
   Addr &= 0x3FFF;  // Mirror: 0x4000+ wraps to 0x0000+
   if(Addr < 0x2000)
     return spaceinvaders_rom[Addr];
+
   return memory[Addr - RAM_OFFSET];
 }
 
@@ -20,6 +20,7 @@ unsigned char spaceinvaders::rdZ80(unsigned short Addr) {
   Addr &= 0x3FFF;
   if(Addr < 0x2000)
     return spaceinvaders_rom[Addr];
+
   return memory[Addr - RAM_OFFSET];
 }
 
@@ -61,7 +62,8 @@ unsigned char spaceinvaders::inZ80(unsigned short Port) {
         retval |= 0x01;  // coin
         if(!last_coin) soundregs[2] = 1;  // trigger coin sound (rising edge)
         last_coin = 1;
-      } else {
+      }
+      else {
         last_coin = 0;
       }
       if(keymask & BUTTON_EXTRA)  retval |= 0x02;  // P2 start
@@ -106,7 +108,6 @@ void spaceinvaders::outZ80(unsigned short Port, unsigned char Value) {
       // Shift amount (bits 0-2)
       shift_amount = Value & 0x07;
       break;
-
     case 3:
       // Sound effects group 1
       // Bit 0: UFO repeat
@@ -117,12 +118,10 @@ void spaceinvaders::outZ80(unsigned short Port, unsigned char Value) {
       // Mapped to soundregs for basic audio support
       soundregs[0] = Value;
       break;
-
     case 4:
       // Shift data: push new byte, previous becomes low byte
       shift_data = (shift_data >> 8) | ((uint16_t)Value << 8);
       break;
-
     case 5:
       // Sound effects group 2
       // Bit 0: Fleet movement 1
@@ -132,7 +131,6 @@ void spaceinvaders::outZ80(unsigned short Port, unsigned char Value) {
       // Bit 4: UFO hit
       soundregs[1] = Value;
       break;
-
     case 6:
       // Watchdog - ignore
       break;
@@ -140,20 +138,16 @@ void spaceinvaders::outZ80(unsigned short Port, unsigned char Value) {
 }
 
 void spaceinvaders::run_frame(void) {
-  current_cpu = 0;
-
   // First half of frame: execute CPU, then fire RST 08H (mid-screen)
   // 8080 runs at 2MHz, Z80 emu uses IM0 mode, EI/DI controls IFF internally
-  for(int i = 0; i < INST_PER_HALFFRAME; i++) {
-    StepZ80(&cpu[0]);
-  }
-  // RST 08H mid-screen interrupt (Z80 core checks IFF1 internally)
-  IntZ80(&cpu[0], INT_RST08);
+  for(int i = 0; i < 832; i++) {
+    StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
 
-  // Second half of frame: execute CPU, then fire RST 10H (vblank)
-  for(int i = 0; i < INST_PER_HALFFRAME; i++) {
-    StepZ80(&cpu[0]);
+    // RST 08H mid-screen interrupt (Z80 core checks IFF1 internally)
+    if (i == 415)
+      IntZ80(&cpu[0], INT_RST08);
   }
+
   // RST 10H vblank interrupt
   IntZ80(&cpu[0], INT_RST10);
 }
@@ -179,7 +173,6 @@ void spaceinvaders::render_row(short row) {
   // Galagino renders 36 rows of 8 pixels = 288 tall
   // We use rows 2-33 (256 pixels), centering the game with 16px borders
   // Rows 0-1 and 34-35 are left black (cleared by memset in main loop)
-
   if(row < 2 || row > 33) return;
 
   // Player's vertical position for this tile row
@@ -221,6 +214,7 @@ void spaceinvaders::render_row(short row) {
     }
   }
 }
+
 
 const unsigned short *spaceinvaders::logo(void) {
   return spaceinvaders_logo;

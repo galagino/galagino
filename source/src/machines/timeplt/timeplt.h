@@ -49,21 +49,6 @@ public:
   ~timeplt() { }
 
   signed char machineType() override { return MCH_TIMEPLT; }
-  void reset() override {
-    machineBase::reset();
-    nmi_enable = 0;
-    video_enable = 0;
-    flip_screen = 0;
-    soundlatch = 0;
-    scanline_counter = 0;
-    snd_irq_pending = 0;
-    snd_irq_last = 0;
-    ay_timer_counter = 0;
-    snd_icnt = 0;
-    memset(snd_ram, 0, sizeof(snd_ram));
-    memset(ay_addr, 0, sizeof(ay_addr));
-    memset(ay_regs, 0, sizeof(ay_regs));
-  }
   unsigned char rdZ80(unsigned short Addr) override;
   void wrZ80(unsigned short Addr, unsigned char Value) override;
   unsigned char opZ80(unsigned short Addr) override;
@@ -86,7 +71,7 @@ protected:
 
 private:
   unsigned char nmi_enable;
-  unsigned char video_enable;
+  unsigned char video_enable = 0;
   unsigned char flip_screen;
   unsigned char soundlatch;
   unsigned char scanline_counter;
@@ -98,14 +83,13 @@ private:
   // Sound CPU state
   Z80 snd_cpu;
   unsigned char snd_ram[1024];
-  unsigned char snd_irq_pending;
-  unsigned char snd_irq_last;    // previous Q2 state for edge detection
+  unsigned char snd_irq_pending = 0;
+  unsigned char snd_irq_last = 0;    // previous Q2 state for edge detection
+  unsigned long snd_icnt = 0;
 
   // AY-3-8910 registers
   unsigned char ay_addr[2];
   unsigned char ay_regs[2][16];
-  unsigned char ay_timer_counter;
-  unsigned long snd_icnt;
 
 #ifdef LED_PIN
   const CRGB menu_leds[7] = { LED_CYAN, LED_WHITE, LED_CYAN, LED_WHITE, LED_CYAN, LED_WHITE, LED_CYAN };

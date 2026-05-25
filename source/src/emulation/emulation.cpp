@@ -11,6 +11,7 @@ volatile static char doDeleteEmulationTask;
 
 void emulation_start() {
   currentMachine->reset();
+  currentMachine->start();
   xTaskCreatePinnedToCore(emulation_task, "emulation task", 4096, NULL, 2, &emulationTaskHandle, ARDUINO_RUNNING_CORE == 0 ? 1 : 0);
 }
 

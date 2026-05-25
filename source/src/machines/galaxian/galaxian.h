@@ -22,9 +22,7 @@ public:
   signed char machineType() override { return MCH_GALAXIAN; }
   unsigned char rdZ80(unsigned short Addr) override;
   void wrZ80(unsigned short Addr, unsigned char Value) override;
-  void outZ80(unsigned short Port, unsigned char Value) override;
   unsigned char opZ80(unsigned short Addr) override;
-  unsigned char inZ80(unsigned short Port) override;
 
   void run_frame(void) override;
   void prepare_frame(void) override;

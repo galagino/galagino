@@ -1,4 +1,4 @@
-galaxian_rom.h
-galaxian_tilemap.h
-galaxian_spritemap.h
 galaxian_cmap.h
+galaxian_rom.h
+galaxian_spritemap.h
+galaxian_tilemap.h

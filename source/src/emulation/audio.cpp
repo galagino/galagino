@@ -1,8 +1,5 @@
 #include "audio.h"
 #include "machines-enabled.h"
-#ifdef ENABLE_SPACEINVADERS
-#include "machines/spaceinvaders/spaceinvaders_samples.h"
-#endif
 #ifdef ES8311_AUDIO
 #include <es8311.h>
 #endif
@@ -143,6 +140,7 @@ void Audio::start(machineBase *machineBase) {
 
     for (int c = 0; c < 3; c++) {
       audio_toggle[ay][c] = 1;
+      ay_envelope[ay][c] = 0;
     }
     ay_noise_rng[ay] = 1;
 
@@ -199,24 +197,24 @@ void Audio::transmit() {
   do {
     // copy data in i2s dma buffer if possible
     i2s_write(I2S_NUM_0, snd_buffer, sizeof(snd_buffer), &bytesOut, 0);
+    if (!bytesOut)
+      return;
 
     // render the next audio chunk if data has actually been sent
-    if(bytesOut) {      
-      if (AY > 0)
-        ay_render_buffer();
-      else if(machineType == MCH_MRDO || machineType == MCH_LADYBUG) 
-        sn76489_render_buffer();
-      else if(machineType == MCH_BAGMAN)
-        discrete_render_buffer();
-      else if(machineType == MCH_DKONG || machineType == MCH_DKONGJR)
-        i8048_render_buffer();
-      else if(machineType == MCH_GALAXIAN || machineType == MCH_MOONCRESTA)
-        galaxian_render_buffer();
-      else if(machineType == MCH_SPACEINVADERS)
-        spaceinvaders_render_buffer();
-      else if (currentMachine->hasNamcoAudio())
-        namco_render_buffer();
-    }
+    if (AY > 0)
+      ay_render_buffer();
+    else if (currentMachine->hasNamcoAudio())
+      namco_render_buffer();
+    else if (machineType == MCH_MRDO || machineType == MCH_LADYBUG) 
+      sn76489_render_buffer();
+    else if (machineType == MCH_DKONG || machineType == MCH_DKONGJR)
+      i8048_render_buffer();
+    else if (machineType == MCH_BAGMAN)
+      bagman_render_buffer();
+    else if (machineType == MCH_SPACEINVADERS)
+      spaceinvaders_render_buffer();
+    else if (machineType == MCH_GALAXIAN || machineType == MCH_MOONCRESTA)
+      galaxian_render_buffer();
   } while(bytesOut);
 }
 
@@ -331,7 +329,7 @@ void Audio::ay_render_buffer(void) {
 }
 
 void Audio::i8048_render_buffer(void) {
-  dkong *dkongMachine = dynamic_cast<dkong*>(currentMachine);
+  dkong *dkongMachine = static_cast<dkong*>(currentMachine);
 
   // render first buffer contents
   for(int i = 0; i < 64; i++) {
@@ -457,7 +455,7 @@ void Audio::namco_render_buffer(void) {
     snd_cnt[2] += snd_freq[2];
     
     if(machineType == MCH_GALAGA) {
-      galaga *galagaMachine = dynamic_cast<galaga*>(currentMachine);
+      galaga *galagaMachine = static_cast<galaga*>(currentMachine);
 
       if(galagaMachine->snd_boom_cnt) {
         value += *galagaMachine->snd_boom_ptr * 3;
@@ -472,19 +470,62 @@ void Audio::namco_render_buffer(void) {
   }
 }
 
+void Audio::generateSinusWave(int32_t amplitude, short* buffer, uint16_t length) {
+  for (int i=0; i<length; ++i) {
+    buffer[i] = int32_t(float(amplitude) * sin(2.0 * PI * (1.0 / length) * i));
+  }
+}
+
+void Audio::bagman_render_buffer() {
+  unsigned short duration = currentMachine->soundregs[0] + (currentMachine->soundregs[1] << 8);
+  if (duration > 0)
+    duration--;
+
+  currentMachine->soundregs[0] = duration & 0x00ff;
+  currentMachine->soundregs[1] = (duration & 0xff00) > 8;
+
+  float frequency;
+  switch (currentMachine->soundregs[2]) {
+    case 0x3: frequency = A5_3; break;
+    case 0x4: frequency = C6_4; break;
+    case 0x5: frequency = F5_5; break;
+    case 0x6: frequency = G5_6; break;
+    case 0x7: frequency = E6_7; break;
+    case 0x8: frequency = B6_8; break;
+    case 0xE: frequency = D6_E; break;
+    case 0xF: frequency = B5_F; break;
+    case 0xB: frequency = XX_B; break;
+  }
+
+  unsigned short pause = currentMachine->soundregs[3];
+  if (pause > 0)
+    currentMachine->soundregs[3]--;
+
+  float delta = 0;
+  if (duration != 0 && pause == 0)
+    delta = (frequency * (sizeof(sinusWaveBuffer) / 2)) / float(24000);
+
+  for(int i = 0; i < 64; i++) {
+    uint16_t pos = uint32_t(((i + 1) * delta) + positionLast) % (sizeof(sinusWaveBuffer) / 2);
+    short value = sinusWaveBuffer[pos];
+
+    if (i == 63)
+      positionLast = pos;
+
+    valueToBuffer(i, value);
+  }
+}
+
 void Audio::spaceinvaders_render_buffer(void) {
 #ifdef ENABLE_SPACEINVADERS
   // Space Invaders discrete audio (based on MAME mw8080bw_a.cpp)
-  //
-  // soundregs[0] = port 3: UFO(0) Shot(1) Explosion(2) InvaderDie(3) ExtPlay(4)
-  // soundregs[1] = port 5: Fleet1(0) Fleet2(1) Fleet3(2) Fleet4(3) UFOhit(4)
 
-  uint8_t p3 = currentMachine->soundregs[0];
-  uint8_t p5 = currentMachine->soundregs[1];
+  uint8_t p3 = currentMachine->soundregs[0]; // port 3: UFO(0) Shot(1) Explosion(2) InvaderDie(3) ExtPlay(4)
+  uint8_t p5 = currentMachine->soundregs[1]; // port 5: Fleet1(0) Fleet2(1) Fleet3(2) Fleet4(3) UFOhit(4)
 
   // Fleet: pick highest active bit → tone frequency (Hz)
   // Original hardware: 555 timer ~33-55Hz, doubled for small speaker audibility
-//  const int fleet_freq[4] = { 66, 110, 80, 74 };
+  //const int fleet_freq[4] = { 66, 110, 80, 74 };
   const int fleet_freq[4] = { 37, 55, 48, 41};
   int fleet_f = 0;
   for(int b = 3; b >= 0; b--) {
@@ -516,18 +557,20 @@ void Audio::spaceinvaders_render_buffer(void) {
         si_ufo_toggle = -si_ufo_toggle;
       }
       value += si_ufo_toggle * 60;
-    } else {
+    } 
+    else {
       si_ufo_sweep = 0;
     }
 
     // ── SHOT: original sample playback (12kHz samples, play each twice for 24kHz) ──
     if(p3 & 0x02) {
-      if(!si_shot_playing) { si_shot_playing = 1; si_shot_pos = 0; si_shot_toggle = 0; }
+      if(!si_shot_playing) { si_shot_playing = 1; si_shot_pos = 0; }
       if((si_shot_pos >> 1) < si_sample_shot_LEN) {
-        value += (signed char)si_sample_shot[si_shot_pos >> 1] * 3;
+        value += si_sample_shot[si_shot_pos >> 1] * 3;
         si_shot_pos++;
       }
-    } else {
+    }
+    else {
       si_shot_playing = 0;
     }
 
@@ -566,7 +609,8 @@ void Audio::spaceinvaders_render_buffer(void) {
         si_explo_cnt = 0;
         if(si_explo_env > 15) si_explo_env--;
       }
-    } else {
+    }
+    else {
       si_explo_env = 0;
       si_explo_cnt = 0;
     }
@@ -575,10 +619,11 @@ void Audio::spaceinvaders_render_buffer(void) {
     if(p3 & 0x08) {
       if(!si_invhit_playing) { si_invhit_playing = 1; si_invhit_pos = 0; }
       if((si_invhit_pos >> 1) < si_sample_invhit_LEN) {
-        value += (signed char)si_sample_invhit[si_invhit_pos >> 1] * 3;
+        value += si_sample_invhit[si_invhit_pos >> 1] * 3;
         si_invhit_pos++;
       }
-    } else {
+    }
+    else {
       si_invhit_playing = 0;
     }
 
@@ -589,7 +634,7 @@ void Audio::spaceinvaders_render_buffer(void) {
         si_fleet_cnt -= 12000;
         si_fleet_toggle = -si_fleet_toggle;
       }
-      value += si_fleet_toggle * 90;
+      value += si_fleet_toggle * 100;
     }
 
     // ── UFO HIT: descending warble tone ~2000Hz with ~15Hz modulation ──
@@ -606,10 +651,11 @@ void Audio::spaceinvaders_render_buffer(void) {
         si_ufohit_cnt -= 12000;
         si_ufohit_toggle = -si_ufohit_toggle;
       }
-      value += si_ufohit_toggle * 80;
+      value += si_ufohit_toggle * 100;
       // Descend (~2000→300 over ~1.5s = 36000 samples)
       if(si_ufohit_freq > 300) si_ufohit_freq--;
-    } else {
+    }
+    else {
       si_ufohit_freq = 0;
       si_ufohit_warble = 0;
     }
@@ -637,16 +683,15 @@ void Audio::galaxian_render_buffer(void) {
   // soundregs[15]   = VOL2 (0x6807, offset 7)
   // NOTE: No BGEN register — VCO is always active when pitch is audible
 
-  int vco_pitch = currentMachine->soundregs[0];
-
   // VOL1/VOL2 control VCO output volume via resistor network
-  int vol1 = currentMachine->soundregs[14];  // offset 6
-  int vol2 = currentMachine->soundregs[15];  // offset 7
-  int vco_vol = (vol1 || vol2) ? (20 + vol1 * 20 + vol2 * 20) : 25;
+  // Volumcontrol not needed - every sound has its own volume setting here
+  unsigned char vol1On = currentMachine->soundregs[14];  // offset 6
+  unsigned char vol2On = currentMachine->soundregs[15];  // offset 1
 
   // VCO half-period: freq = 1.536MHz / (16*(256-pitch))
   // At 24kHz: half_period = (256-pitch) / 8
-  int half_period = (256 - vco_pitch) / 8;
+  unsigned char vco_pitch = currentMachine->soundregs[0];
+  unsigned char half_period = (256 - vco_pitch);
 
   // Detect pitch sweeps (credit sound): VCO plays through R34 base path
   // when pitch is actively changing even without VOL1/VOL2
@@ -659,39 +704,57 @@ void Audio::galaxian_render_buffer(void) {
   if(gal_pitch_active > 0) gal_pitch_active--;
 
   // VCO plays when: VOL is on (normal sounds) OR pitch is sweeping (credit sound)
-  bool vco_on = (half_period > 1) && (vol1 || vol2 || gal_pitch_active > 0);
+  char vco_on = (half_period > 1) && (vol1On || vol2On || gal_pitch_active > 0);
 
   // FS1/FS2/FS3: 555 timer tones (frequencies from RC values)
-  // FS1 ~130Hz, FS2 ~170Hz, FS3 ~230Hz
+  // FS1 ~139Hz, FS2 ~190Hz, FS3 ~267Hz // {86, 63, 44}
+  // 24.000Hz / 130Hz = 184 / 2 = 92
   // Half-periods at 24kHz sample rate
-  static const int fs_period[3] = {92, 71, 52};
+  static const unsigned char fs_period[3] = {86, 63, 44};
+  unsigned char lfo_val = ((currentMachine->soundregs[1] & 0x01) << 0);
+  lfo_val |= ((currentMachine->soundregs[2] & 0x01) << 1);
+  lfo_val |= ((currentMachine->soundregs[3] & 0x01) << 2);
+  lfo_val |= ((currentMachine->soundregs[4] & 0x01) << 3);
+
+  if (lfo_val > 2) {
+    lfo_counter++;
+    if ((lfo_counter % (lfo_val * 3)) == 0) {
+      lfo++;
+      if (lfo > 10)
+        lfo = 0;
+    }
+  }
+  else {
+    lfo = 0;
+  }
 
   for(int i = 0; i < 64; i++) {
     short value = 0;
 
     // === VCO tone ===
     if(vco_on) {
-      gal_tone_cnt++;
-      if(gal_tone_cnt >= (unsigned long)half_period) {
-        gal_tone_cnt = 0;
-        gal_tone_toggle = -gal_tone_toggle;
+      for (int i=0; i < 8; i++) {
+        gal_tone_cnt++;
+        if(gal_tone_cnt >= half_period) {
+          gal_tone_cnt = 0;
+          gal_tone_toggle = -gal_tone_toggle;
+        }
       }
-      value += gal_tone_toggle * vco_vol;
+      value += gal_tone_toggle * 100;
     }
-/*
 
     // === FS1, FS2, FS3: background march tones (independent volume) ===
     for(int fs = 0; fs < 3; fs++) {
       if(currentMachine->soundregs[8 + fs]) {
         gal_fs_cnt[fs]++;
-        if(gal_fs_cnt[fs] >= (unsigned long)fs_period[fs]) {
+        if(gal_fs_cnt[fs] >= fs_period[fs] + lfo) {
           gal_fs_cnt[fs] = 0;
           gal_fs_toggle[fs] = -gal_fs_toggle[fs];
         }
         value += gal_fs_toggle[fs] * 25;
       }
     }
-*/
+
     // === HIT: explosion noise (LFSR, bandpass ~470Hz) ===
     if(currentMachine->soundregs[11]) {
       uint32_t b = ((gal_noise_rng >> 0) ^ (gal_noise_rng >> 3)) & 1;
@@ -709,53 +772,6 @@ void Audio::galaxian_render_buffer(void) {
       }
       value += ((gal_fire_rng & 1) ? 70 : -70);
     }
-
-    valueToBuffer(i, value);
-  }
-}
-
-void Audio::generateSinusWave(int32_t amplitude, short* buffer, uint16_t length) { 
-  for (int i=0; i<length; ++i) {
-    buffer[i] = int32_t(float(amplitude) * sin(2.0 * PI * (1.0 / length) * i));
-  }
-}
-
-void Audio::discrete_render_buffer() {
-  unsigned short duration = currentMachine->soundregs[0] + (currentMachine->soundregs[1] << 8);
-
-  if (duration > 0)
-    duration--;
-
-  currentMachine->soundregs[0] = duration & 0x00ff;
-  currentMachine->soundregs[1] = (duration & 0xff00) > 8;
-
-  float frequency;
-  switch (currentMachine->soundregs[2]) {
-    case 0x3: frequency = A5_3; break;
-    case 0x4: frequency = C6_4; break;
-    case 0x5: frequency = F5_5; break;
-    case 0x6: frequency = G5_6; break;
-    case 0x7: frequency = E6_7; break;
-    case 0x8: frequency = B6_8; break;
-    case 0xE: frequency = D6_E; break;
-    case 0xF: frequency = B5_F; break;
-    case 0xB: frequency = XX_B; break;
-  }
-
-  unsigned short pause = currentMachine->soundregs[3];
-  if (pause > 0)
-    currentMachine->soundregs[3]--;
-
-  float delta = 0;
-  if (duration != 0 && pause == 0)
-    delta = (frequency * (sizeof(sinusWaveBuffer) / 2)) / float(24000);
-  
-  for(int i = 0; i < 64; i++) {
-    uint16_t pos = uint32_t(((i + 1) * delta) + positionLast) % (sizeof(sinusWaveBuffer) / 2);
-    short value = sinusWaveBuffer[pos];
-
-    if (i == 63)
-      positionLast = pos;
 
     valueToBuffer(i, value);
   }

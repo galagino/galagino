@@ -27,7 +27,7 @@ unsigned char galaxian::rdZ80(unsigned short Addr) {
 
   if((Addr & 0xf800) == 0x6000) {
     unsigned char keymask = input->buttons_get();
-    unsigned char retval = 0x00;
+    unsigned char retval = GALAXIAN_DIP_IN0;
     if(keymask & BUTTON_COIN)   retval |= 0x01;
     if(keymask & BUTTON_LEFT)   retval |= 0x04;
     if(keymask & BUTTON_RIGHT)  retval |= 0x08;
@@ -46,7 +46,11 @@ unsigned char galaxian::rdZ80(unsigned short Addr) {
     return GALAXIAN_DIP_IN2;
   }
 
-  return 0x00;
+  // Watchdog
+  if((Addr & 0xf800) == 0x7800) {
+    return 0xff;
+  }
+  return 0xff;
 }
 
 void galaxian::wrZ80(unsigned short Addr, unsigned char Value) {
@@ -104,17 +108,7 @@ void galaxian::wrZ80(unsigned short Addr, unsigned char Value) {
   }
 }
 
-void galaxian::outZ80(unsigned short Port, unsigned char Value) {
-}
-
-unsigned char galaxian::inZ80(unsigned short Port) {
-  return 0x00;
-}
-
 void galaxian::run_frame(void) {
-  if(!game_started) game_started = 1;
-
-  current_cpu = 0;
   for(int i = 0; i < INST_PER_FRAME; i++) {
     StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
   }
@@ -177,11 +171,11 @@ void galaxian::prepare_frame(void) {
 }
 
 void galaxian::blit_tile(short row, char col) {
-  unsigned short addr = tileaddr[row][col];
 
   if((row < 2) || (row >= 34))
     return;
 
+  unsigned short addr = tileaddr[row][col];
   const unsigned short *tile = galaxian_tilemap[memory[0x0800 + addr]];
 
   int c = memory[0x0C00 + 2 * (addr & 31) + 1] & 7;
@@ -192,7 +186,8 @@ void galaxian::blit_tile(short row, char col) {
   for(char r = 0; r < 8; r++, ptr += (224 - 8)) {
     unsigned short pix = *tile++;
     for(char c = 0; c < 8; c++, pix >>= 2) {
-      if(pix & 3) *ptr = colors[pix & 3];
+      long index = ((pix & 2) >> 1) | ((pix & 1) << 1);
+      if(pix & 3) *ptr = colors[index];
       ptr++;
     }
   }
@@ -214,7 +209,8 @@ void galaxian::blit_tile_scroll(short row, signed char col, unsigned char scroll
     // clip rightmost tile if partial
     if((sub != 0) && (col == 27))
       mask = 0xffff >> (2 * sub);
-  } else {
+  }
+  else {
     // col == -1: partial tile at left edge
     addr = tileaddr[row][0];
     addr = (addr + 32 + ((scroll & ~7) << 2)) & 1023;
@@ -229,7 +225,8 @@ void galaxian::blit_tile_scroll(short row, signed char col, unsigned char scroll
   for(char r = 0; r < 8; r++, ptr += (224 - 8)) {
     unsigned short pix = *tile++ & mask;
     for(char c = 0; c < 8; c++, pix >>= 2) {
-      if(pix & 3) *ptr = colors[pix & 3];
+      long index = ((pix & 2) >> 1) | ((pix & 1) << 1);
+      if(pix & 3) *ptr = colors[index];
       ptr++;
     }
   }
@@ -261,7 +258,8 @@ void galaxian::blit_sprite(short row, unsigned char s) {
   for(char r = 0; r < lines2draw; r++, ptr += (224 - 16)) {
     unsigned long pix = *spr++ & mask;
     for(char c = 0; c < 16; c++, pix >>= 2) {
-      if(pix & 3) *ptr = colors[pix & 3];
+      long index = ((pix & 2) >> 1) | ((pix & 1) << 1);
+      if(pix & 3) *ptr = colors[index];
       ptr++;
     }
   }
@@ -342,7 +340,8 @@ void galaxian::render_row(short row) {
   if(scroll == 0) {
     for(char col = 0; col < 28; col++)
       blit_tile(row, col);
-  } else {
+  }
+  else {
     // partial tile at left edge when sub-tile scroll active
     if(scroll & 7)
       blit_tile_scroll(row, -1, scroll);

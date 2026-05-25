@@ -4,6 +4,7 @@
 #include "spaceinvaders_logo.h"
 #include "spaceinvaders_rom.h"
 #include "spaceinvaders_dipswitches.h"
+#include "spaceinvaders_samples.h"
 #include "../machineBase.h"
 
 // Space Invaders (Midway, 1978)
@@ -40,11 +41,6 @@
 #define COL_WHITE  0xFFFF
 #define COL_GREEN  0xE007
 #define COL_RED    0x00F8
-
-// Space Invaders runs at 2MHz, 60fps → ~33333 T-states/frame
-// Split into two halves for mid-screen and vblank interrupts
-// ~2083 instructions per half-frame (avg ~8 T-states per instruction)
-#define INST_PER_HALFFRAME  2083
 
 class spaceinvaders : public machineBase
 {
