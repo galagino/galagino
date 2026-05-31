@@ -27,5 +27,6 @@
 #define ENABLE_TUTANKHM
 #define ENABLE_DKONGJR
 #define ENABLE_MOONCRESTA
+#define ENABLE_STARFORCE
 
 #endif

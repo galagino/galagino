@@ -103,6 +103,10 @@
   #include "machines/mooncresta/mooncresta.h"
 #endif
 
+#ifdef ENABLE_STARFORCE
+  #include "machines/starforce/starforce.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -179,6 +183,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_MOONCRESTA
   new mooncresta(),
+#endif
+#ifdef ENABLE_STARFORCE
+  new starforce(),
 #endif
 };
 
