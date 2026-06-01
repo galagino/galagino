@@ -54,7 +54,7 @@ IRAM_ATTR void emulation_task(void *p) {
   // slow down. This risk is only given with Galaga as the emulation of
   // all three CPUs takes nearly 13ms. The 60hz vblank rate is in turn 
   // 16.6 ms.  
-#if 0
+#ifdef FRAME_RATE_DEBUG
   static int counter;
   static unsigned long time = millis();
   

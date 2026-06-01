@@ -630,6 +630,9 @@ if [[ -f ../romszip/starforc.zip ]]; then
   echo Star Force Sprites
   python3 ./sprites.py || die
 
+  echo Star Force Palette RBG565
+  python3 ./starforce_palette.py || die
+
   cd ..
   
   echo --- Success ---

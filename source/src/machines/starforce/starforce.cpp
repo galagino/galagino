@@ -62,10 +62,10 @@ unsigned char starforce::rdZ80(unsigned short Addr) {
       {
       case 0xD000:
         keymask = input->buttons_get();
-	      if(keymask & BUTTON_RIGHT) retval |= 0x01;
-	      if(keymask & BUTTON_LEFT)  retval |= 0x02;
-	      if(keymask & BUTTON_UP)    retval |= 0x04;
-	      if(keymask & BUTTON_DOWN)  retval |= 0x08;
+        if(keymask & BUTTON_RIGHT) retval |= 0x01;
+        if(keymask & BUTTON_LEFT)  retval |= 0x02;
+        if(keymask & BUTTON_UP)    retval |= 0x04;
+        if(keymask & BUTTON_DOWN)  retval |= 0x08;
         if(keymask & BUTTON_FIRE)  retval |= 0x10;
         return retval;
       case 0xD001:
@@ -139,7 +139,11 @@ void starforce::wrZ80(unsigned short Addr, unsigned char Value) {
     // 0x9C00 - 0x9DFF: Palette RAM (512 bytes)
     if (Addr >= 0x9C00 && Addr <= 0x9DFF) {
       memory[STARFORCE_PALETTE_RAM + (Addr - 0x9C00)] = Value;
+      #if 0
       starforce_palette[Addr - 0x9C00] = calculate_color_starforce(Value);
+      #else
+      starforce_palette[Addr - 0x9C00] = starforce_rgb565_palette[Value];
+      #endif
       return;
     }
 

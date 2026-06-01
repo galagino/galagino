@@ -25,6 +25,10 @@ echo Star Force Sprites
 python ./sprites.py
 if errorlevel 1 goto :error
 
+echo Star Force Palette RBG565
+python ./starforce_palette.py
+if errorlevel 1 goto :error
+
 cd..
 
 echo --- Success ---
