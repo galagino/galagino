@@ -181,11 +181,11 @@ machineBase *machines[] = {
 #ifdef ENABLE_DKONGJR
   new dkongjr(),
 #endif
-#ifdef ENABLE_MOONCRESTA
-  new mooncresta(),
-#endif
 #ifdef ENABLE_STARFORCE
   new starforce(),
+#endif
+#ifdef ENABLE_MOONCRESTA
+  new mooncresta(),
 #endif
 };
 
