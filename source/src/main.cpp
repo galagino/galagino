@@ -105,7 +105,7 @@ void setup() {
   #ifdef AUDIO_ENABLE_PIN
   pinMode(AUDIO_ENABLE_PIN, OUTPUT);   // ESP32-E Audio Enable
   digitalWrite(AUDIO_ENABLE_PIN, LOW); // active low
-  printf("Setting AUDIO_ENABLE %s\n", "LOW");
+  printf("AUDIO_ENABLE:     %s\n", "LOW");
   #endif
 
   // allocate memory for a single tile/character row
