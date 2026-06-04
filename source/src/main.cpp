@@ -10,6 +10,8 @@
  *
  */
 #include <Arduino.h>
+#include <esp_flash.h>
+#include <rom/spi_flash.h>
 #include "config.h"
 #include "machines.h"
 #include "machines/machineBase.h"
@@ -49,6 +51,7 @@ void onDoAttractReset();
 void onVolumeUpDown(bool up, bool down);
 void onDoReset();
 bool doReset = false;
+
 
 void setup() {
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -107,6 +110,22 @@ void setup() {
   digitalWrite(AUDIO_ENABLE_PIN, LOW); // active low
   printf("AUDIO_ENABLE:     %s\n", "LOW");
   #endif
+
+  esp_flash_t* chip = esp_flash_default_chip;
+  if (chip) {
+    printf("Flash size = %dMiB speed = %d\n", 
+      chip->size / 1024 / 1024,
+      0);
+  }
+  else {
+    printf("esp_flash_default_chip is nullptr\n");
+  }
+
+  esp_flash_io_mode_t io_mode = esp_flash_default_chip->read_mode;
+  printf("Raw Enum Value: %d\n", io_mode);
+
+  printf("CONFIG_ESPTOOLPY_FLASHMODE: %s\n", CONFIG_ESPTOOLPY_FLASHMODE);
+  printf("CONFIG_ESPTOOLPY_FLASHFREQ: %s\n", CONFIG_ESPTOOLPY_FLASHFREQ);
 
   // allocate memory for a single tile/character row
   frame_buffer = (unsigned short*)malloc(224 * 8 * 2);

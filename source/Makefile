@@ -52,3 +52,6 @@ cyd-fnk0103f-usb-up:
 cyd-fnk0103b-usb-up:
 	$(MAKE) upload ENV=$@
 	
+
+image-info:
+	esptool --chip esp32s3 --port /dev/ttyACM0 image-info .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
