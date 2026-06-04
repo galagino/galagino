@@ -50,6 +50,11 @@ public:
   void render_row(short row) override;
   const unsigned short *logo(void) override;
 
+#ifdef LED_PIN
+  void menuLeds(CRGB *leds) override;
+  void gameLeds(CRGB *leds) override;
+#endif
+
 protected:
   void blit_tile_bg(short logical_row);
   void blit_tile_fg(short row, char col);
@@ -71,6 +76,11 @@ private:
 
   unsigned char coinBackup = 0;
   unsigned char coinFrameCounter = 0;
+
+#ifdef LED_PIN
+  const CRGB menu_leds[7] = { LED_BLUE, LED_CYAN, LED_BLUE, LED_WHITE, LED_BLUE, LED_CYAN, LED_BLUE };
+#endif
+
 };
 
 #endif

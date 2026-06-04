@@ -20,11 +20,7 @@
 #define LED_WHITE    CRGB::White
 #endif
 
-#if (defined(ENABLE_1942) || defined(ENABLE_MRDO) || defined(ENABLE_LADYBUG) || defined(ENABLE_GYRUSS) || defined(ENABLE_TIMEPLT) || defined(ENABLE_PENGO))
-  #define RAMSIZE   (8192 + 1024 + 128)
-#else
-  #define RAMSIZE   (8192)
-#endif
+#define RAMSIZE     16384 // max usage is Starforce with 15.040
 
 struct sprite_S {
   unsigned char code, color, flags;
@@ -93,8 +89,10 @@ public:
 
     virtual void start() { }
     virtual void reset() {
-      for(current_cpu = 0; current_cpu < sizeof(cpu) / sizeof(Z80); current_cpu++)
+      for(current_cpu = 0; current_cpu < sizeof(cpu) / sizeof(Z80); current_cpu++) {
         ResetZ80(&cpu[current_cpu]);
+        irq_enable[current_cpu] = 0;
+      }
 
       memset(memory, 0, RAMSIZE);
       memset(soundregs, 0, sizeof(soundregs)); 
@@ -152,6 +150,7 @@ public:
     //Ladybug
     int sn_min_volume[3][4]; // latched min volume per audio render cycle
     int sn_hold[3][4];       // hold counter: keep sound active for N render cycles
+
 protected:
     virtual void blit_tile(short row, char col) { }
     virtual void blit_sprite(short row, unsigned char s) { }

@@ -1,9 +1,14 @@
 #include "mooncresta.h"
 #include "../../emulation/input.h"
 
+void mooncresta::start() {
+  stars_init();
+}
+
 unsigned char mooncresta::opZ80(unsigned short Addr) {
   if(Addr < 0x4000)
     return mooncresta_rom[Addr];
+
   return 0x00;
 }
 
@@ -39,6 +44,7 @@ unsigned char mooncresta::rdZ80(unsigned short Addr) {
   }
 
   if (Addr == MC_IN2) {
+    game_started = 1;
     return MOONCRESTA_DIP_IN2;
   }
 
@@ -46,7 +52,7 @@ unsigned char mooncresta::rdZ80(unsigned short Addr) {
     return 0xff;
   }
 
-  printf("rdZ80: 0x%04x\n", Addr);
+  //printf("rdZ80: 0x%04x\n", Addr);
   return 0x00;
 }
 
@@ -97,7 +103,7 @@ void mooncresta::wrZ80(unsigned short Addr, unsigned char Value) {
       irq_enable[0] = Value & 1;  // NMI enable at 0xb000
       return;
     case 0xb004:
-      stars_enabled = (Value & 1);  // stars enable at 0xb004
+      stars_enabled = Value & 1;  // stars enable at 0xb004
       return;
     case 0xb006:
       // galaxian_flip_screen_x_w
@@ -111,14 +117,11 @@ void mooncresta::wrZ80(unsigned short Addr, unsigned char Value) {
       return;
   }
 
-  printf("wrZ80: 0x%04x=0x%02x\n", Addr, Value);
+  //printf("wrZ80: 0x%04x=0x%02x\n", Addr, Value);
 }
 
 void mooncresta::run_frame(void) {
-  if(!game_started) game_started = 1;
-
-  current_cpu = 0;
-  for(int i = 0; i < INST_PER_FRAME; i++) {
+  for(int i = 0; i < INST_PER_FRAME + 312; i++) { //+ 312 to run ~ speed as MAME????
     StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
   }
 
@@ -128,21 +131,11 @@ void mooncresta::run_frame(void) {
 }
 
 void mooncresta::prepare_frame(void) {
-  // Initialize starfield on first frame
-  if(!stars_initialized) stars_init();
-
-  // Scroll stars: advance 1 pixel per frame (slow upward scroll)
-  if(stars_enabled) {
-    star_scroll_offset = (star_scroll_offset + 1) % 288;
-  }
-
   active_sprites = 0;
 
   // Sprite data at spriteram + 0x40 (HW 0x5840), 4 bytes per sprite
   // base[0]=Y  base[1]=code|flipx|flipy  base[2]=color  base[3]=X
   for(int idx = 7; idx >= 0 && active_sprites < 128; idx--) {
-    struct sprite_S spr;
-
     unsigned char *base = memory + MC_OFF_SPRITERAM + 0x0040 + idx * 4;
 
     /*
@@ -150,6 +143,7 @@ void mooncresta::prepare_frame(void) {
       *Code = (*Code & 0x0f) | (GalGfxBank[0] << 4) | (GalGfxBank[1] << 5) | 0x40;
     */
 
+    struct sprite_S spr;
     spr.code = base[1] & 0x3f;
     if (gfx_bank[2] && (spr.code & 0x030) == 0x20) {
       spr.code = (spr.code & 0x0f) | (gfx_bank[0] << 4) | gfx_bank[1] << 5 | 0x40;
@@ -261,7 +255,8 @@ void mooncresta::blit_tile_scroll(short row, signed char col, unsigned char scro
     // clip rightmost tile if partial
     if((sub != 0) && (col == 27))
       mask = 0xffff >> (2 * sub);
-  } else {
+  }
+  else {
     // col == -1: partial tile at left edge
     addr = tileaddr[row][0];
     addr = (addr + 32 + ((scroll & ~7) << 2)) & 1023;
@@ -272,6 +267,7 @@ void mooncresta::blit_tile_scroll(short row, signed char col, unsigned char scro
   if (gfx_bank[2] && (tile_code & 0xc0) == 0x80) {
     tile_code = (tile_code & 0x3f) | (gfx_bank[0] << 6) | (gfx_bank[1] << 7) | 0x0100;
   }
+
   const unsigned short *tile = mooncresta_tilemap[ tile_code ];
   int c = memory[MC_OFF_SPRITERAM + 2 * (addr & 0x1f) + 1] & 0x07;
   /*
@@ -332,57 +328,17 @@ void mooncresta::blit_sprite(short row, unsigned char s) {
   }
 }
 
-// Convert 8-bit R,G,B to RGB565 byte-swapped for ESP32 SPI
-static inline unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b) {
-  unsigned short c = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-  return (c >> 8) | (c << 8);  // byte-swap
-}
-
-void mooncresta::stars_init() {
-  // MAME algorithm: 17-bit LFSR, period 2^17-1 = 131071
-  // Stars visible when upper 8 bits == 0xFF and bit 0 == 0
-  // Color from bits 3-8 (6-bit, 64 colors)
-  static const unsigned char starmap[4] = { 0, 150, 200, 255 };
-
-  unsigned short star_color_lut[64];
-  for(int i = 0; i < 64; i++) {
-    unsigned char r = starmap[((i >> 4) & 2) | ((i >> 5) & 1)];
-    unsigned char g = starmap[((i >> 2) & 2) | ((i >> 3) & 1)];
-    unsigned char b = starmap[((i >> 0) & 2) | ((i >> 1) & 1)];
-    star_color_lut[i] = rgb_to_swapped565(r, g, b);
-  }
-
-  // Run the LFSR and collect visible stars
-  star_count = 0;
-  uint32_t shiftreg = 0;
-  for(int i = 0; i < 131071 && star_count < GAL_MAX_STARS; i++) {
-    if((shiftreg & 0x1fe01) == 0x1fe00) {
-      int color_idx = (~shiftreg >> 3) & 0x3f;
-      int x = (i % 512) / 2;
-      int y = i / 512;
-
-      if((y ^ (x >> 3)) & 1) {
-        int gx = 255 - y;
-        int gy = x + 16;
-
-        if(gx >= 0 && gx < 224 && gy >= 16 && gy < 288) {
-          stars[star_count].x = gx;
-          stars[star_count].y = gy;
-          stars[star_count].color = star_color_lut[color_idx];
-          star_count++;
-        }
-      }
-    }
-    shiftreg = (shiftreg >> 1) | ((((shiftreg >> 12) ^ ~shiftreg) & 1) << 16);
-  }
-  stars_initialized = true;
-}
-
 void mooncresta::render_row(short row) {
   if(row <= 1 || row >= 34) return;
 
   // Draw stars BEFORE tiles (stars are background, tiles overwrite)
-  if(stars_enabled && stars_initialized) {
+  if(stars_enabled) {
+    if (row == 2)
+      star_scroll_offset = (star_scroll_offset + 1) % 288;
+
+    if (row % 2)
+      stars_toggle ^= 1;
+
     int row_top = 8 * row;
     int row_bot = row_top + 8;
     for(int i = 0; i < star_count; i++) {
@@ -393,7 +349,7 @@ void mooncresta::render_row(short row) {
         if(sx >= 0 && sx < 224) {
           int fb_idx = (sy - row_top) * 224 + sx;
           if(frame_buffer[fb_idx] == 0x0000) {
-            frame_buffer[fb_idx] = stars[i].color;
+            frame_buffer[fb_idx] = stars_toggle ? stars[i].color : 0;
           }
         }
       }
@@ -407,7 +363,8 @@ void mooncresta::render_row(short row) {
   if(scroll == 0) {
     for(char col = 0; col < 28; col++)
       blit_tile(row, col);
-  } else {
+  }
+  else {
     // partial tile at left edge when sub-tile scroll active
     if(scroll & 7)
       blit_tile_scroll(row, -1, scroll);
@@ -444,7 +401,72 @@ void mooncresta::render_row(short row) {
   }
 }
 
+void mooncresta::stars_init(void) {
+  // MAME algorithm: 17-bit LFSR, period 2^17-1 = 131071
+  // Stars visible when upper 8 bits == 0xFF and bit 0 == 0
+  // Color from bits 3-8 (6-bit, 64 colors)
+  static const unsigned char starmap[4] = { 0, 150, 200, 255 };
+
+  unsigned short star_color_lut[64];
+  for(int i = 0; i < 64; i++) {
+    unsigned char r = starmap[((i >> 4) & 2) | ((i >> 5) & 1)];
+    unsigned char g = starmap[((i >> 2) & 2) | ((i >> 3) & 1)];
+    unsigned char b = starmap[((i >> 0) & 2) | ((i >> 1) & 1)];
+    star_color_lut[i] = rgb_to_swapped565(r, g, b);
+  }
+
+  // Run the LFSR and collect visible stars
+  star_count = 0;
+  uint32_t shiftreg = 0;
+  for(int i = 0; i < 131071 && star_count < GAL_MAX_STARS; i++) {
+    if((shiftreg & 0x1fe01) == 0x1fe00) {
+      int color_idx = (~shiftreg >> 3) & 0x3f;
+      int x = (i % 512) / 2;
+      int y = i / 512;
+
+      if((y ^ (x >> 3)) & 1) {
+        int gx = 255 - y;
+        int gy = x + 16;
+
+        if(gx >= 0 && gx < 224 && gy >= 16 && gy < 288) {
+          stars[star_count].x = gx;
+          stars[star_count].y = gy;
+          stars[star_count].color = star_color_lut[color_idx];
+          star_count++;
+        }
+      }
+    }
+    shiftreg = (shiftreg >> 1) | ((((shiftreg >> 12) ^ ~shiftreg) & 1) << 16);
+  }
+}
+
+// Convert 8-bit R,G,B to RGB565 byte-swapped for ESP32 SPI
+inline unsigned short mooncresta::rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b) {
+  unsigned short c = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+  return (c >> 8) | (c << 8);  // byte-swap
+}
+
 const unsigned short *mooncresta::logo(void) {
   return mooncresta_logo;
 }
+
+#ifdef LED_PIN
+void mooncresta::gameLeds(CRGB *leds) {
+  static char sub_cnt = 0;
+  if(sub_cnt++ == 32) {
+    sub_cnt = 0;
+    static char led = 0;
+    char il = (led < NUM_LEDS) ? led : ((2 * NUM_LEDS - 2) - led);
+    for(char c = 0; c < NUM_LEDS; c++) {
+      if(c == il) leds[c] = LED_YELLOW;
+      else        leds[c] = LED_BLUE;
+    }
+    led = (led + 1) % (2 * NUM_LEDS - 2);
+  }
+}
+
+void mooncresta::menuLeds(CRGB *leds) {
+  memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
+}
+#endif
 

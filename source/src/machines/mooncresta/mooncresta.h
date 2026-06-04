@@ -74,6 +74,7 @@ public:
   ~mooncresta() {}
 
   signed char machineType() override { return MCH_MOONCRESTA; }
+  void start() override;
   unsigned char opZ80(unsigned short Addr) override;
   unsigned char rdZ80(unsigned short Addr) override;
   void wrZ80(unsigned short Addr, unsigned char Value) override;
@@ -82,10 +83,14 @@ public:
   void render_row(short row) override;
   const unsigned short *logo(void) override;
 
+#ifdef LED_PIN
+  void menuLeds(CRGB *leds) override;
+  void gameLeds(CRGB *leds) override;
+#endif
+
 protected:
   void blit_tile(short row, char col) override;
   void blit_sprite(short row, unsigned char s) override;
-
   void blit_tile_scroll(short row, signed char col, unsigned char scroll);
   
 private:
@@ -94,23 +99,26 @@ private:
   unsigned char bullet_active;  // bitmask of active bullets
 
   // Starfield
+  void stars_init(void);
+  unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b);
+
   struct star_entry {
     unsigned char x;       // 0-255 horizontal position (landscape)
     unsigned char y;       // 0-255 vertical position (landscape)
     unsigned short color;  // RGB565 byte-swapped
   };
   star_entry stars[GAL_MAX_STARS];
+
   int star_count = 0;
   int star_scroll_offset = 0;   // scrolls +1 each frame
-  bool stars_enabled = false;
-  bool stars_initialized = false;
-  void stars_init();
+  unsigned char stars_enabled = 0;
+  unsigned char stars_toggle = 0;
 
   uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
   uint8_t gfx_scroll;
 
 #ifdef LED_PIN
-  const CRGB menu_leds[7] = { LED_BLUE, LED_YELLOW, LED_BLUE, LED_YELLOW, LED_BLUE, LED_YELLOW, LED_BLUE };
+  const CRGB menu_leds[7] = { LED_YELLOW, LED_BLUE, LED_GREEN, LED_WHITE, LED_GREEN, LED_BLUE, LED_YELLOW };
 #endif
 };
 #endif
