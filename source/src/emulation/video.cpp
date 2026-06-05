@@ -142,17 +142,19 @@ Video::Video() {
   // 40Mhz is max possible rate with esp32
   // 40Mhz = 2.5MPix/s. A frame has 64512 pixels
   // -> max 38 frames/s = 25.8ms/frame
-#ifdef VSPI_HOST
+  //
+  // Using correct pins ESP32 does 80MHz on SPI2_HOST and SPI3_HOST
+  // Using correct pins ESP32-S3 does 80MHz on SPI2_HOST
+
+#ifdef TFT_SPI_HOST
+  spi_bus_initialize(TFT_SPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
+  spi_bus_add_device(TFT_SPI_HOST, &if_cfg, &handle);
+#elif def VSPI_HOST
   spi_bus_initialize(VSPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
   spi_bus_add_device(VSPI_HOST, &if_cfg, &handle);
-#else  
-#if CONFIG_IDF_TARGET_ESP32S3
-  spi_bus_initialize(SPI2_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
-  spi_bus_add_device(SPI2_HOST, &if_cfg, &handle);
 #else
-  spi_bus_initialize(SPI1_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
-  spi_bus_add_device(SPI1_HOST, &if_cfg, &handle);
-#endif
+  spi_bus_initialize(HSPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
+  spi_bus_add_device(HSPI_HOST, &if_cfg, &handle);
 #endif
 
   // trigger hardware reset

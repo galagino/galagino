@@ -94,4 +94,22 @@
 #endif
 #endif
 
+#ifndef TFT_SPI_HOST
+
+#if CONFIG_IDF_TARGET_ESP32S3
+// ESP32-S3
+// SPI0/SPI1 -> FLASH/PSRAM 
+// SPI2      -> 80MHz IO_MUX pins 9/10/11/12/13/14
+// SPI3      -> 40Mhz GPIO matrix any pins
+#define TFT_SPI_HOST SPI2_HOST
+#else
+// ESP32
+// SPI0/SPI1 -> FLASH/PSRAM 
+// SPI2      -> 80MHz 2/4/12=HSPI_MISO/13=HSPI_MOSI/14=HSPI_CLK/15=HSPI_CS0
+// SPI3      -> 80Mhz 5=VSPI_CS0/18=VSPI_CLK/19=VSPI_MISO/23=VSPI_MOSI 22=VSPI_WP 21=VSPI_HD
+#define TFT_SPI_HOST SPI2_HOST
+#endif
+
+#endif
+
 #endif // _CONFIG_H_
