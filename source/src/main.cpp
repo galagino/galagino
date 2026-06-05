@@ -93,6 +93,7 @@ void setup() {
   printf("Main core: %d\n", xPortGetCoreID());
   printf("Main priority: %d\n", uxTaskPriorityGet(NULL));
 
+  printf("TFT_SPI_HOST:  %d\n", TFT_SPI_HOST);
   printf("TFT Controller: ");
   #ifdef TFT_ILI9341
   printf("ILI9341\n");
