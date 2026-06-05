@@ -70,7 +70,7 @@ IRAM_ATTR void emulation_task(void *p) {
   // Wait for signal from video task to emulate a 60Hz frame rate. Don't do
   // this unless the game has actually started to speed up the boot process
   // a little bit.
-  if(currentMachine->game_started)   
+  if(currentMachine->game_started)
     ulTaskNotifyTake(1, portMAX_DELAY);
   else
     vTaskDelay(1); // give a millisecond delay to make the watchdog happy

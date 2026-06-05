@@ -54,4 +54,8 @@ cyd-fnk0103b-usb-up:
 	
 
 image-info:
-	esptool --chip esp32s3 --port /dev/ttyACM0 image-info .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
+	esptool --chip esp32s3 --port $(DEVICE_PATH) image-info .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
+
+flash-id:
+	esptool --port $(DEVICE_PATH) flash-id
+

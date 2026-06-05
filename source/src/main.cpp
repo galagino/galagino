@@ -10,6 +10,7 @@
  *
  */
 #include <Arduino.h>
+#include <Esp.h>
 #include <esp_flash.h>
 #include <rom/spi_flash.h>
 #include "config.h"
@@ -52,6 +53,8 @@ void onVolumeUpDown(bool up, bool down);
 void onDoReset();
 bool doReset = false;
 
+// defined in Esp.cpp
+uint32_t ESP_getFlashChipId(void);
 
 void setup() {
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -61,13 +64,30 @@ void setup() {
   delay(200); // let serial initialize
   printf("Galagino\n");
 
-  printf("ESP-IDF %0x\n", ESP_IDF_VERSION);
+  printf("ESP-IDF:     %s\n", ESP.getSdkVersion());
+  printf("Arduino:     %d.%d.%d\n", ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH);
+  printf("ESP Chip:    %s - %d\n", ESP.getChipModel(), ESP.getChipRevision());
+  printf("CPU Clock:   %d MHz\n", ESP.getCpuFreqMHz());
+  printf("Flash Size:  %d MiB\n", ESP.getFlashChipSize() / 1024 / 1024);
+  printf("Flash Speed: %d MHz\n", ESP.getFlashChipSpeed() / 1000 / 1000);
+  printf("Flash Mode:  %d - ", ESP.getFlashChipMode());
+  switch (ESP.getFlashChipMode()) {
+    case FM_QIO:       printf("FM_QIO - Quad IO\n"); break;
+    case FM_QOUT:      printf("FM_QOUT - Quad Out\n"); break;
+    case FM_DIO:       printf("FM_DIO - Dual IO\n"); break;
+    case FM_DOUT:      printf("FM_DOUT - Dual Out\n"); break;
+    case FM_FAST_READ: printf("FM_FAST_READ\n"); break;
+    case FM_SLOW_READ: printf("FM_SLOW_READ\n"); break;
+    default:           printf("FM_UNKNOWN\n"); break;
+  }
+  printf("Flash Manufacturer: 0x%02x\n", (g_rom_flashchip.device_id >> 16) & 0xff);
+  printf("Flash Type Code:    0x%02x\n", (g_rom_flashchip.device_id >> 8) & 0xff);
+  printf("Flash Size Code:    0x%02x\n", (g_rom_flashchip.device_id >> 0) & 0xff);
+  printf("Flash Id:           0x%08x\n", ESP_getFlashChipId());
 
 #ifdef WORKAROUND_I2S_APLL_PROBLEM
   printf("I2S APLL workaround active\n");
 #endif
-  // this should not be needed as the CPU runs by default on 240Mht nowadays
-  setCpuFrequencyMhz(240);
 
   printf("Free heap: %d\n", ESP.getFreeHeap());
   printf("Main core: %d\n", xPortGetCoreID());
@@ -110,22 +130,6 @@ void setup() {
   digitalWrite(AUDIO_ENABLE_PIN, LOW); // active low
   printf("AUDIO_ENABLE:     %s\n", "LOW");
   #endif
-
-  esp_flash_t* chip = esp_flash_default_chip;
-  if (chip) {
-    printf("Flash size = %dMiB speed = %d\n", 
-      chip->size / 1024 / 1024,
-      0);
-  }
-  else {
-    printf("esp_flash_default_chip is nullptr\n");
-  }
-
-  esp_flash_io_mode_t io_mode = esp_flash_default_chip->read_mode;
-  printf("Raw Enum Value: %d\n", io_mode);
-
-  printf("CONFIG_ESPTOOLPY_FLASHMODE: %s\n", CONFIG_ESPTOOLPY_FLASHMODE);
-  printf("CONFIG_ESPTOOLPY_FLASHFREQ: %s\n", CONFIG_ESPTOOLPY_FLASHFREQ);
 
   // allocate memory for a single tile/character row
   frame_buffer = (unsigned short*)malloc(224 * 8 * 2);
