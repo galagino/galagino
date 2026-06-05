@@ -93,7 +93,12 @@ void setup() {
   printf("Main core: %d\n", xPortGetCoreID());
   printf("Main priority: %d\n", uxTaskPriorityGet(NULL));
 
-  printf("TFT_SPI_HOST:  %d\n", TFT_SPI_HOST);
+  switch (TFT_SPI_HOST) {
+    case SPI1_HOST: printf("TFT_SPI_HOST:  %s\n", "SPI1_HOST"); break;
+    case SPI2_HOST: printf("TFT_SPI_HOST:  %s\n", "SPI2_HOST"); break; // esp32 HSPI | esp32-s3 FSPI
+    case SPI3_HOST: printf("TFT_SPI_HOST:  %s\n", "SPI3_HOST"); break; // esp32 VSPI | esp32-s3 HSPI
+    default:        printf("TFT_SPI_HOST:  %s\n", "?");         break;
+  }
   printf("TFT Controller: ");
   #ifdef TFT_ILI9341
   printf("ILI9341\n");
