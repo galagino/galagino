@@ -13,7 +13,8 @@ die() {
 #------------------------------------
 
 # unzip and patch z80 emulator
-python ./z80patch.py || die
+python3 ./z80patch.py || die
+dos2unix ../source/src/cpus/z80/* || die
 echo "Z80 done"
 
 #------------------------------------

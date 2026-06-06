@@ -253,7 +253,7 @@ const char *mchName(signed char machineType) {
     case MCH_MRDO:          return "Mr. Do!";
     case MCH_BAGMAN:        return "Bagman";
     case MCH_PENGO:         return "Pengo";
-    case MCH_MSPACMAN:      return "Ms. Pac-Mman";
+    case MCH_MSPACMAN:      return "Ms. Pac-Man";
     case MCH_GALAXIAN:      return "Galaxian";
     case MCH_LADYBUG:       return "Lady Bug";
     case MCH_SPACEINVADERS: return "Space Invaders";
@@ -263,6 +263,7 @@ const char *mchName(signed char machineType) {
     case MCH_DKONGJR:       return "Donkey Kong Jr.";
     case MCH_STARFORCE:     return "Star Force";
     case MCH_MOONCRESTA:    return "Moon Cresta";
+    case MCH_SCRAMBLE:      return "Scramble";
   }
 
   return "";

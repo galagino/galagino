@@ -99,12 +99,16 @@
   #include "machines/dkongjr/dkongjr.h"
 #endif
 
+#ifdef ENABLE_STARFORCE
+  #include "machines/starforce/starforce.h"
+#endif
+
 #ifdef ENABLE_MOONCRESTA
   #include "machines/mooncresta/mooncresta.h"
 #endif
 
-#ifdef ENABLE_STARFORCE
-  #include "machines/starforce/starforce.h"
+#ifdef ENABLE_SCRAMBLE
+  #include "machines/scramble/scramble.h"
 #endif
 
 // change machine order is possible here...
@@ -186,6 +190,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_MOONCRESTA
   new mooncresta(),
+#endif
+#ifdef ENABLE_SCRAMBLE
+  new scramble(),
 #endif
 };
 
