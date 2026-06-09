@@ -130,13 +130,15 @@ private:
   static constexpr unsigned short CPU1_SPRITE_ADDR = 0x5040;
   static constexpr unsigned short CPU1_BULLET_ADDR = 0x5060;
   static constexpr unsigned short CPU1_RAM2_ADDR   = 0x5080;
+  static constexpr unsigned short CPU1_OBJRAM_ADDR = CPU1_ATTR_ADDR;
 
   static constexpr unsigned short CPU1_RAM_SIZE    = 0x0800;
   static constexpr unsigned short CPU1_VRAM_SIZE   = 0x0400;
   static constexpr unsigned short CPU1_ATTR_SIZE   = 0x0040;
   static constexpr unsigned short CPU1_SPRITE_SIZE = 0x0020;
   static constexpr unsigned short CPU1_BULLET_SIZE = 0x0020;
-  static constexpr unsigned short CPU1_RAM2_SIZE   = 0x0800;
+  static constexpr unsigned short CPU1_RAM2_SIZE   = 0x0080;
+  static constexpr unsigned short CPU1_OBJRAM_SIZE = CPU1_ATTR_SIZE + CPU1_SPRITE_SIZE + CPU1_BULLET_SIZE + CPU1_RAM2_SIZE;
 
   static constexpr unsigned short CPU1_RAM_OFFSET    = 0x0000;
   static constexpr unsigned short CPU1_VRAM_OFFSET   = CPU1_RAM_OFFSET    + CPU1_RAM_SIZE;
@@ -162,6 +164,7 @@ private:
   unsigned char *sprite_ram    = memory + CPU1_SPRITE_OFFSET;
   unsigned char *bullet_ram    = memory + CPU1_BULLET_OFFSET;
   unsigned char *cpu_ram2      = memory + CPU1_RAM2_OFFSET;
+  unsigned char *obj_ram       = memory + CPU1_OBJRAM_ADDR;
 
   unsigned char *cpu2_ram      = memory + CPU2_RAM_OFFSET;
 

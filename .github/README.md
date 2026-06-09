@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) and Moon Cresta.
+It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta and Scramble (audio doesn't sound right).
 
 
 ### Quality of Life, improvements and fixes
@@ -64,5 +64,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Donkey Kong Jr. (dkongjrj.zip) | ![ ](/logos/dkongjr.png)      | ![ ](/images/dkongjr.png)      |       |
 | Star Force (starforc.zip)      | ![ ](/logos/starforce.png)    | ![ ](/images/starforce.png)    |       |
 | Moon Cresta (mooncrst.zip)     | ![ ](/logos/mooncresta.png)   | ![ ](/images/mooncresta.png)   |       |
+| Scramble (scramble.zip)        | ![_](/logos/scramble.png)     | ![_](/images/scramble.png)     |       |
 
 ### ...

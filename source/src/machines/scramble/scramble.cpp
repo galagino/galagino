@@ -27,7 +27,7 @@ inline unsigned char scramble::rdIN0() { // PPI0 PortA
   if(keymask & BUTTON_COIN)  retval &= ~0x80;
   if(keymask & BUTTON_LEFT)  retval &= ~0x20;
   if(keymask & BUTTON_RIGHT) retval &= ~0x10;
-  
+
   if(ignoreFireButton && !(keymask & BUTTON_FIRE) && (keymask & BUTTON_START))
     ignoreFireButton = 0;
 
@@ -40,7 +40,7 @@ inline unsigned char scramble::rdIN1() { // PPI0 PortB
   unsigned char retval = SCRAMBLE_IN1_VALUE;
   unsigned char keymask = input->buttons_get();
 
-  if(!ignoreFireButton && (keymask & BUTTON_START)) retval &= ~0x80; 
+  if(!ignoreFireButton && (keymask & BUTTON_START)) retval &= ~0x80;
   return retval;
 }
 inline unsigned char scramble::rdIN2() { // PPI0 PortC
@@ -106,6 +106,9 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
     if ((Addr & 0xfbff) >= CPU1_VRAM_ADDR && (Addr & 0xfbff) < CPU1_VRAM_ADDR + CPU1_VRAM_SIZE)
       return video_ram[(Addr & 0x03ff)];
 
+    //if (Addr >= CPU1_OBJRAM_ADDR && Addr < CPU1_OBJRAM_ADDR + CPU1_OBJRAM_SIZE)
+    //  return obj_ram[Addr - CPU1_OBJRAM_ADDR];
+    
     if (Addr >= CPU1_ATTR_ADDR && Addr < CPU1_ATTR_ADDR + CPU1_ATTR_SIZE)
       return attribute_ram[Addr - CPU1_ATTR_ADDR];
 
@@ -119,8 +122,8 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
       return cpu_ram2[Addr - CPU1_RAM2_ADDR];
 
     switch (Addr) {
-      case 0x7000: // Watchdog 
-      case 0x7800: 
+      case 0x7000: // Watchdog
+      case 0x7800:
         return 0xff;
       case 0x8100: // PPI0 - Port A - IN0
       case 0x8110:
@@ -147,7 +150,7 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
     if (Addr < CPU2_ROM_SIZE)
       return scramble_audio_rom[Addr];
 
-    if (Addr >= CPU2_RAM_ADDR && Addr < CPU2_RAM_ADDR + CPU2_RAM_SIZE) 
+    if (Addr >= CPU2_RAM_ADDR && Addr < CPU2_RAM_ADDR + CPU2_RAM_SIZE)
       return cpu2_ram[Addr - CPU2_RAM_ADDR];
   }
 
@@ -167,6 +170,12 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
       return;
     }
 
+    //if (Addr >= CPU1_OBJRAM_ADDR && Addr < CPU1_OBJRAM_ADDR + CPU1_OBJRAM_SIZE) {
+    //  obj_ram[Addr - CPU1_OBJRAM_ADDR] = Value;
+    //  return;
+    //}
+
+    
     if (Addr >= CPU1_ATTR_ADDR && Addr < CPU1_ATTR_ADDR + CPU1_ATTR_SIZE) {
       attribute_ram[Addr - CPU1_ATTR_ADDR] = Value;
       return;
@@ -186,7 +195,7 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
       cpu_ram2[Addr - CPU1_RAM2_ADDR] = Value;
       return;
     }
-    
+
     switch (Addr) {
       case 0x6801: // NMI
         irq_enable[0] = Value & 1;
@@ -197,7 +206,7 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
         // GalBackgroundEnable = d & 1;
         return;
       case 0x6804: // Stars enable
-        stars_enabled = (Value & 1); 
+        stars_enabled = (Value & 1);
         return;
       case 0x6805: // Atlantis
         return;
@@ -254,7 +263,7 @@ static constexpr unsigned char  AY2_OFFSET = 0x10;
 
 unsigned char scramble::inZ80(unsigned short Port) {
   static const unsigned char _timer[20] = {
-    0x0e, 0x1e, 0x0e, 0x1e, 0x2e, 0x3e, 0x2e, 0x3e, 0x4e, 0x5e, 
+    0x0e, 0x1e, 0x0e, 0x1e, 0x2e, 0x3e, 0x2e, 0x3e, 0x4e, 0x5e,
     0x8e, 0x9e, 0x8e, 0x9e, 0xae, 0xbe, 0xae, 0xbe, 0xce, 0xde
   };
 
@@ -269,8 +278,8 @@ unsigned char scramble::inZ80(unsigned short Port) {
           return soundregs[AY2_OFFSET + ay_port];
         if (ay_port == 14)
           return sound_latch;
-        if (ay_port == 15) { 
-          return _timer[(snd_icnt/20)%20]; 
+        if (ay_port == 15) {
+          return _timer[(snd_icnt/20)%20];
         }
         break;
     }
@@ -304,7 +313,7 @@ void scramble::outZ80(unsigned short Port, unsigned char Value) {
 }
 
 void scramble::run_frame(void) {
-  for(int i=0; i<1350; i++) {
+  for(int i=0; i<1450; i++) {
     current_cpu=0; StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
     current_cpu=1; StepZ80(&cpu[1]); snd_icnt++; StepZ80(&cpu[1]); snd_icnt++;
 
