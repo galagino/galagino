@@ -104,7 +104,6 @@ private:
   unsigned char sound_latch;
   unsigned char ay_port;
   unsigned char snd_irq_state;
-  unsigned char snd_irq_pending = 0;
   unsigned char snd_irq_last = 0;   
   unsigned long snd_icnt = 0;
 

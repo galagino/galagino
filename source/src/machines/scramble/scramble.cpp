@@ -108,7 +108,7 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
 
     //if (Addr >= CPU1_OBJRAM_ADDR && Addr < CPU1_OBJRAM_ADDR + CPU1_OBJRAM_SIZE)
     //  return obj_ram[Addr - CPU1_OBJRAM_ADDR];
-    
+
     if (Addr >= CPU1_ATTR_ADDR && Addr < CPU1_ATTR_ADDR + CPU1_ATTR_SIZE)
       return attribute_ram[Addr - CPU1_ATTR_ADDR];
 
@@ -175,7 +175,6 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
     //  return;
     //}
 
-    
     if (Addr >= CPU1_ATTR_ADDR && Addr < CPU1_ATTR_ADDR + CPU1_ATTR_SIZE) {
       attribute_ram[Addr - CPU1_ATTR_ADDR] = Value;
       return;
@@ -228,7 +227,9 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
         sound_latch = Value;
         return;
       case 0x8201: // PPI1 - Port B
-        snd_irq_state = Value;
+        if((Value & 0x08) && !snd_irq_last)
+          snd_irq_state = Value;
+        snd_irq_last = Value & 0x08;
         return;
       case 0x8202: // PPI1 - Port C
         wrProtection(Value);
@@ -259,12 +260,11 @@ static constexpr unsigned char  AY1_OFFSET = 0x00;
 static constexpr unsigned char  AY2_OFFSET = 0x10;
 
 // AY2_PORTA - sound_latch
-// AY2_PORTB - timer... nhec
+// AY2_PORTB - timer
 
 unsigned char scramble::inZ80(unsigned short Port) {
-  static const unsigned char _timer[20] = {
-    0x0e, 0x1e, 0x0e, 0x1e, 0x2e, 0x3e, 0x2e, 0x3e, 0x4e, 0x5e,
-    0x8e, 0x9e, 0x8e, 0x9e, 0xae, 0xbe, 0xae, 0xbe, 0xce, 0xde
+  static const unsigned char _timer[10] = {
+    0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
   };
 
   if (current_cpu == 1) {
@@ -279,7 +279,9 @@ unsigned char scramble::inZ80(unsigned short Port) {
         if (ay_port == 14)
           return sound_latch;
         if (ay_port == 15) {
-          return _timer[(snd_icnt/20)%20];
+          // Port B = timer: LS90 bi-quinary counter, divide-by-5120
+          // MAME: scramble_timer[(total_cycles / 512) % 10]
+          return _timer[(snd_icnt / 45) % 10];
         }
         break;
     }
@@ -312,8 +314,10 @@ void scramble::outZ80(unsigned short Port, unsigned char Value) {
   return;
 }
 
+// Main  Z80 @ 3.072 MHz
+// Sound Z80 @ 1.789 MHz + 2x AY-3-8910
 void scramble::run_frame(void) {
-  for(int i=0; i<1450; i++) {
+  for(int i=0; i<1280; i++) {
     current_cpu=0; StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]); StepZ80(&cpu[0]);
     current_cpu=1; StepZ80(&cpu[1]); snd_icnt++; StepZ80(&cpu[1]); snd_icnt++;
 
