@@ -1,10 +1,17 @@
 
-DEVICE ?= 0
 DEVICE_BASE := /dev/ttyUSB
 DEVICE_BASE := /dev/ttyACM
-DEVICE_PATH := $(DEVICE_BASE)$(DEVICE)
 DEFAULT_ENV := cyd-2432s028r
 DEFAULT_ENV := cyd-esp32-s3-display-usb-up
+
+ifneq (,$(wildcard /dev/ttyUSB*))
+  DEVICE_BASE := /dev/ttyUSB
+endif
+ifneq (,$(wildcard /dev/ttyACM*))
+  DEVICE_BASE := /dev/ttyACM
+endif
+DEVICE ?= 0
+DEVICE_PATH := $(DEVICE_BASE)$(DEVICE)
 
 ENV ?= $(DEFAULT_ENV)
 
@@ -43,15 +50,17 @@ cyd-fnk0103f:
 cyd-fnk0103b:
 	$(MAKE) upload ENV=$@
 
-cyd-2432s028r-usb-up:
+# ST7789 - black
+cyd-fnk0103b-usb-up:
 	$(MAKE) upload ENV=$@
 
+# ILI9341 - transparent
 cyd-fnk0103f-usb-up:
 	$(MAKE) upload ENV=$@
 
-cyd-fnk0103b-usb-up:
+# ILI9341 - silk white
+cyd-esp32-s3-display-usb-up:
 	$(MAKE) upload ENV=$@
-	
 
 image-info:
 	esptool --chip esp32s3 --port $(DEVICE_PATH) image-info .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
