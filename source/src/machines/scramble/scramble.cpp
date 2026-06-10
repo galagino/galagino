@@ -281,7 +281,7 @@ unsigned char scramble::inZ80(unsigned short Port) {
         if (ay_port == 15) {
           // Port B = timer: LS90 bi-quinary counter, divide-by-5120
           // MAME: scramble_timer[(total_cycles / 512) % 10]
-          return _timer[(snd_icnt / 45) % 10];
+          return _timer[(snd_icnt / 32) % 10];
         }
         break;
     }
