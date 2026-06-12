@@ -216,6 +216,8 @@ void updateAudioVideo(void) {
       audio.transmit();
     }
 
+    emulation_videoRendered();
+
     // one screen at 60 Hz is 16.6ms
     unsigned long t1 = (micros() - t0) / 1000;  // calculate time in milliseconds
     if(t1 < 16)
@@ -240,9 +242,10 @@ void updateAudioVideo(void) {
         audio.transmit();
       }
 
+      emulation_videoRendered();
+
       // one screen at 60 Hz is 16.6ms
       unsigned long t1 = (micros() - t0) / 1000;  // calculate time in milliseconds
-      // printf("uspf %d\n", t1);
       if(t1 < (half ? 33 : 16))
         vTaskDelay((half ? 33 : 16) - t1);
       else if(half)

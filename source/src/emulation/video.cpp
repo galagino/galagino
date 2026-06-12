@@ -153,8 +153,8 @@ Video::Video() {
   spi_bus_initialize(VSPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
   spi_bus_add_device(VSPI_HOST, &if_cfg, &handle);
 #else
-  spi_bus_initialize(HSPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
-  spi_bus_add_device(HSPI_HOST, &if_cfg, &handle);
+  spi_bus_initialize(SPI1_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
+  spi_bus_add_device(SPI1_HOST, &if_cfg, &handle);
 #endif
 
   // trigger hardware reset
@@ -241,8 +241,7 @@ void Video::write(uint16_t *colors, uint32_t len) {
   }
  
   memcpy(dma_buffer, colors, 2 * len);
-
-  transaction.flags = 0;
+transaction.flags = 0;
   transaction.length = 16 * len; // Length in bits
   transaction.tx_buffer = dma_buffer;
   spi_device_queue_trans(handle, &transaction, portMAX_DELAY);
