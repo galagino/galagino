@@ -55,7 +55,6 @@ public:
 
   signed char machineType() override { return MCH_SCRAMBLE; }
   void start() override;
-  void reset() override;
 
   unsigned char opZ80(unsigned short Addr) override;
   unsigned char rdZ80(unsigned short Addr) override;
@@ -96,9 +95,9 @@ private:
   star_entry stars[SCRAMBLE_MAX_STARS];
 
   int star_count = 0;
-  int star_scroll_offset = 0;   // scrolls +1 each frame
+  int stars_frame_counter = 0;
+  int stars_index = 2;
   unsigned char stars_enabled = 0;
-  unsigned char stars_toggle = 0;
 
   unsigned char ignoreFireButton;
   unsigned char sound_latch;
@@ -107,15 +106,8 @@ private:
   unsigned char snd_irq_last = 0;   
   unsigned long snd_icnt = 0;
 
-  unsigned short ScrambleProtectionState = 0;
-  unsigned char  ScrambleProtectionResult = 0;
-
-  inline unsigned char rdIN0(); // PPI0 PortA
-  inline unsigned char rdIN1(); // PPI0 PortB
-  inline unsigned char rdIN2(); // PPI0 PortC
-
-  inline unsigned char rdProtection();               // PPI1 PortC
-  inline void wrProtection(unsigned char d);         // PPI1 PortC
+  unsigned short protectionState = 0;
+  unsigned char  protectionResult = 0;
 
   uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
   uint8_t gfx_scroll;

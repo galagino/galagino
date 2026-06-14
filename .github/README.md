@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta and Scramble (audio doesn't sound right).
+It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta and Scramble.
 
 
 ### Quality of Life, improvements and fixes
@@ -16,7 +16,7 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * Time Pilot sprite multiplexing
 
-* Bluetooth Controller over i2c
+* Bluetooth Controller over i2c -> [galagino-controller](https://github.com/galagino/galagino-controller)
 
 * Support for ESP32-S3
 
@@ -24,11 +24,18 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * Linux `romconv` scripts
 
+* `pengo.zip`, `pengoj.zip` romsets conversion
+
 ### Hardware Used
 
-| Board | Link | Amazon |
-| ---   | ---  | ---    |
-|       |      |        | 
+| Board    | Link | Amazon |
+| ---      | ---  | ---    |
+| fnk0103b |      |        |
+|          |      |        |
+| fnk0103f |      |        |
+|          |      |        |
+| fnk0104  |      |        |
+|          |      |        |
 
 ### 3d printed enclosure
 
