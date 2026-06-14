@@ -28,14 +28,14 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 ### Hardware Used
 
-| Board    | Link | Amazon |
-| ---      | ---  | ---    |
-| fnk0103b |      |        |
-|          |      |        |
-| fnk0103f |      |        |
-|          |      |        |
-| fnk0104  |      |        |
-|          |      |        |
+| Board    | Link                                                            | Amazon | Notes               |
+| ---      | ---                                                             | ---    | ---                 |
+| fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)       | ST7789 - SPI 80MHz  |
+|          |                                                                 |        |                            |
+| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)       | ILI9341 - SPI 60MHz |
+|          |                                                                 |                                     |                     |
+| fnk0104a | [github](https://github.com/Freenove/Freenove_ESP32_S3_Display) | [Amzn](https://amazon.es/dp/B0FSQLPQ6M) | ESP32-S3 - IPS Display - External DAC |
+|          |                                                                 |                                     | ILI9341 - SPI 60MHz - 16MiB Flash     |
 
 ### 3d printed enclosure
 
