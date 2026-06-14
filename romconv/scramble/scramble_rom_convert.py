@@ -52,7 +52,7 @@ def load_file(names, sha1):
             return rom
           return None
   for name in names:
-    print(f"ERROR: File '{name}' not found in {os.path.abspath(ROM_SRC)}")
+    print(f"ERROR: File '{name}' not found in {os.path.abspath(ROM_SET)}")
     return None
 
 def check_file(name, b, h):

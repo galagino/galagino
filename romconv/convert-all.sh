@@ -405,7 +405,19 @@ fi
 # Pengo
 #------------------------------------
 
-if [[ -f ../romszip/pengo2u.zip ]]; then
+if [[ -f ../romszip/pengo.zip ]] || [[ -f ../romszip/pengoj.zip ]]; then
+  #echo Pengo Logos
+  #python3 ./logoconv.py ../logos/pengo.png ../source/src/machines/pengo/pengo_logo.h || die
+
+  cd pengo || die
+
+  echo Pengo conversion
+  python3 ./convert_pengo_rom.py || die
+
+  cd ..
+fi
+
+if false && [[ -f ../romszip/pengo2u.zip ]]; then
   echo Pengo Unpack roms
   python3 ./unpack.py pengo2u.zip || die
 
