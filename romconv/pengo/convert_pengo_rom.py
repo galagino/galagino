@@ -28,21 +28,22 @@ ROM_SET_J  = os.path.normpath(os.path.join("..", "..", "romszip", "pengoj.zip"))
 ROM_SET_2u = os.path.normpath(os.path.join("..", "..", "romszip", "pengo2u.zip"))
 OUT_DIR    = os.path.normpath(os.path.join("..", "..", "source", "src", "machines", "pengo"))
 
-PENGO_FILES_old = {
-  "cpu0":   {"names": ["ep1689c.8"],  "sha1": "0930de17a763a527057f60783a92662b09554426"},
-  "cpu1":   {"names": ["ep1690b.7"],  "sha1": "4c97529e61eeca5d94938b1dfbeac41bf8cbaf7d"}, 
-  "cpu2":   {"names": ["ep1691b.15"], "sha1": "c8949fbdbfe5023ee17a789ef60205e834a76c81"},
-  "cpu3":   {"names": ["ep1692b.14"], "sha1": "7079769d14dfe3873ffe29623ba0a93413706c6d"},
-  "cpu4":   {"names": ["ep1693b.21"], "sha1": "c0508951c2ad8dc31481be8b3bfee2063e3fb0d7"},
-  "cpu5":   {"names": ["ep1694b.20"], "sha1": "7b47aec61593efd758e2a031f72a854bb0ba8af1"},
-  "cpu6":   {"names": ["ep5118b.32"], "sha1": "207ed466546f40ca60a38031b83aef61446902e2"},
-  "cpu7":   {"names": ["ep5119c.31"], "sha1": "fec7236b3dee2ea6e39c68440a6d2d9e3f72675a"},
-  "gfx1":   {"names": ["ep1640.92"],  "sha1": "e542bcc28f292be9a0a29d949de726e0b55e654a"},
-  "gfx2":   {"names": ["ep1695.105"], "sha1": "bdec535e486b43a8f5550334beff423eeace10b2"},
-  "prom1":  {"names": ["pr1633.78"],  "sha1": "680eab0e1204c9b74adc11588461651b474021bb"},
-  "prom2":  {"names": ["pr1634.88"],  "sha1": "3fcd66610fcaee814953a115bf5e04788923181f"},
-  "sound1": {"names": ["pr1635.51"],  "sha1": "563c9770028fe39188e62630711589d6ed242a66"},
-  "sound2": {"names": ["pr1636.70"],  "sha1": "0c4d0bee858b97632411c440bea6948a74759746"},
+PENGO2u_FILES = {
+  "romset": {"name": "pengo2u.zip", "description": "Pengo (set 2 not encrypted)"},
+  "cpu0":   {"names": ["epr5128.u8",  "pengo.u8"],   "sha1": "a387b72501da77bf38b58619d2099083a0463e1f"},
+  "cpu1":   {"names": ["epr5129.u7",  "pengo.u7"],   "sha1": "d1c66bb9cf479e6960dbcd35c820097a81eaa555"},
+  "cpu2":   {"names": ["epr5130.u15", "pengo.u15"],  "sha1": "a8a568da68babd0ccb9f2cee4182fc01c3138494"},
+  "cpu3":   {"names": ["epr5131.u14", "pengo.u14"],  "sha1": "2ee821b0f6e0f3cfeae7f5ff25a6e9bd977efce0"},
+  "cpu4":   {"names": ["ep5124.21",   "ep5124.21"],  "sha1": "fdebc68a6d87f8ecdf52a57a34ae5ae844a13510"},
+  "cpu5":   {"names": ["epr5133.u20", "pengo.u20"],  "sha1": "ed814d58318c1055e475ff678609d189727bf9b4"},
+  "cpu6":   {"names": ["ep5126.32",   "ep5126.32"],  "sha1": "0ac5ffdad7bdcb32e630b9582e1b1aaece5198c9"},
+  "cpu7":   {"names": ["epr5135.u31", "pengo.u31"],  "sha1": "332b484d47c9921ed93432755bb2d7a9d4628939"},
+  "gfx1":   {"names": ["ep1640.92",   "ep1640.92"],  "sha1": "e542bcc28f292be9a0a29d949de726e0b55e654a"},
+  "gfx2":   {"names": ["ep1695.105",  "ep1695.105"], "sha1": "bdec535e486b43a8f5550334beff423eeace10b2"},
+  "prom1":  {"names": ["pr1633.78",   "pr1633.78"],  "sha1": "680eab0e1204c9b74adc11588461651b474021bb"},
+  "prom2":  {"names": ["pr1634.88",   "pr1634.88"],  "sha1": "3fcd66610fcaee814953a115bf5e04788923181f"},
+  "sound1": {"names": ["pr1635.51",   "pr1635.51"],  "sha1": "563c9770028fe39188e62630711589d6ed242a66"},
+  "sound2": {"names": ["pr1636.70",   "pr1636.70"],  "sha1": "0c4d0bee858b97632411c440bea6948a74759746"},
 }
 
 PENGOW_FILES = {
@@ -346,6 +347,8 @@ def main():
     convert_pengo(ROM_SET_J, PENGOJ_FILES, GALAGINO_FILES)
   elif os.path.isfile(ROM_SET_W):
     convert_pengo(ROM_SET_W, PENGOW_FILES, GALAGINO_FILES)
+  elif os.path.isfile(ROM_SET_2u):
+    convert_pengo(ROM_SET_2u, PENGO2u_FILES, GALAGINO_FILES)
   else:
     print("ERROR: No roms.")
     sys.exit(1)

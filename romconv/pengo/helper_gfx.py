@@ -138,7 +138,7 @@ def flip_sprite(sprite_data, flip_x, flip_y):
 # -----------------------------------------------------------------------------
 
 def tiles_create_preview(gfx_list, width, height, output_filename):
-    print(f"Creazione anteprima: {output_filename}...")
+    print(f"Create preview: {output_filename}...")
     # ... (Codice per l'anteprima) ...
     num_elements = len(gfx_list)
     grid_cols = 32 if width == 8 else 16
@@ -164,7 +164,7 @@ def tiles_create_preview(gfx_list, width, height, output_filename):
 # -----------------------------------------------------------------------------
 
 def sprites_create_preview(gfx_list, width, height, output_filename):
-    print(f"Creazione anteprima: {output_filename}...")
+    print(f"Create preview: {output_filename}...")
     num_elements = len(gfx_list)
     grid_cols = 16
     grid_rows = (num_elements + grid_cols - 1) // grid_cols

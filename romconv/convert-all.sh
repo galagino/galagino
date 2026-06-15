@@ -405,7 +405,7 @@ fi
 # Pengo
 #------------------------------------
 
-if [[ -f ../romszip/pengo.zip ]] || [[ -f ../romszip/pengoj.zip ]]; then
+if [[ -f ../romszip/pengo.zip ]] || [[ -f ../romszip/pengoj.zip ]] || [[ -f ../romszip/pengo2u.zip ]]; then
   #echo Pengo Logos
   #python3 ./logoconv.py ../logos/pengo.png ../source/src/machines/pengo/pengo_logo.h || die
 
@@ -648,6 +648,43 @@ if [[ -f ../romszip/starforc.zip ]]; then
 
   cd ..
   
+  echo --- Success ---
+fi
+
+#------------------------------------
+# Moon Cresta
+#------------------------------------
+
+if [[ -f ../romszip/mooncrst.zip ]]; then
+  echo --------- Convert Star Force ---------
+  #echo Moon Cresta Logos
+  #python3 ./logoconv.py ../logos/mooncresta.png ../source/src/machines/mooncresta/mooncresta_logo.h || die
+
+  echo Moon Cresta Unpack roms
+  python3 ./unpack.py mooncrst.zip || die
+
+  echo Converting Moon Cresta
+  cd mooncresta || die
+  python3 ./mooncresta_rom_convert.py || die
+  cd ..
+
+  echo --- Success ---
+fi
+
+#------------------------------------
+# Scramble
+#------------------------------------
+
+if [[ -f ../romszip/scramble.zip ]]; then
+  echo --------- Convert Scramble ---------
+  #echo Scramble Logos
+  #python3 ./logoconv.py ../logos/scramble.png ../source/src/machines/scramble/scramble_logo.h || die
+
+  echo Converting Scramble
+  cd scramble || die
+  python3 ./scramble_rom_convert.py || die
+  cd ..
+
   echo --- Success ---
 fi
 

@@ -18,8 +18,10 @@ if [[ -f ../romszip/scramble.zip ]]; then
 
   echo Converting Scramble
   cd scramble || die
+
   python3 ./scramble_rom_convert.py || die
+
   cd ..
-
-
+else
+  die
 fi

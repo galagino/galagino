@@ -23,5 +23,7 @@ if [[ -f ../romszip/mooncrst.zip ]]; then
   cd mooncresta || die
   python3 ./mooncresta_rom_convert.py || die
   cd ..
+else
+  die
 fi
 
