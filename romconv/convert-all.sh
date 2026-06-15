@@ -412,7 +412,7 @@ if [[ -f ../romszip/pengo.zip ]] || [[ -f ../romszip/pengoj.zip ]] || [[ -f ../r
   cd pengo || die
 
   echo Pengo conversion
-  python3 ./convert_pengo_rom.py || die
+  python3 ./pengo_rom_convert.py || die
 
   cd ..
 fi
