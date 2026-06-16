@@ -2,6 +2,7 @@
 echo --------- Convert all ---------
 
 call conv_z80.bat
+call conv_m6502.bat
 call conv_pacman.bat
 call conv_galaga.bat
 call conv_digdug.bat

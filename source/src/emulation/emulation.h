@@ -4,6 +4,7 @@
 #include "cpus/z80/Z80.h"
 #include "cpus/i8048/i8048.h"
 #include "cpus/m6809/m6809.h"
+#include "cpus/m6502/M6502.h"
 
 //#define DEBUG_TIMING
 
@@ -47,4 +48,12 @@ extern "C" unsigned char m6809_read(m6809_state *s, uint16_t addr);
 extern "C" void m6809_write(m6809_state *s, uint16_t addr, uint8_t val);
 extern "C" unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr);
 #endif
+
+#ifdef __cplusplus
+extern "C" void Wr6502(unsigned short Addr,unsigned char Value);
+extern "C" unsigned char Rd6502(unsigned short Addr);
+extern "C" unsigned char Op6502(unsigned short Addr);
+extern "C" void PatchM6502(M6502 *R);
+#endif
+
 #endif

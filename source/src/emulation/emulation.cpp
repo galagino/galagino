@@ -142,3 +142,18 @@ unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr) {
   return currentMachine->m6809_read_opcode(s, addr);
 }
 
+void Wr6502(unsigned short Addr, unsigned char Value) {
+  currentMachine->wr6502(Addr, Value);
+}
+
+unsigned char Rd6502(unsigned short Addr) {
+  return currentMachine->rd6502(Addr);
+}
+
+unsigned char Op6502(unsigned short Addr) {
+  return currentMachine->op6502(Addr);
+}
+
+unsigned char PatchM6502(unsigned char Op, M6502 *R) {
+  return 0;
+}

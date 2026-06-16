@@ -14,8 +14,15 @@ die() {
 
 # unzip and patch z80 emulator
 python3 ./z80patch.py || die
-dos2unix ../source/src/cpus/z80/* || die
 echo "Z80 done"
+
+#------------------------------------
+# m6502
+#------------------------------------
+
+# unzip and patch z80 emulator
+python3 ./m6502patch.py || die
+echo "m6502 done"
 
 #------------------------------------
 # pacman
