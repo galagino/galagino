@@ -15,6 +15,8 @@ import sys
 import zipfile
 import hashlib
 
+sys.dont_write_bytecode = True
+
 from helper_functions import hex8, hex16, hex32
 from helper_functions import load_file
 from helper_functions import get_bit, rgb888_to_rgb565_le
