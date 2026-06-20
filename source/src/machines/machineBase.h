@@ -66,7 +66,8 @@ enum {
   MCH_GALAXIAN,
   MCH_STARFORCE,
   MCH_MOONCRESTA,
-  MCH_SCRAMBLE
+  MCH_SCRAMBLE,
+  MCH_SUPERCOBRA
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame

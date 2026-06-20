@@ -1,43 +1,42 @@
-#ifndef SCRAMBLE_H
-#define SCRAMBLE_H
+#ifndef SUPERCOBRA_H
+#define SUPERCOBRA_H
 
-#include "scramble_logo.h"
-#include "scramble_main_rom.h"
-#include "scramble_audio_rom.h"
-#include "scramble_spritemap.h"
-#include "scramble_tilemap.h"
-#include "scramble_cmap.h"
-#include "scramble_dipswitches.h"
+#include "supercobra_logo.h"
+#include "supercobra_main_rom.h"
+#include "supercobra_audio_rom.h"
+#include "supercobra_spritemap.h"
+#include "supercobra_tilemap.h"
+#include "supercobra_cmap.h"
+#include "supercobra_dipswitches.h"
 
 #include "../tileaddr.h"
 #include "../machineBase.h"
 
 // ============================================================
-// Scramble (Konami 1981) memory map:
+// Super Cobra (Konami 1981) memory map:
 // Main CPU (Z80 @ 3.072 MHz):
-//   0x0000-0x3fff: ROM (16KiB)      (0x4000)
-//   0x4000-0x47ff: RAM (2KiB)       (0x0800)
-//   0x4800-0x4bff: Video RAM (1KiB) (0x0400)
-//   0x4c00-0x4fff: Video RAM mirror (0x0400)
-//   0x5000-0x503f: Attributes RAM   (0x0040)
-//   0x5040-0x505f: Sprite RAM       (0x0020)
-//   0x5060-0x507f: Bullet RAM       (0x0020)
-//   0x5080-0x50ff: RAM              (0x0080)
-//   0x6801-0x6801: NMI           galaxold_nmi_enable_w
-//   0x6802-0x6802: Coin Counter  galaxold_coin_counter_w
-//   0x6804-0x6804: Stars Enable  galaxold_stars_enable_w
-//   0x6806-0x6806: Flip Screen X galaxold_flip_screen_x_w
-//   0x6807-0x6807: Flip Screen Y galaxold_flip_screen_y_w
-//   0x7000-0x7000: Watchdog      reset_r
-//   0x7800-0x7800: Watchdog      reset_r
-//   0x8100-0x8103: PPI0          read/write
-//   0x8110-0x8113: PPI0 mirror   read
-//   0x8200-0x8203: PPI1          read/write
+//   0x0000-0x2fff: ROM (24KiB)      (0x6000)
+//   0x8000-0x87ff: RAM (2KiB)       (0x0800)  0x4000 -> 0x8000
+//   0x8800-0x8bff: Video RAM (1KiB) (0x0400)  0x4800 -> 0x8800
+//   0x8c00-0x8fff: Video RAM mirror (0x0400)  0x4c00 -> 0x8c00
+//   0x9000-0x903f: Attributes RAM   (0x0040)  0x5000 -> 0x9000 
+//   0x9040-0x905f: Sprite RAM       (0x0020)
+//   0x9060-0x907f: Bullet RAM       (0x0020)
+//   0x9080-0x90ff: RAM              (0x0080)
+//   0xa801-0xa801: NMI           galaxold_nmi_enable_w       6801 -> a801
+//   0xa802-0xa802: Coin Counter  galaxold_coin_counter_w     6802 -> a802
+//   0xa803-0xa803: Background    GalBackgroundEnable = d & 1;
+//   0xa804-0xa804: Stars Enable  galaxold_stars_enable_w     6804 -> a804 
+//   0xa806-0xa806: Flip Screen X galaxold_flip_screen_x_w    
+//   0xa807-0xa807: Flip Screen Y galaxold_flip_screen_y_w
+//   0xb000-0xb000: Watchdog      reset_r                     7000 -> b000
+//   0x9800-0x9803: PPI0          read/write                0x8100 -> 0x9800
+//   0xa000-0xa003: PPI1          read/write                0x8200 -> 0xa000
 //
 // Audio CPU (Z80 @ 1.78975 MHz):
-//   0x0000-0x2fff: ROM (12KiB) - scramble only uses 3 x 2Kib = 6KiB
+//   0x0000-0x2fff: ROM (12KiB) - super cobra only uses 3 x 2Kib = 6KiB
 //   0x8000-0x8fff: Sound RAM (4Kib)
-//   0x9000-0x9fff: Audio filters - not used by scramble
+//   0x9000-0x9fff: Audio filters - not used by super cobra
 //   
 // IO: mask 0x00ff
 //   0x0010-0x0010: AY8910 1 address_w
@@ -47,13 +46,13 @@
 //
 // ============================================================
 
-class scramble : public machineBase
+class supercobra : public machineBase
 {
 public:
-  scramble() {}
-  ~scramble() {}
+  supercobra() {}
+  ~supercobra() {}
 
-  signed char machineType() override { return MCH_SCRAMBLE; }
+  signed char machineType() override { return MCH_SUPERCOBRA; }
   void start() override;
 
   unsigned char opZ80(unsigned short Addr) override;
@@ -83,7 +82,7 @@ private:
   unsigned char bullet_active;  // bitmask of active bullets
 
   // Starfield
-  static constexpr unsigned short SCRAMBLE_MAX_STARS = 256;
+  static constexpr unsigned short SUPERCOBRA_MAX_STARS = 256;
   void stars_init(void);
   unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b);
 
@@ -92,7 +91,7 @@ private:
     unsigned char y;       // 0-255 vertical position (landscape)
     unsigned short color;  // RGB565 byte-swapped
   };
-  star_entry stars[SCRAMBLE_MAX_STARS];
+  star_entry stars[SUPERCOBRA_MAX_STARS];
 
   int star_count = 0;
   int stars_frame_counter = 0;
@@ -112,28 +111,33 @@ private:
   uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
   uint8_t gfx_scroll;
 
-  static constexpr unsigned short CPU1_ROM_SIZE = 0x4000;
+  static constexpr unsigned short CPU1_ROM_SIZE = 0x6000;
   static constexpr unsigned short CPU2_ROM_SIZE = 0x2000;
 
-  static constexpr unsigned short CPU1_RAM_ADDR    = 0x4000;
-  static constexpr unsigned short CPU1_VRAM_ADDR   = 0x4800;
-  static constexpr unsigned short CPU1_ATTR_ADDR   = 0x5000;
-  static constexpr unsigned short CPU1_SPRITE_ADDR = 0x5040;
-  static constexpr unsigned short CPU1_BULLET_ADDR = 0x5060;
-  static constexpr unsigned short CPU1_RAM2_ADDR   = 0x5080;
-  static constexpr unsigned short CPU1_OBJRAM_ADDR = CPU1_ATTR_ADDR;
+  static constexpr unsigned short CPU1_RAM_ADDR    = 0x8000; //0x4000 + 0x4000;
+  static constexpr unsigned short CPU1_VRAM1_ADDR  = 0x8800; //0x4000 + 0x4800;
+  static constexpr unsigned short CPU1_VRAM2_ADDR  = 0x8c00; //0x4000 + 0x4c00;
+  static constexpr unsigned short CPU1_ATTR_ADDR   = 0x9000; //0x4000 + 0x5000;
+  static constexpr unsigned short CPU1_SPRITE_ADDR = 0x9040; //0x4000 + 0x5040;
+  static constexpr unsigned short CPU1_BULLET_ADDR = 0x9060; //0x4000 + 0x5060;
+  static constexpr unsigned short CPU1_RAM2_ADDR   = 0x9080; //0x4000 + 0x5080;
+  static constexpr unsigned short CPU1_OBJRAM_ADDR = 0x9000; //CPU1_ATTR_ADDR;
 
   static constexpr unsigned short CPU1_RAM_SIZE    = 0x0800;
-  static constexpr unsigned short CPU1_VRAM_SIZE   = 0x0400;
+  static constexpr unsigned short CPU1_VRAM1_SIZE  = 0x0400;
+  static constexpr unsigned short CPU1_VRAM2_SIZE  = 0x0400;
   static constexpr unsigned short CPU1_ATTR_SIZE   = 0x0040;
   static constexpr unsigned short CPU1_SPRITE_SIZE = 0x0020;
   static constexpr unsigned short CPU1_BULLET_SIZE = 0x0020;
   static constexpr unsigned short CPU1_RAM2_SIZE   = 0x0080;
   static constexpr unsigned short CPU1_OBJRAM_SIZE = CPU1_ATTR_SIZE + CPU1_SPRITE_SIZE + CPU1_BULLET_SIZE + CPU1_RAM2_SIZE;
 
+  static_assert(CPU1_OBJRAM_SIZE == 0x0100, "CPU1_OBJRAM_SIZE is wrong");
+
   static constexpr unsigned short CPU1_RAM_OFFSET    = 0x0000;
-  static constexpr unsigned short CPU1_VRAM_OFFSET   = CPU1_RAM_OFFSET    + CPU1_RAM_SIZE;
-  static constexpr unsigned short CPU1_ATTR_OFFSET   = CPU1_VRAM_OFFSET   + CPU1_VRAM_SIZE;
+  static constexpr unsigned short CPU1_VRAM1_OFFSET  = CPU1_RAM_OFFSET    + CPU1_RAM_SIZE;
+  static constexpr unsigned short CPU1_VRAM2_OFFSET  = CPU1_VRAM1_OFFSET  + CPU1_VRAM1_SIZE;
+  static constexpr unsigned short CPU1_ATTR_OFFSET   = CPU1_VRAM2_OFFSET  + CPU1_VRAM2_SIZE;
   static constexpr unsigned short CPU1_SPRITE_OFFSET = CPU1_ATTR_OFFSET   + CPU1_ATTR_SIZE;
   static constexpr unsigned short CPU1_BULLET_OFFSET = CPU1_SPRITE_OFFSET + CPU1_SPRITE_SIZE;
   static constexpr unsigned short CPU1_RAM2_OFFSET   = CPU1_BULLET_OFFSET + CPU1_BULLET_SIZE;
@@ -151,7 +155,8 @@ private:
   static constexpr unsigned short CPU2_FILTER_SIZE   = 0x1000;
 
   unsigned char *cpu_ram       = memory + CPU1_RAM_OFFSET;
-  unsigned char *video_ram     = memory + CPU1_VRAM_OFFSET;
+  unsigned char *video_ram1    = memory + CPU1_VRAM1_OFFSET;
+  unsigned char *video_ram2    = memory + CPU1_VRAM2_OFFSET;
   unsigned char *attribute_ram = memory + CPU1_ATTR_OFFSET;
   unsigned char *sprite_ram    = memory + CPU1_SPRITE_OFFSET;
   unsigned char *bullet_ram    = memory + CPU1_BULLET_OFFSET;

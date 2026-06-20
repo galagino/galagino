@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta and Scramble.
+It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta, Scramble and Super Cobra.
 
 
 ### Quality of Life, improvements and fixes
@@ -26,16 +26,22 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * `pengo.zip`, `pengoj.zip` romsets conversion
 
+* File generation without unziping, some roms cause name clashes and is much cleaner. Not all roms yet.
+
+* mos6502 emulation (WIP)
+
+
+
 ### Hardware Used
 
-| Board    | Link                                                            | Amazon | Notes               |
-| ---      | ---                                                             | ---    | ---                 |
-| fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)       | ST7789 - SPI 80MHz  |
-|          |                                                                 |        |                            |
-| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)       | ILI9341 - SPI 60MHz |
-|          |                                                                 |                                     |                     |
+| Board    | Link                                                            | Amazon                                  | Notes               |
+| ---      | ---                                                             | ---                                     | ---                 |
+| fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ST7789 - SPI 80MHz  |
+|          |                                                                 |                                         |                     |
+| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ILI9341 - SPI 60MHz |
+|          |                                                                 |                                         |                     |
 | fnk0104a | [github](https://github.com/Freenove/Freenove_ESP32_S3_Display) | [Amzn](https://amazon.es/dp/B0FSQLPQ6M) | ESP32-S3 - IPS Display - External DAC |
-|          |                                                                 |                                     | ILI9341 - SPI 60MHz - 16MiB Flash     |
+|          |                                                                 |                                         | ILI9341 - SPI 60MHz - 16MiB Flash     |
 
 ### 3d printed enclosure
 
@@ -72,5 +78,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Star Force (starforc.zip)      | ![ ](/logos/starforce.png)    | ![ ](/images/starforce.png)    |       |
 | Moon Cresta (mooncrst.zip)     | ![ ](/logos/mooncresta.png)   | ![ ](/images/mooncresta.png)   |       |
 | Scramble (scramble.zip)        | ![_](/logos/scramble.png)     | ![_](/images/scramble.png)     |       |
+| Super Cobra (scobra.zip)       | ![_](/logos/supercobra.png)   | ![_](/images/supercobra.png)   |       |
 
 ### ...

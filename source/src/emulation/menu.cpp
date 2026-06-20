@@ -264,6 +264,7 @@ const char *mchName(signed char machineType) {
     case MCH_STARFORCE:     return "Star Force";
     case MCH_MOONCRESTA:    return "Moon Cresta";
     case MCH_SCRAMBLE:      return "Scramble";
+    case MCH_SUPERCOBRA:    return "Super Cobra";
   }
 
   return "";
