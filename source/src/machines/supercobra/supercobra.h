@@ -11,6 +11,7 @@
 
 #include "../tileaddr.h"
 #include "../machineBase.h"
+#include "../scramble/scramble.h"
 
 // ============================================================
 // Super Cobra (Konami 1981) memory map:
@@ -46,14 +47,13 @@
 //
 // ============================================================
 
-class supercobra : public machineBase
+class supercobra : public scramble
 {
 public:
   supercobra() {}
   ~supercobra() {}
 
   signed char machineType() override { return MCH_SUPERCOBRA; }
-  void start() override;
 
   unsigned char opZ80(unsigned short Addr) override;
   unsigned char rdZ80(unsigned short Addr) override;
@@ -77,39 +77,6 @@ protected:
   void blit_tile_scroll(short row, signed char col, unsigned char scroll);
 
 private:
-  // Bullet rendering (8 bullets)
-  short bullet_x[8], bullet_y[8];
-  unsigned char bullet_active;  // bitmask of active bullets
-
-  // Starfield
-  static constexpr unsigned short SUPERCOBRA_MAX_STARS = 256;
-  void stars_init(void);
-  unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b);
-
-  struct star_entry {
-    unsigned char x;       // 0-255 horizontal position (landscape)
-    unsigned char y;       // 0-255 vertical position (landscape)
-    unsigned short color;  // RGB565 byte-swapped
-  };
-  star_entry stars[SUPERCOBRA_MAX_STARS];
-
-  int star_count = 0;
-  int stars_frame_counter = 0;
-  int stars_index = 2;
-  unsigned char stars_enabled = 0;
-
-  unsigned char ignoreFireButton;
-  unsigned char sound_latch;
-  unsigned char ay_port;
-  unsigned char snd_irq_state;
-  unsigned char snd_irq_last = 0;   
-  unsigned long snd_icnt = 0;
-
-  unsigned short protectionState = 0;
-  unsigned char  protectionResult = 0;
-
-  uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
-  uint8_t gfx_scroll;
 
   static constexpr unsigned short CPU1_ROM_SIZE = 0x6000;
   static constexpr unsigned short CPU2_ROM_SIZE = 0x2000;
@@ -166,6 +133,13 @@ private:
   unsigned char *cpu2_ram      = memory + CPU2_RAM_OFFSET;
 
   static_assert(CPU2_MEM_FREE <= RAMSIZE, "RAMSIZE is too low");
+
+  static constexpr int AY1_ADDR_PORT = 0x10;
+  static constexpr int AY2_ADDR_PORT = 0x40;
+  static constexpr int AY1_DATA_PORT = 0x20;
+  static constexpr int AY2_DATA_PORT = 0x80;
+  static constexpr int AY1_OFFSET = 0x00;
+  static constexpr int AY2_OFFSET = 0x10;
 
 #ifdef LED_PIN
   const CRGB menu_leds[7] = { LED_YELLOW, LED_BLUE, LED_GREEN, LED_WHITE, LED_GREEN, LED_BLUE, LED_YELLOW };

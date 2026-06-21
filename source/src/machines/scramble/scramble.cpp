@@ -146,8 +146,9 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
         irq_enable[0] = Value & 1;
         return;
       case 0x6802: // Coin counter
-      case 0x6803: // Blue background ???
-        // GalBackgroundEnable = d & 1;
+        return;
+      case 0x6803: // Blue background
+        background_enable = Value & 1;
         game_started = 1;
         return;
       case 0x6804: // Stars enable
@@ -208,24 +209,17 @@ void scramble::wrZ80(unsigned short Addr, unsigned char Value) {
   }
 }
 
-static constexpr unsigned short AY1_ADDR = 0x10;
-static constexpr unsigned short AY2_ADDR = 0x40;
-static constexpr unsigned short AY1_DATA = 0x20;
-static constexpr unsigned short AY2_DATA = 0x80;
-static constexpr unsigned char  AY1_OFFSET = 0x00;
-static constexpr unsigned char  AY2_OFFSET = 0x10;
-
 unsigned char scramble::inZ80(unsigned short Port) {
   static const unsigned char _timer[10] = {
     0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
   };
 
   switch (Port & 0xff) {
-    case AY1_DATA:
+    case AY1_DATA_PORT:
       if (ay_port < 14)
         return soundregs[AY1_OFFSET + ay_port];
       break;
-    case AY2_DATA:
+    case AY2_DATA_PORT:
       if (ay_port < 14)
         return soundregs[AY2_OFFSET + ay_port];
       if (ay_port == 14)
@@ -233,7 +227,7 @@ unsigned char scramble::inZ80(unsigned short Port) {
       if (ay_port == 15) {
         // Port B = timer: LS90 bi-quinary counter, divide-by-5120
         // MAME: scramble_timer[(total_cycles / 512) % 10]
-        return _timer[(snd_icnt / 32) % 10];
+        return _timer[(snd_icnt / 40) % 10];
       }
       break;
   }
@@ -244,17 +238,17 @@ unsigned char scramble::inZ80(unsigned short Port) {
 void scramble::outZ80(unsigned short Port, unsigned char Value) {
 
   switch (Port & 0xff) {
-    case AY1_ADDR:
+    case AY1_ADDR_PORT:
       ay_port = Value & 0x0f;
       return;
-    case AY1_DATA:
+    case AY1_DATA_PORT:
       if (ay_port < 14)
         soundregs[AY1_OFFSET + ay_port] = Value;
       return;
-    case AY2_ADDR:
+    case AY2_ADDR_PORT:
       ay_port = Value & 0x0f;
       return;
-    case AY2_DATA:
+    case AY2_DATA_PORT:
       if (ay_port < 14)
         soundregs[AY2_OFFSET + ay_port] = Value;
       return;
@@ -421,6 +415,31 @@ void scramble::blit_sprite(short row, unsigned char s) {
 void scramble::render_row(short row) {
   if(row <= 1 || row >= 34) return;
 
+  // blue background
+  if (background_enable)
+    memset(frame_buffer, 8, 2 * 224 * 8);
+
+  if(stars_enabled) {
+    if (row == 2) {
+      stars_frame_counter++;
+
+      if ((stars_frame_counter % 60) == 0) {
+        stars_index = 2 + ((stars_frame_counter / 60) % 4);
+      }
+    }
+
+    int row_top = 8 * row;
+    int row_bot = row_top + 8;
+    for(int i = 0; i < star_count; i++) {
+      if (stars[i].y >= row_top && stars[i].y < row_bot) {
+        if (stars[i].x >= 0 &&  stars[i].x < 224 && (i % stars_index) == 0) {
+          int fb_idx = (stars[i].y - row_top) * 224 + stars[i].x;
+          frame_buffer[fb_idx] = stars[i].color;
+        }
+      }
+    }
+  }
+
   // Read scroll register for this portrait row (per-column scroll in MAME terms)
   // ObjRAM even bytes at 0x5000+2*col → attribute_ram[2*(row-2)]
   unsigned char scroll = attribute_ram[2 * (row - 2)];
@@ -459,27 +478,6 @@ void scramble::render_row(short row) {
     }
   }
 
-  if(stars_enabled) {
-    if (row == 2) {
-      stars_frame_counter++;
-
-      if ((stars_frame_counter % 60) == 0) {
-        stars_index = 2 + ((stars_frame_counter / 60) % 4);
-      }
-    }
-
-    int row_top = 8 * row;
-    int row_bot = row_top + 8;
-    for(int i = 0; i < star_count; i++) {
-      if (stars[i].y >= row_top && stars[i].y < row_bot) {
-        if (stars[i].x >= 0 &&  stars[i].x < 224 && (i % stars_index) == 0) {
-          int fb_idx = (stars[i].y - row_top) * 224 + stars[i].x;
-          if (frame_buffer[fb_idx] == 0x00)
-            frame_buffer[fb_idx] = stars[i].color;
-        }
-      }
-    }
-  }
 }
 
 void scramble::stars_init(void) {

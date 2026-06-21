@@ -1,10 +1,5 @@
 #include "supercobra.h"
 
-void supercobra::start() {
-  stars_init();
-  ignoreFireButton = 1;
-}
-
 unsigned char supercobra::opZ80(unsigned short Addr) {
   if (current_cpu == 0 && Addr < CPU1_ROM_SIZE)
     return supercobra_main_rom[Addr];
@@ -147,8 +142,9 @@ void supercobra::wrZ80(unsigned short Addr, unsigned char Value) {
         irq_enable[0] = Value & 1;
         return;
       case 0xa802: // Coin counter
-      case 0xa803: // Blue background ???
-        // GalBackgroundEnable = d & 1;
+        return;
+      case 0xa803: // Blue background
+        background_enable = Value & 1;
         game_started = 1;
         return;
       case 0xa804: // Stars enable
@@ -208,24 +204,17 @@ void supercobra::wrZ80(unsigned short Addr, unsigned char Value) {
   }
 }
 
-static constexpr unsigned short AY1_ADDR = 0x10;
-static constexpr unsigned short AY2_ADDR = 0x40;
-static constexpr unsigned short AY1_DATA = 0x20;
-static constexpr unsigned short AY2_DATA = 0x80;
-static constexpr unsigned char  AY1_OFFSET = 0x00;
-static constexpr unsigned char  AY2_OFFSET = 0x10;
-
 unsigned char supercobra::inZ80(unsigned short Port) {
   static const unsigned char _timer[10] = {
     0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
   };
 
   switch (Port & 0xff) {
-    case AY1_DATA:
+    case AY1_DATA_PORT:
       if (ay_port < 14)
         return soundregs[AY1_OFFSET + ay_port];
       break;
-    case AY2_DATA:
+    case AY2_DATA_PORT:
       if (ay_port < 14)
         return soundregs[AY2_OFFSET + ay_port];
       if (ay_port == 14)
@@ -233,34 +222,34 @@ unsigned char supercobra::inZ80(unsigned short Port) {
       if (ay_port == 15) {
         // Port B = timer: LS90 bi-quinary counter, divide-by-5120
         // MAME: supercobra_timer[(total_cycles / 512) % 10]
-        return _timer[(snd_icnt / 32) % 10];
+        return _timer[(snd_icnt / 40) % 10];
       }
       break;
   }
 
-  printf("inZ80: cpu=%d port=0x%04x\n", current_cpu, Port);
   return 0x00;
 }
 
 void supercobra::outZ80(unsigned short Port, unsigned char Value) {
 
   switch (Port & 0xff) {
-    case AY1_ADDR:
+    case AY1_ADDR_PORT:
       ay_port = Value & 0x0f;
       return;
-    case AY1_DATA:
+    case AY1_DATA_PORT:
       if (ay_port < 14)
         soundregs[AY1_OFFSET + ay_port] = Value;
       return;
-    case AY2_ADDR:
+    case AY2_ADDR_PORT:
       ay_port = Value & 0x0f;
       return;
-    case AY2_DATA:
-      if (ay_port < 14)
+    case AY2_DATA_PORT:
+      if (ay_port < 14 && ay_port != 6)
         soundregs[AY2_OFFSET + ay_port] = Value;
+      else if (ay_port == 6 && Value < 32) // Reduce ugly helicopter sound...
+        soundregs[0x10 + ay_port] = Value;
       return;
   }
-  printf("outZ80: cpu=%d port=0x%04x v=0x%02x\n", current_cpu, Port, Value);
 }
 
 void supercobra::run_frame(void) {
@@ -423,6 +412,31 @@ void supercobra::blit_sprite(short row, unsigned char s) {
 void supercobra::render_row(short row) {
   if(row <= 1 || row >= 34) return;
 
+  // blue background
+  if (background_enable)
+    memset(frame_buffer, 8, 2 * 224 * 8);
+
+  if(stars_enabled) {
+    if (row == 2) {
+      stars_frame_counter++;
+
+      if ((stars_frame_counter % 60) == 0) {
+        stars_index = 2 + ((stars_frame_counter / 60) % 4);
+      }
+    }
+
+    int row_top = 8 * row;
+    int row_bot = row_top + 8;
+    for(int i = 0; i < star_count; i++) {
+      if (stars[i].y >= row_top && stars[i].y < row_bot) {
+        if (stars[i].x >= 0 &&  stars[i].x < 224 && (i % stars_index) == 0) {
+          int fb_idx = (stars[i].y - row_top) * 224 + stars[i].x;
+          frame_buffer[fb_idx] = stars[i].color;
+        }
+      }
+    }
+  }
+
   // Read scroll register for this portrait row (per-column scroll in MAME terms)
   // ObjRAM even bytes at 0x9000+2*col → attribute_ram[2*(row-2)]
   unsigned char scroll = attribute_ram[2 * (row - 2)];
@@ -461,72 +475,6 @@ void supercobra::render_row(short row) {
     }
   }
 
-  if(stars_enabled) {
-    if (row == 2) {
-      stars_frame_counter++;
-
-      if ((stars_frame_counter % 60) == 0) {
-        stars_index = 2 + ((stars_frame_counter / 60) % 4);
-      }
-    }
-
-    int row_top = 8 * row;
-    int row_bot = row_top + 8;
-    for(int i = 0; i < star_count; i++) {
-      if (stars[i].y >= row_top && stars[i].y < row_bot) {
-        if (stars[i].x >= 0 &&  stars[i].x < 224 && (i % stars_index) == 0) {
-          int fb_idx = (stars[i].y - row_top) * 224 + stars[i].x;
-          if (frame_buffer[fb_idx] == 0x00)
-            frame_buffer[fb_idx] = stars[i].color;
-        }
-      }
-    }
-  }
-}
-
-void supercobra::stars_init(void) {
-  // MAME algorithm: 17-bit LFSR, period 2^17-1 = 131071
-  // Stars visible when upper 8 bits == 0xFF and bit 0 == 0
-  // Color from bits 3-8 (6-bit, 64 colors)
-  static const unsigned char starmap[4] = { 0, 150, 200, 255 };
-
-  unsigned short star_color_lut[64];
-  for(int i = 0; i < 64; i++) {
-    unsigned char r = starmap[((i >> 4) & 2) | ((i >> 5) & 1)];
-    unsigned char g = starmap[((i >> 2) & 2) | ((i >> 3) & 1)];
-    unsigned char b = starmap[((i >> 0) & 2) | ((i >> 1) & 1)];
-    star_color_lut[i] = rgb_to_swapped565(r, g, b);
-  }
-
-  // Run the LFSR and collect visible stars
-  star_count = 0;
-  uint32_t shiftreg = 0;
-  for(int i = 0; i < 131071 && star_count < SUPERCOBRA_MAX_STARS; i++) {
-    if((shiftreg & 0x1fe01) == 0x1fe00) {
-      int color_idx = (~shiftreg >> 3) & 0x3f;
-      int x = (i % 512) / 2;
-      int y = i / 512;
-
-      if((y ^ (x >> 3)) & 1) {
-        int gx = 255 - y;
-        int gy = x + 16;
-
-        if(gx >= 0 && gx < 224 && gy >= 16 && gy < 288) {
-          stars[star_count].x = gx;
-          stars[star_count].y = gy;
-          stars[star_count].color = star_color_lut[color_idx];
-          star_count++;
-        }
-      }
-    }
-    shiftreg = (shiftreg >> 1) | ((((shiftreg >> 12) ^ ~shiftreg) & 1) << 16);
-  }
-}
-
-// Convert 8-bit R,G,B to RGB565 byte-swapped for ESP32 SPI
-inline unsigned short supercobra::rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b) {
-  unsigned short c = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-  return (c >> 8) | (c << 8);  // byte-swap
 }
 
 const unsigned short *supercobra::logo(void) {

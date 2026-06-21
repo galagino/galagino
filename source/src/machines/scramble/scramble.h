@@ -25,6 +25,7 @@
 //   0x5080-0x50ff: RAM              (0x0080)
 //   0x6801-0x6801: NMI           galaxold_nmi_enable_w
 //   0x6802-0x6802: Coin Counter  galaxold_coin_counter_w
+//   0x6803-0x6803: Blue background enable
 //   0x6804-0x6804: Stars Enable  galaxold_stars_enable_w
 //   0x6806-0x6806: Flip Screen X galaxold_flip_screen_x_w
 //   0x6807-0x6807: Flip Screen Y galaxold_flip_screen_y_w
@@ -77,16 +78,28 @@ protected:
   void blit_sprite(short row, unsigned char s) override;
   void blit_tile_scroll(short row, signed char col, unsigned char scroll);
 
-private:
+  unsigned char ignoreFireButton;
+  unsigned char sound_latch;
+  unsigned char ay_port;
+  unsigned char snd_irq_state;
+  unsigned char snd_irq_last = 0;
+  unsigned long snd_icnt = 0;
+
+  unsigned short protectionState = 0;
+  unsigned char  protectionResult = 0;
+
+  uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
+  uint8_t gfx_scroll;
+  unsigned char background_enable = 0;
+
   // Bullet rendering (8 bullets)
   short bullet_x[8], bullet_y[8];
   unsigned char bullet_active;  // bitmask of active bullets
 
   // Starfield
-  static constexpr unsigned short SCRAMBLE_MAX_STARS = 256;
   void stars_init(void);
-  unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b);
 
+  static constexpr unsigned short SCRAMBLE_MAX_STARS = 256;
   struct star_entry {
     unsigned char x;       // 0-255 horizontal position (landscape)
     unsigned char y;       // 0-255 vertical position (landscape)
@@ -99,18 +112,8 @@ private:
   int stars_index = 2;
   unsigned char stars_enabled = 0;
 
-  unsigned char ignoreFireButton;
-  unsigned char sound_latch;
-  unsigned char ay_port;
-  unsigned char snd_irq_state;
-  unsigned char snd_irq_last = 0;   
-  unsigned long snd_icnt = 0;
-
-  unsigned short protectionState = 0;
-  unsigned char  protectionResult = 0;
-
-  uint8_t gfx_bank[4] = {0x00,0x00,0x00,0x00};
-  uint8_t gfx_scroll;
+private:
+  unsigned short rgb_to_swapped565(unsigned char r, unsigned char g, unsigned char b);
 
   static constexpr unsigned short CPU1_ROM_SIZE = 0x4000;
   static constexpr unsigned short CPU2_ROM_SIZE = 0x2000;
@@ -130,6 +133,8 @@ private:
   static constexpr unsigned short CPU1_BULLET_SIZE = 0x0020;
   static constexpr unsigned short CPU1_RAM2_SIZE   = 0x0080;
   static constexpr unsigned short CPU1_OBJRAM_SIZE = CPU1_ATTR_SIZE + CPU1_SPRITE_SIZE + CPU1_BULLET_SIZE + CPU1_RAM2_SIZE;
+
+  static_assert(CPU1_OBJRAM_SIZE == 0x0100, "CPU1_OBJRAM_SIZE is wrong");
 
   static constexpr unsigned short CPU1_RAM_OFFSET    = 0x0000;
   static constexpr unsigned short CPU1_VRAM_OFFSET   = CPU1_RAM_OFFSET    + CPU1_RAM_SIZE;
@@ -161,6 +166,13 @@ private:
   unsigned char *cpu2_ram      = memory + CPU2_RAM_OFFSET;
 
   static_assert(CPU2_MEM_FREE <= RAMSIZE, "RAMSIZE is too low");
+
+  static constexpr int AY1_ADDR_PORT = 0x10;
+  static constexpr int AY2_ADDR_PORT = 0x40;
+  static constexpr int AY1_DATA_PORT = 0x20;
+  static constexpr int AY2_DATA_PORT = 0x80;
+  static constexpr int AY1_OFFSET = 0x00;
+  static constexpr int AY2_OFFSET = 0x10;
 
 #ifdef LED_PIN
   const CRGB menu_leds[7] = { LED_YELLOW, LED_BLUE, LED_GREEN, LED_WHITE, LED_GREEN, LED_BLUE, LED_YELLOW };
