@@ -175,7 +175,7 @@ private:
   static constexpr int AY2_OFFSET = 0x10;
 
 #ifdef LED_PIN
-  const CRGB menu_leds[7] = { LED_YELLOW, LED_BLUE, LED_GREEN, LED_WHITE, LED_GREEN, LED_BLUE, LED_YELLOW };
+  const CRGB menu_leds[7] = { LED_GREEN, LED_CYAN, LED_BLUE, LED_WHITE, LED_BLUE, LED_CYAN, LED_GREEN };
 #endif
 };
 #endif
