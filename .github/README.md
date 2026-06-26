@@ -12,7 +12,7 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * `TFT_INVERT` added to support CYD clones that show inverted colors
 
-* `M6809` emulation uses machineBase methods, so you can have multiple instances just like the `Z80` and `i8048`
+* `m6809` emulation uses machineBase methods, so you can have multiple instances just like the `Z80` and `i8048`
 
 * Time Pilot sprite multiplexing
 
@@ -79,5 +79,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Moon Cresta (mooncrst.zip)     | ![ ](/logos/mooncresta.png)   | ![ ](/images/mooncresta.png)   |       |
 | Scramble (scramble.zip)        | ![_](/logos/scramble.png)     | ![_](/images/scramble.png)     |       |
 | Super Cobra (scobra.zip)       | ![_](/logos/supercobra.png)   | ![_](/images/supercobra.png)   |       |
+| Donkey Kong 3 (dkong3.zip)     | ![_](/logos/dkong3.png)       | ![_](/images/dkong3.png)       |       |
 
 ### ...

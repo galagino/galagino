@@ -4,6 +4,7 @@
 #include <driver/i2s.h>
 #include "../machines/machineBase.h"
 #include "../machines/dkong/dkong.h"
+#include "../machines/dkong3/dkong3.h"
 #include "../machines/galaga/galaga.h"
 #include "../machines/spaceinvaders/spaceinvaders.h"
 #include "../config.h"
@@ -46,8 +47,9 @@ private:
   void bagman_render_buffer(void);
   void galaxian_render_buffer(void);
   void spaceinvaders_render_buffer(void);
+  void dkong3_render_buffer(void);
   void generateSinusWave(int32_t amplitude, short* buffer, uint16_t length);
- 
+
   machineBase *currentMachine;
   signed char machineType;
 
@@ -146,7 +148,6 @@ private:
   int si_coin_toggle2 = 1;              // overtone square wave
   int si_coin_timer = 0;                // samples remaining for coin sound
   int si_coin_env = 0;                  // envelope level (decays)
-
 };
 
 #endif

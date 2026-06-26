@@ -13,6 +13,7 @@ RENAME   = ["Codes6502.h", "M6502.c", "M6502.h", "Tables6502.h"]
 REPLACE  = [
   [b'#include "Tables.h"', b'#include "Tables6502.h"'],
   [b'#include "Codes.h"', b'#include "Codes6502.h"'],
+  [b' M6502_H', b' MOS6502_H'],
 
   [b"/* #define LSB_FIRST */", b"#define LSB_FIRST      "],
 # [b"/* #define FAST_RDOP */", b"#define FAST_RDOP      "],
@@ -38,7 +39,7 @@ REPLACE  = [
   [b"N_FLAG",    b"N_6502_FLAG"],
 
   [b"#endif /* M6502_H */",
-   b"#endif /* M6502_H */\n"
+   b"#endif /* MOS6502_H */\n"
    b"\n" + 
    b'#include "../../emulation/emulation.h"']
 ] 

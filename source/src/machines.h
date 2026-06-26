@@ -115,6 +115,10 @@
   #include "machines/supercobra/supercobra.h"
 #endif
 
+#ifdef ENABLE_DKONG3
+  #include "machines/dkong3/dkong3.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -200,6 +204,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_SUPERCOBRA
   new supercobra(),
+#endif
+#ifdef ENABLE_DKONG3
+  new dkong3()
 #endif
 };
 

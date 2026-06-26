@@ -30,5 +30,6 @@
 #define ENABLE_MOONCRESTA
 #define ENABLE_SCRAMBLE
 #define ENABLE_SUPERCOBRA
+#define ENABLE_DKONG3
 
 #endif
