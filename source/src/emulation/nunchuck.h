@@ -30,13 +30,13 @@ public:
   void setup();
   void enable();
   void disable();
-  unsigned char getInput();
+  unsigned int getInput();
  
 private:
   Nunchuk nchuk;
   bool enabled;
   unsigned long timeout;
-  unsigned char lastValue;
+  unsigned int lastValue;
 };
 
 #endif

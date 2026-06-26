@@ -1,6 +1,6 @@
 #include "input.h"
 
-void Input::init(char SingleMachine) {
+void Input::init(bool SingleMachine) {
   singleMachine = SingleMachine;
 #ifndef NUNCHUCK_INPUT
   #ifdef GALAGINO_CONTROLLER
@@ -20,7 +20,7 @@ void Input::init(char SingleMachine) {
   nunchuck.setup();
 #endif
 
-  char inputs = buttons_get();
+  unsigned int inputs = buttons_get();
   if (inputs & BUTTON_FIRE) {
     printf("Demo Sounds switched off\n");
     switchDemoSoundsOff = 1;
@@ -33,7 +33,7 @@ void Input::init(char SingleMachine) {
   #endif
 }
 
-char Input::demoSoundsOff() {
+bool Input::demoSoundsOff() {
   return switchDemoSoundsOff;
 }
 
@@ -56,11 +56,11 @@ void Input::disable() {
   vTaskDelay(100);
 #endif
 }
-unsigned char Input::buttons_get(void) {
+unsigned int Input::buttons_get(void) {
   // galagino can be compiled without coin button. This will then
   // be implemented by the start button. Whenever the start button 
   // is pressed, a virtual coin button will be sent first 
-  unsigned char input_states = 0;
+  unsigned int input_states = 0;
 #if defined(GALAGINO_CONTROLLER)
   input_states = Controller.getInput();
 #elif defined(NUNCHUCK_INPUT)
@@ -79,7 +79,7 @@ unsigned char Input::buttons_get(void) {
     (digitalRead(BTN_FIRE_PIN) ? 0 : BUTTON_FIRE);
 #endif
   
-  unsigned char startAndCoinState = 0;
+  unsigned int startAndCoinState = 0;
 #ifdef BTN_COIN_PIN 
   // there is a coin pin -> coin and start work normal
   startAndCoinState = (digitalRead(BTN_START_PIN) ? 0 : BUTTON_START) |
@@ -145,6 +145,12 @@ unsigned char Input::buttons_get(void) {
     }
 
     // reset control
+    if(input_states & BUTTON_MENU) {
+      if (_doReset_callback)
+        _doReset_callback();
+    }
+
+    // reset control
     if(input_states & BUTTON_EXTRA) {
       if(!reset_timer)
         reset_timer = millis();
@@ -154,9 +160,8 @@ unsigned char Input::buttons_get(void) {
         reset_timer = millis();
         if (_doReset_callback)
           _doReset_callback();
-        printf("reset 3000 millis\n");
       }
-    } 
+    }
     else
       reset_timer = 0;
 
@@ -167,8 +172,7 @@ unsigned char Input::buttons_get(void) {
     printf("Wait for release fire button...\n");
     input_states = 0;
   }
-  else
-  {
+  else {
     firePressedAtStart = false;
   }
 
@@ -194,4 +198,3 @@ Input &Input::onDoAttractReset(THandlerDoAttractReset fn) {
 bool Input::button_y_pressed(void) {
   return false;
 }
-

@@ -56,7 +56,6 @@ void ControllerI2C::setup() {
   printf("Transmission: err=%d\n", err);
   lastUpdate = 0;
   lastValue = 0;
-  lastVal2 = 0;
   //scan(GALAGINO_CONTROLLER_ADDR);
   enable();
 }
@@ -85,7 +84,7 @@ void ControllerI2C::disable() {
 #define CONTROLLER_UPDATE_MILLIS 33
 #endif
 
-unsigned char ControllerI2C::getInput() {
+unsigned int ControllerI2C::getInput() {
 
   unsigned long now = millis();
   if (!enabled || now - lastUpdate < CONTROLLER_UPDATE_MILLIS) {
@@ -100,8 +99,7 @@ unsigned char ControllerI2C::getInput() {
     while (WIRE.available()) {
       WIRE.read();
     }
-    lastVal2  = val;
-    lastValue = val & 0xff;
+    lastValue = val;
   }
   return lastValue;
 }

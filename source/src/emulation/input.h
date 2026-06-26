@@ -20,15 +20,23 @@
 #define BUTTON_COIN  0x40
 #define BUTTON_EXTRA 0x80
 
+#define BUTTON_A    0x0100
+#define BUTTON_B    0x0200
+#define BUTTON_X    0x0400
+#define BUTTON_Y    0x0800
+#define BUTTON_L1   0x1000
+#define BUTTON_R1   0x2000
+
+#define BUTTON_MENU 0x8000
 
 class Input {
 public:
-  void init(char SingleMachine);
+  void init(bool SingleMachine);
   void enable();
   void disable();
-  unsigned char buttons_get(void);
+  unsigned int buttons_get(void);
   bool button_y_pressed(void);
-  char demoSoundsOff();
+  bool demoSoundsOff();
 
   typedef std::function<void(bool up, bool down)> THandlerVolume;
   Input& onVolumeUpDown(THandlerVolume fn);
@@ -43,13 +51,13 @@ private:
   THandlerVolume _volume_callback;
   THandlerDoReset _doReset_callback;
   THandlerDoAttractReset _doAttractReset_callback;
-  unsigned char input_states_last;
+  unsigned int input_states_last;
   int virtual_coin_state;
   unsigned long virtual_coin_timer;
   unsigned long reset_timer;
-  char singleMachine;
-  char switchDemoSoundsOff;
-  char firePressedAtStart;
+  bool singleMachine;
+  bool switchDemoSoundsOff;
+  bool firePressedAtStart;
 #ifdef NUNCHUCK_INPUT
   Nunchuck nunchuck;
 #endif

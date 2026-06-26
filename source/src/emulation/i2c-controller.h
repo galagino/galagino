@@ -48,14 +48,13 @@ public:
   void enable();
   void disable();
   void scan(uint8_t);
-  unsigned char getInput();
+  unsigned int getInput();
 
 private:
   bool enabled;
   bool dead;
   unsigned long lastUpdate;
-  unsigned char lastValue;
-  uint16_t lastVal2;
+  unsigned int lastValue;
 };
 
 #endif

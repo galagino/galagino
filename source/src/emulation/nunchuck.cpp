@@ -20,7 +20,7 @@ void Nunchuck::disable() {
   enabled = false;
 }
 
-unsigned char Nunchuck::getInput() {
+unsigned int Nunchuck::getInput() {
   // update every 100ms only
   unsigned long now = millis();
   if(!enabled || now - timeout < 100)
