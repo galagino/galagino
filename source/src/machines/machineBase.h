@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "../cpus/z80/Z80.h"
 #include "../cpus/i8048/i8048.h"
-#include "../cpus/m6502/M6502.h"
+#include "../cpus/mos6502/M6502.h"
 #include "../emulation/input.h"
 
 #ifdef LED_PIN

@@ -4,7 +4,7 @@
 #include "cpus/z80/Z80.h"
 #include "cpus/i8048/i8048.h"
 #include "cpus/m6809/m6809.h"
-#include "cpus/m6502/M6502.h"
+#include "cpus/mos6502/M6502.h"
 
 //#define DEBUG_TIMING
 

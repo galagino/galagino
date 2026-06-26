@@ -5,7 +5,7 @@ import re
 import zipfile
 
 ZIP_FILE = os.path.normpath(os.path.join("..", "romszip", "M6502-081707.zip"))
-DEST_DIR = os.path.normpath(os.path.join("..", "source", "src", "cpus", "m6502"))
+DEST_DIR = os.path.normpath(os.path.join("..", "source", "src", "cpus", "mos6502"))
 
 COPY     = ["Codes.h",     "M6502.c", "M6502.h", "Tables.h"]
 RENAME   = ["Codes6502.h", "M6502.c", "M6502.h", "Tables6502.h"]
