@@ -1,12 +1,17 @@
-# Galagino ported to platformio - now with 29 games!
+# Galagino ported to platformio - now with 30 games!
 
 This repo is a port of Till Harbaum's awesome [Galaga emulator](https://github.com/harbaum/galagino) ported to platformio.
 This port is NOT by the original author, so please do not bother him with issues.
 
 I used and modified the games Bombjack, Mr. Do!, Pengo, Donkey Kong Jr., Donkey Kong 3 and Starforce from [Alby1970](https://github.com/Alby1970).
+
 Donkey Kong 3 sound cpus have been added by [VirtualClaudioBoy](https://github.com/VirtualClaudioBoy).  
+
 I used and modified the games Gyruss, Lady Bug, Ms. Pacman, Time Pilot, Tutankham, Space Invaders and Galaxian from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3).
+
 I used and modified the games Moon Cresta, Scramble and Super Cobra from [galagino](https://github.com/galagino)
+
+I used and modified the game Pooyan from [VirtualClaudioBoy](https://github.com/VirtualClaudioBoy).  
 
 This solution is an easy way to build a galagino arcade machine. No need of a 3D printer and PCB´s. Just buy the hardware listed below.
 
@@ -44,6 +49,7 @@ This solution is an easy way to build a galagino arcade machine. No need of a 3D
 ![Scramble screenshot](images/scramble.png)
 ![Super Copra screenshot](images/supercobra.png)
 ![Donkey Kong 3 screenshot](images/dkong3.png)
+![Pooyan screenshot](images/pooyan.png)
 
 ## Hardware
 
@@ -107,6 +113,7 @@ Like in the original from Till Harbaum's Galaga emulator, download these files:
     * [Scramble](https://www.google.com/search?q=scramble.zip+arcade+rom)
     * [Super Cobra](https://www.google.com/search?q=scobra.zip+arcade+rom)
     * [Donkey Kong 3](https://www.google.com/search?q=dkong3.zip+arcade+rom)
+    * [Pooyan](https://www.google.com/search?q=pooyan.zip+arcade+rom)
 
 Galagino uses code that is not freely available and thus not included in this repository. Preparing the firmware thus consists of a few additional steps:
 

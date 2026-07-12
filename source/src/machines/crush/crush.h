@@ -14,32 +14,44 @@
 class crush : public pacman
 {
 public:
-	crush() { }
-	~crush() { }
+  crush() { }
+  ~crush() { }
 
-	signed char machineType() override { return MCH_CRUSH; } 
-	unsigned char rdZ80(unsigned short Addr) override;
-	void wrZ80(unsigned short Addr, unsigned char Value) override;
-	void outZ80(unsigned short Port, unsigned char Value) override;
-	unsigned char opZ80(unsigned short Addr) override;
-	
-	void run_frame(void) override;
-	const signed char *waveRom(unsigned char value) override;
-	const unsigned short *logo(void) override;	
-	
+  signed char machineType() override { return MCH_CRUSH; } 
+  unsigned char rdZ80(unsigned short Addr) override;
+  void wrZ80(unsigned short Addr, unsigned char Value) override;
+  void outZ80(unsigned short Port, unsigned char Value) override;
+  unsigned char opZ80(unsigned short Addr) override;
+  
+  void run_frame(void) override;
+  const signed char *waveRom(unsigned char value) override;
+  const unsigned short *logo(void) override;	
+
+#ifdef LED_PIN
+  void menuLeds(CRGB *leds) override;
+  void gameLeds(CRGB *leds) override;
+#endif
+  
 protected:
-	const unsigned short *tileRom(unsigned short addr) override;
-	const unsigned short *colorRom(unsigned short addr) override;
-	const unsigned long *spriteRom(unsigned char flags, unsigned char code) override;
+  const unsigned short *tileRom(unsigned short addr) override;
+  const unsigned short *colorRom(unsigned short addr) override;
+  const unsigned long *spriteRom(unsigned char flags, unsigned char code) override;
 
 private:
-	void maketrax_protection_w(uint8_t data);
-	uint8_t maketrax_special_port2_r(unsigned short offset);
-	uint8_t maketrax_special_port3_r(unsigned short offset);
-	uint8_t m_maketrax_counter;
-	uint8_t m_maketrax_offset;
-	uint8_t m_maketrax_disable_protection;
-	unsigned long timerSoundChanged;
+  void maketrax_protection_w(uint8_t data);
+  uint8_t maketrax_special_port2_r(unsigned short offset);
+  uint8_t maketrax_special_port3_r(unsigned short offset);
+  uint8_t m_maketrax_counter;
+  uint8_t m_maketrax_offset;
+  uint8_t m_maketrax_disable_protection;
+  unsigned long timerSoundChanged;
+
+#ifdef LED_PIN
+  const CRGB menu_leds[7] = { LED_RED, LED_YELLOW, LED_GREEN, LED_CYAN, LED_BLUE, LED_MAGENTA, LED_WHIT
+ };
+#endif
 };
+
+
 
 #endif

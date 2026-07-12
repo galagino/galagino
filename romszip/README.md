@@ -28,3 +28,4 @@ Put rom zip files here:
 *  scramble.zip
 *  scobra.zip
 *  dkong3.zip
+#  pooyan.zip

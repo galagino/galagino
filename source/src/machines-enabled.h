@@ -31,5 +31,6 @@
 #define ENABLE_SCRAMBLE
 #define ENABLE_SUPERCOBRA
 #define ENABLE_DKONG3
+#define ENABLE_POOYAN
 
 #endif

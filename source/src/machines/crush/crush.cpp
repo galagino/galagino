@@ -3,76 +3,76 @@
 void crush::maketrax_protection_w(uint8_t data)
 {
   // disable protection / reset?
-	if (data == 0) {
-		m_maketrax_counter = 0;
-		m_maketrax_offset = 0;
-		m_maketrax_disable_protection = 1;
-		return;
-	}
+  if (data == 0) {
+    m_maketrax_counter = 0;
+    m_maketrax_offset = 0;
+    m_maketrax_disable_protection = 1;
+    return;
+  }
 
-	if (data == 1) {
-		m_maketrax_disable_protection = 0;
+  if (data == 1) {
+    m_maketrax_disable_protection = 0;
 
-		m_maketrax_counter++;
-		if (m_maketrax_counter == 0x3c)
-		{
-			m_maketrax_counter = 0;
-			m_maketrax_offset++;
+    m_maketrax_counter++;
+    if (m_maketrax_counter == 0x3c)
+    {
+      m_maketrax_counter = 0;
+      m_maketrax_offset++;
 
-			if (m_maketrax_offset == 0x1e)
-				m_maketrax_offset = 0;
-		}
-	}
+      if (m_maketrax_offset == 0x1e)
+        m_maketrax_offset = 0;
+    }
+  }
 }
 
 uint8_t crush::maketrax_special_port2_r(unsigned short offset)
 {
-	const uint8_t protdata[0x1e] = { // table at $ebd (odd entries)
-		0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40, 0x00, 0xc0, 0x00, 0x40, 0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40,
-		0x00, 0xc0, 0x00, 0x40, 0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40, 0x00, 0xc0, 0x00, 0x40
-	};
+  const uint8_t protdata[0x1e] = { // table at $ebd (odd entries)
+    0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40, 0x00, 0xc0, 0x00, 0x40, 0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40,
+    0x00, 0xc0, 0x00, 0x40, 0x00, 0xc0, 0x00, 0x40, 0xc0, 0x40, 0x00, 0xc0, 0x00, 0x40
+  };
 
-	uint8_t data = CRUSH_DIP & 0x3f;
+  uint8_t data = CRUSH_DIP & 0x3f;
   
   if (m_maketrax_disable_protection == 0)
-		return protdata[m_maketrax_offset] | data;
+    return protdata[m_maketrax_offset] | data;
 
-	switch (offset)
-	{
-		case 0x01:
-		case 0x04:
-			data |= 0x40; break;
-		case 0x05:
-		case 0x0e: // korosuke
-		case 0x10: // korosuke
-			data |= 0xc0; break;
-		default:
-			data &= 0x3f; break;
-	}
-	return data;
+  switch (offset)
+  {
+    case 0x01:
+    case 0x04:
+      data |= 0x40; break;
+    case 0x05:
+    case 0x0e: // korosuke
+    case 0x10: // korosuke
+      data |= 0xc0; break;
+    default:
+      data &= 0x3f; break;
+  }
+  return data;
 }
 
 uint8_t crush::maketrax_special_port3_r(unsigned short offset)
 {
-	const uint8_t protdata[0x1e] = { // table at $ebd (even entries)
-		0x1f, 0x3f, 0x2f, 0x2f, 0x0f, 0x0f, 0x0f, 0x3f, 0x0f, 0x0f, 0x1c, 0x3c, 0x2c, 0x2c, 0x0c, 0x0c,
-		0x0c, 0x3c, 0x0c, 0x0c, 0x11, 0x31, 0x21, 0x21, 0x01, 0x01, 0x01, 0x31, 0x01, 0x01
-	};
+  const uint8_t protdata[0x1e] = { // table at $ebd (even entries)
+    0x1f, 0x3f, 0x2f, 0x2f, 0x0f, 0x0f, 0x0f, 0x3f, 0x0f, 0x0f, 0x1c, 0x3c, 0x2c, 0x2c, 0x0c, 0x0c,
+    0x0c, 0x3c, 0x0c, 0x0c, 0x11, 0x31, 0x21, 0x21, 0x01, 0x01, 0x01, 0x31, 0x01, 0x01
+  };
 
-	if (m_maketrax_disable_protection == 0)
-		return protdata[m_maketrax_offset];
+  if (m_maketrax_disable_protection == 0)
+    return protdata[m_maketrax_offset];
 
-	switch (offset)
-	{
-		case 0x00:
-			return 0x1f;
-		case 0x09:
-			return 0x30;
-		case 0x0c:
-			return 0x00;
-		default:
-			return 0x20;
-	}
+  switch (offset)
+  {
+    case 0x00:
+      return 0x1f;
+    case 0x09:
+      return 0x30;
+    case 0x0c:
+      return 0x00;
+    default:
+      return 0x20;
+  }
 }
 
 unsigned char crush::opZ80(unsigned short Addr) {
@@ -142,7 +142,7 @@ void crush::wrZ80(unsigned short Addr, unsigned char Value) {
 
     if ((Addr & 0xffe0) == 0x5040) {
       if (soundregs[Addr - 0x5040] != Value & 0x0f)
-	      soundregs[Addr - 0x5040] = Value & 0x0f;
+        soundregs[Addr - 0x5040] = Value & 0x0f;
 
       if (Addr == 0x505f)
         timerSoundChanged = millis();
@@ -193,3 +193,29 @@ const signed char * crush::waveRom(unsigned char value) {
 const unsigned short *crush::logo(void) {
   return crush_logo;
 }
+
+#ifdef LED_PIN
+void crush::menuLeds(CRGB *leds) {
+  memcpy(leds, menu_leds, NUM_LEDS * sizeof(CRGB));
+}
+
+void crush::gameLeds(CRGB *leds) {
+  static char sub_cnt = 0;
+  if(sub_cnt++ == 16) {
+    sub_cnt = 0;
+    static char pos = 0;
+    static char color_offset = 0;
+    const CRGB paint_colors[6] = { LED_RED, LED_YELLOW, LED_GREEN, LED_CYAN, LED_BLUE, LED_MAGENTA };
+    for(char c = 0; c < NUM_LEDS; c++) {
+      if(c == pos)  leds[c] = LED_WHITE;
+      else if(c < pos) leds[c] = paint_colors[(c + color_offset) % 6];
+      else             leds[c] = LED_BLACK;
+    }
+    pos++;
+    if(pos == NUM_LEDS) {
+      pos = 0;
+      color_offset = (color_offset + 1) % 6;
+    }
+  }
+}
+#endif

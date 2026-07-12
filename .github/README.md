@@ -80,5 +80,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Scramble (scramble.zip)        | ![_](/logos/scramble.png)     | ![_](/images/scramble.png)     |       |
 | Super Cobra (scobra.zip)       | ![_](/logos/supercobra.png)   | ![_](/images/supercobra.png)   |       |
 | Donkey Kong 3 (dkong3.zip)     | ![_](/logos/dkong3.png)       | ![_](/images/dkong3.png)       |       |
+| Pooyan (pooyan.zip)            | ![_](/logos/pooyan.png)       | ![_](/images/pooyan.png)       |       |
 
 ### ...
