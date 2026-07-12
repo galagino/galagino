@@ -118,9 +118,7 @@ def main():
         with open(OUTPUT_HEADER_FILE, "w") as f:
             f.write(f"// File generato da sprites_conv.py (modifica: flip/rotazione per sprite)\n")
             f.write(f"// Dati da: {', '.join(INPUT_ROM_FILES)}\n\n")
-            f.write("#include <pgmspace.h>\n\n")
-
-            f.write(f"const unsigned long PROGMEM {OUTPUT_ARRAY_NAME}[4][{NUM_SPRITES}][{SPRITE_HEIGHT}] = {{\n")
+            f.write(f"const unsigned long {OUTPUT_ARRAY_NAME}[4][{NUM_SPRITES}][{SPRITE_HEIGHT}] = {{\n")
 
             for flip_flag in range(4):
                 flip_x = (flip_flag & 1) != 0

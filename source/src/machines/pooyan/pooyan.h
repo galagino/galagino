@@ -74,8 +74,6 @@ private:
 	unsigned char flip_screen;
 	unsigned char soundlatch;
 
-	// Sound CPU state (timeplt_audio, identico a Time Pilot)
-	Z80 snd_cpu;
 	unsigned char snd_ram[1024];
 	unsigned char snd_irq_pending = 0;
 	unsigned char snd_irq_last = 0;    // previous Q1 state for edge detection

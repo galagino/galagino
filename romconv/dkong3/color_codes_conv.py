@@ -43,10 +43,7 @@ def generate_color_codes_array():
     with open(OUTPUT_HEADER_FILE, "w") as f:
         f.write(f"// File generato automaticamente per la PROM dei codici colore dei tile di Donkey Kong 3.\n")
         f.write(f"// Dati estratti da: {COLOR_CODES_FILE}\n\n")
-        
-        # Usa PROGMEM per salvare l'array nella memoria Flash su piattaforme come Arduino
-        f.write(f"#include <pgmspace.h>\n\n")
-        f.write(f"const unsigned char PROGMEM {OUTPUT_ARRAY_NAME}[256] = {{\n")
+        f.write(f"const unsigned char {OUTPUT_ARRAY_NAME}[256] = {{\n")
         
         # Formatta i dati in righe da 16 valori per una migliore leggibilità
         lines = []

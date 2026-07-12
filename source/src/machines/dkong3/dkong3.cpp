@@ -490,7 +490,7 @@ void dkong3::blit_tile(short row, char col) {
     const unsigned short *tile = dkong3_tilemap[final_code];
 
     unsigned short color_idx = (addr % 32) + 32 * ((addr / 32) / 4);
-    unsigned char  base_pal  = pgm_read_byte(&color_codes_prom[color_idx]) & 0x0F;
+    unsigned char  base_pal  = color_codes_prom[color_idx] & 0x0F;
     unsigned short final_pal = base_pal + (palette_bank * 16);
     const unsigned short *colors = dkong3_colormap_sprite[final_pal];
 
