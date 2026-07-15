@@ -765,6 +765,24 @@ if [[ -f ../romszip/pooyan.zip ]]; then
   echo --- Success ---
 fi
 
+#------------------------------------
+# Phoenix
+#------------------------------------
+
+if [[ -f ../romszip/phoenix.zip ]]; then
+  #echo Phoenix Logos
+  #python3 ./logoconv.py ../logos/phoenix.png ../source/src/machines/phoenix/phoenix_logo.h || die
+
+  echo Converting Phoenix
+  cd phoenix || die
+
+  python3 ./phoenix_rom_convert.py || die
+
+  cd ..
+
+  echo --- Success ---
+fi
+
 echo -- -------------------------------------------------
 echo -- END
 echo -- -------------------------------------------------

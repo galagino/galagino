@@ -123,6 +123,10 @@
   #include "machines/pooyan/pooyan.h"
 #endif
 
+#ifdef ENABLE_PHOENIX
+  #include "machines/phoenix/phoenix.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -213,7 +217,10 @@ machineBase *machines[] = {
   new dkong3(),
 #endif
 #ifdef ENABLE_POOYAN
-  new pooyan()
+  new pooyan(),
+#endif
+#ifdef ENABLE_PHOENIX
+  new phoenix()
 #endif
 };
 

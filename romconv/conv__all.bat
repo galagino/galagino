@@ -32,6 +32,7 @@ call conv_mooncresta.bat
 call conv_scramble.bat
 call conv_supercobra.bat
 call conv_dkong3.bat
+call conv_phoenix.bat
 
 echo ---- Important
 echo ---- Please check if any errors occured!
