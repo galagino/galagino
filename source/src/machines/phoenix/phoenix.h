@@ -78,13 +78,6 @@ private:
   // VBLANK polling (no IRQ): pilotato deterministicamente in 2 fasi dentro
   // run_frame (vblank_active=true → bit 7 = 0; false → bit 7 = 1).
   bool vblank_active = false;
-
-  // Pre-decoded tile pens (1 byte per pixel = pen 0..3).
-  // Layout [code][py][px] = 256 × 8 × 8 = 16 KB per layer = 32 KB total.
-  const unsigned char *bg_decoded;     // 16 KB
-  const unsigned char *fg_decoded;     // 16 KB
-  const unsigned short *palette_cache; // 256 colori x 2 byte
-  bool            cache_done;
 };
 
 #endif

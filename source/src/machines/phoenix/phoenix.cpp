@@ -16,25 +16,8 @@
 #define PX_OFFSET   8       // (224-208)/2, centratura orizzontale portrait
 #define ARCADE_COLS 26      // tile per riga portrait (208 px)
 
-phoenix::phoenix() : videoreg(0), scroll_x(0), palette_bank(0),
-                     bg_decoded(nullptr), fg_decoded(nullptr),
-                     palette_cache(nullptr), cache_done(false) {
+phoenix::phoenix() {
   memset(vram, 0, sizeof(vram));
-}
-
-// Pre-decode 256 tile × 8 rows × 8 cols → pen 2-bit packed in 1 byte.
-// Chiamato dopo cache PROGMEM. ~32 KB DRAM extra.
-static void decode_tile_pens(const unsigned char *gfx, unsigned char *out) {
-  for (int code = 0; code < 256; code++) {
-    for (int py = 0; py < 8; py++) {
-      unsigned char p0 = gfx[code * 8 + py];
-      unsigned char p1 = gfx[code * 8 + py + 0x800];
-      for (int px = 0; px < 8; px++) {
-        unsigned char pen = ((p0 >> px) & 1) | (((p1 >> px) & 1) << 1);
-        out[(code << 6) | (py << 3) | px] = pen;
-      }
-    }
-  }
 }
 
 void phoenix::init(Input *in, unsigned short *fb,
@@ -46,19 +29,19 @@ void phoenix::reset() {
   machineBase::reset();
   memset(vram, 0, sizeof(vram));
 
-  // Lazy alloc: ~32.5 KB DRAM interna, solo al primo avvio di Phoenix.
-  if (!cache_done) {
-    const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-    bg_decoded    = phoenix_bgtiles_pens;
-    fg_decoded    = phoenix_fgtiles_pens;
-    palette_cache = phoenix_palette;
-    cache_done=true;
-  }
-
   videoreg = 0;
   scroll_x = 0;
   palette_bank = 0;
   vblank_active = false;       // fase iniziale = display attivo
+
+  /*
+  ph_c24_level = ph_c25_level = 0;
+  ph_noise_shiftreg = 0x1fff;
+  ph_e1_vc1 = 0;
+  ph_e2_note_c1 = ph_e2_note_c2 = 0;
+  ph_mix_vcap1 = ph_mix_vcap2 = ph_mix_vcamp = 0;
+  ph_mel_active = false;
+  */
 }
 
 const unsigned short *phoenix::logo(void) {
@@ -182,7 +165,6 @@ void phoenix::prepare_frame() {}
 
 void phoenix::render_row(short row) {
   if (row < 2 || row > 33) return;
-  if (!cache_done) return;              // alloc cache fallita (OOM): niente da rendere
 
   unsigned char idx = videoreg & 0x01;
   unsigned char *vp = vram[idx];
@@ -200,8 +182,8 @@ void phoenix::render_row(short row) {
       int ty = 25 - pcol;
       unsigned char code = vp[(ty << 5) + bg_tx + 0x800];
       unsigned char col  = ((code >> 5) & 0x07) | (palette_bank << 4);
-      const unsigned short *pal  = &palette_cache[col << 2];
-      const unsigned char  *pens = &bg_decoded[(code << 6) + bg_lx];
+      const unsigned short *pal  = &phoenix_palette[col << 2];
+      const unsigned char  *pens = &phoenix_bgtiles[(code << 6) + bg_lx];
       unsigned short *p = line + (pcol << 3);
       // rx 0..7 -> ly = 7-rx ; pen = pens[ly*8]
       p[0] = pal[pens[7 << 3]]; p[1] = pal[pens[6 << 3]];
@@ -216,8 +198,8 @@ void phoenix::render_row(short row) {
       int ty = 25 - pcol;
       unsigned char code = vp[(ty << 5) + prow];
       unsigned char col  = ((code >> 5) & 0x07) | 0x08 | (palette_bank << 4);
-      const unsigned short *pal  = &palette_cache[col << 2];
-      const unsigned char  *pens = &fg_decoded[(code << 6) + fg_lx];
+      const unsigned short *pal  = &phoenix_palette[col << 2];
+      const unsigned char  *pens = &phoenix_fgtiles[(code << 6) + fg_lx];
       unsigned short *p = line + (pcol << 3);
       unsigned char pen;
       pen = pens[7 << 3]; if (pen) p[0] = pal[pen];

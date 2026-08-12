@@ -8,6 +8,6 @@
 // bit 5,6 = unknown -> 0
 // bit 7   = VBLANK (managed in rdZ80)
 //
-#define PHOENIX_DSW0 0x10
+#define PHOENIX_DSW0 0x12
 
 #endif
