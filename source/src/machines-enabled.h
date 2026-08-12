@@ -1,7 +1,8 @@
 #ifndef _MACHINES_ENABLED_H_
 #define _MACHINES_ENABLED_H_
 
-// disable e.g. if roms are missing
+#ifndef USE_PIO_CONFIG
+
 #define ENABLE_PACMAN
 #define ENABLE_GALAGA
 #define ENABLE_DKONG
@@ -33,5 +34,7 @@
 #define ENABLE_DKONG3
 #define ENABLE_POOYAN
 #define ENABLE_PHOENIX
+
+#endif
 
 #endif
