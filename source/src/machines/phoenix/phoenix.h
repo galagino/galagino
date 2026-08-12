@@ -94,15 +94,6 @@ private:
   short ship_polled_x = 128;
   short paddle_committed = 0;
 
-  // Cache PROGMEM in DRAM/PSRAM (allocate at init).
-  // pgm_read_byte e' MOLTO lento su ESP32-P4 (flash @ ~40 MHz vs DRAM @ 360 MHz),
-  // cache fa difference di 10-20x sulla velocita' rendering.
-  unsigned char  *rom_cache;     // 16 KB CPU ROM
-  unsigned char  *bgtiles_cache; // 4 KB BG tiles (raw plane data)
-  unsigned char  *fgtiles_cache; // 4 KB FG tiles
-  unsigned short *palette_cache; // 256 colori × 2 byte
-  bool            cache_done;
-
   // Pre-decoded tile pens (1 byte per pixel = pen 0..3).
   // Layout [code][py][px] = 256 × 8 × 8 = 16 KB per layer = 32 KB total.
   unsigned char *bg_decoded;     // 16 KB

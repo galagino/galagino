@@ -19,11 +19,7 @@
 #define ARCADE_COLS     32       // tile colonne arcade landscape (256 wide)
 #define ARCADE_ROWS     26       // tile righe arcade landscape (208 tall)
 
-phoenix::phoenix()
-  : videoreg(0), scroll_x(0), palette_bank(0),
-    rom_cache(nullptr), bgtiles_cache(nullptr), fgtiles_cache(nullptr),
-    palette_cache(nullptr), cache_done(false),
-    bg_decoded(nullptr), fg_decoded(nullptr) {
+phoenix::phoenix() {
   // vblank_active inizializzato a false direttamente in phoenix.h.
   memset(vram, 0, sizeof(vram));
   memset(bg_dirty, 1, sizeof(bg_dirty));
@@ -49,82 +45,10 @@ static void decode_tile_pens(const unsigned char *gfx, unsigned char *out) {
 void phoenix::init(Input *in, unsigned short *fb,
                    sprite_S *sb, unsigned char *mem) {
   machineBase::init(in, fb, sb, mem);
-  // ATTENZIONE (fix bisect 2026-05-09): l'allocazione cache (~268 KB SRAM)
-  // e' stata SPOSTATA da init() a reset(). init() viene chiamata al boot per
-  // TUTTE le machine in machines[], indipendentemente da quale viene scelta.
-  // Allocare 268 KB SRAM al boot saturava la SRAM interna e spingeva gli stack
-  // dei FreeRTOS task (audio_task, emulation_task) in PSRAM, rallentando di
-  // ~5x l'emulazione di tutti gli altri giochi (Arkanoid 2, Galaga, Motorace).
-  // Ora alloca solo quando Phoenix viene effettivamente selezionato (reset()
-  // = al primo avvio gioco).
-}
-
-// Helper: alloca le cache (~268 KB) — eseguito una volta sola al primo
-// reset() di Phoenix (cioe' quando l'utente seleziona Phoenix dal menu).
-static void phoenix_lazy_init_caches(unsigned char  **rom_cache,
-                                     unsigned char  **bgtiles_cache,
-                                     unsigned char  **fgtiles_cache,
-                                     unsigned short **palette_cache,
-                                     unsigned char  **bg_decoded,
-                                     unsigned char  **fg_decoded,
-                                     unsigned short **bg_bitmap0,
-                                     unsigned short **bg_bitmap1,
-                                     bool           *cache_done) {
-  if (*cache_done) return;
-
-  const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-  *rom_cache     = (unsigned char*) heap_caps_malloc(16384, CAPS);
-  *bgtiles_cache = (unsigned char*) heap_caps_malloc(4096,  CAPS);
-  *fgtiles_cache = (unsigned char*) heap_caps_malloc(4096,  CAPS);
-  *palette_cache = (unsigned short*)heap_caps_malloc(256 * sizeof(unsigned short), CAPS);
-  *bg_decoded    = (unsigned char*) heap_caps_malloc(16384, CAPS);
-  *fg_decoded    = (unsigned char*) heap_caps_malloc(16384, CAPS);
-  *bg_bitmap0    = (unsigned short*)heap_caps_malloc(256 * 208 * 2, CAPS);
-  *bg_bitmap1    = (unsigned short*)heap_caps_malloc(256 * 208 * 2, CAPS);
-
-  if (*rom_cache && *bgtiles_cache && *fgtiles_cache && *palette_cache &&
-      *bg_decoded && *fg_decoded && *bg_bitmap0 && *bg_bitmap1) {
-    for (int i = 0; i < 16384; i++) (*rom_cache)[i]     = pgm_read_byte(&phoenix_rom[i]);
-    for (int i = 0; i < 4096;  i++) (*bgtiles_cache)[i] = pgm_read_byte(&phoenix_bgtiles[i]);
-    for (int i = 0; i < 4096;  i++) (*fgtiles_cache)[i] = pgm_read_byte(&phoenix_fgtiles[i]);
-    for (int i = 0; i < 256;   i++) (*palette_cache)[i] = pgm_read_word(&phoenix_palette[i]);
-    decode_tile_pens(*bgtiles_cache, *bg_decoded);
-    decode_tile_pens(*fgtiles_cache, *fg_decoded);
-    memset(*bg_bitmap0, 0, 256 * 208 * 2);
-    memset(*bg_bitmap1, 0, 256 * 208 * 2);
-    *cache_done = true;
-    Serial.println(F("[PHOENIX] All cached in DRAM internal (~268 KB)"));
-  } else {
-    // Fallback PSRAM (slower, ma meglio di niente)
-    const uint32_t PSCAPS = MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT;
-    if (!*rom_cache)     *rom_cache     = (unsigned char*) heap_caps_malloc(16384, PSCAPS);
-    if (!*bgtiles_cache) *bgtiles_cache = (unsigned char*) heap_caps_malloc(4096,  PSCAPS);
-    if (!*fgtiles_cache) *fgtiles_cache = (unsigned char*) heap_caps_malloc(4096,  PSCAPS);
-    if (!*palette_cache) *palette_cache = (unsigned short*)heap_caps_malloc(512,   PSCAPS);
-    if (!*bg_decoded)    *bg_decoded    = (unsigned char*) heap_caps_malloc(16384, PSCAPS);
-    if (!*fg_decoded)    *fg_decoded    = (unsigned char*) heap_caps_malloc(16384, PSCAPS);
-    if (*rom_cache && *bgtiles_cache && *fgtiles_cache && *palette_cache &&
-        *bg_decoded && *fg_decoded) {
-      for (int i = 0; i < 16384; i++) (*rom_cache)[i]     = pgm_read_byte(&phoenix_rom[i]);
-      for (int i = 0; i < 4096;  i++) (*bgtiles_cache)[i] = pgm_read_byte(&phoenix_bgtiles[i]);
-      for (int i = 0; i < 4096;  i++) (*fgtiles_cache)[i] = pgm_read_byte(&phoenix_fgtiles[i]);
-      for (int i = 0; i < 256;   i++) (*palette_cache)[i] = pgm_read_word(&phoenix_palette[i]);
-      decode_tile_pens(*bgtiles_cache, *bg_decoded);
-      decode_tile_pens(*fgtiles_cache, *fg_decoded);
-      *cache_done = true;
-      Serial.println(F("[PHOENIX] Cached in PSRAM (DRAM full!)"));
-    }
-  }
 }
 
 void phoenix::reset() {
   machineBase::reset();
-  // Lazy alloc cache (~268 KB) — solo quando Phoenix selezionato dal menu.
-  // Skippato se cache_done=true (gia' allocato da reset precedente).
-  phoenix_lazy_init_caches(&rom_cache, &bgtiles_cache, &fgtiles_cache,
-                           &palette_cache, &bg_decoded, &fg_decoded,
-                           &bg_bitmap[0], &bg_bitmap[1], &cache_done);
-
   memset(vram, 0, sizeof(vram));
   videoreg = 0;
   scroll_x = 0;
@@ -139,16 +63,14 @@ const unsigned short *phoenix::logo(void) {
   return phoenix_logo;
 }
 
-// ── Z80 op fetch ──
 unsigned char phoenix::opZ80(unsigned short Addr) {
   return rdZ80(Addr);
 }
 
-// ── Z80 memory read ──
 unsigned char phoenix::rdZ80(unsigned short Addr) {
   // ROM 0x0000-0x3FFF (cached in DRAM)
-  if (Addr < 0x4000) return rom_cache ? rom_cache[Addr]
-                                       : pgm_read_byte(&phoenix_rom[Addr]);
+  if (Addr < 0x4000) 
+    return phoenix_rom[Addr];
 
   // VRAM 0x4000-0x4FFF (page corrente)
   if (Addr >= 0x4000 && Addr <= 0x4FFF) {
@@ -258,18 +180,12 @@ void phoenix::wrZ80(unsigned short Addr, unsigned char Value) {
 #define PHOENIX_DISPLAY_PHASE    2100   // 84% di 2500
 
 void phoenix::run_frame() {
-  current_cpu = 0;
-  // Fase display attivo (bit 7 = 1)
   vblank_active = false;
-  for (int i = 0; i < PHOENIX_DISPLAY_PHASE; i++) {
+  for (int i = 0; i < PHOENIX_LOOPS_PER_FRAME; i++) {
+    if (i == PHOENIX_DISPLAY_PHASE) 
+      vblank_active = true;
     StepZ80(cpu); StepZ80(cpu); StepZ80(cpu); StepZ80(cpu);
   }
-  // Fase vblank (bit 7 = 0) — il polling Z80 vede la transizione 1→0 qui
-  vblank_active = true;
-  for (int i = PHOENIX_DISPLAY_PHASE; i < PHOENIX_LOOPS_PER_FRAME; i++) {
-    StepZ80(cpu); StepZ80(cpu); StepZ80(cpu); StepZ80(cpu);
-  }
-  // NESSUN IRQ — Phoenix usa solo polling VBLANK (vedi rdZ80 0x7800)
 }
 
 void phoenix::prepare_frame() {}
@@ -285,7 +201,7 @@ void phoenix::prepare_frame() {}
 //   2. FG layer overlay sopra SENZA scroll (pen 0 trasparente).
 //
 // MAME convention:
-//   FG tile = vram[idx][tile_index]        + GFX fgtiles (gfx_set 1)
+//   FG tile = vram[idx][tile_index]         + GFX fgtiles (gfx_set 1)
 //   BG tile = vram[idx][tile_index + 0x800] + GFX bgtiles (gfx_set 0)
 // ============================================================================
 
@@ -312,7 +228,7 @@ void phoenix::render_row(short strip_r) {
     int tile_index = strip_r * 32 + t;
     unsigned char bg_code = vp[tile_index + 0x800];
     unsigned char bg_col = ((bg_code >> 5) & 0x07) | (palette_bank << 4);
-    const unsigned short *bg_pal = &palette_cache[bg_col * 4];
+    const unsigned short *bg_pal = &phoenix_palette[bg_col * 4];
     const unsigned char  *pens   = &bg_decoded[bg_code << 6];
 
     int fb_x_start = (t * 8 - scroll_x) & 0xFF;
@@ -346,7 +262,7 @@ void phoenix::render_row(short strip_r) {
     int tile_index = strip_r * 32 + t;
     unsigned char fg_code = vp[tile_index];
     unsigned char fg_col = ((fg_code >> 5) & 0x07) | 0x08 | (palette_bank << 4);
-    const unsigned short *fg_pal = &palette_cache[fg_col * 4];
+    const unsigned short *fg_pal = &phoenix_palette[fg_col * 4];
     const unsigned char  *pens   = &fg_decoded[fg_code << 6];
 
     int fb_x_base = t * 8;

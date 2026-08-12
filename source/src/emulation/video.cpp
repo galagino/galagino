@@ -85,7 +85,9 @@ static const uint8_t init_cmd[] = {
   0x36, 1, MADCTL_DEFAULT,
   0x37, 1, 0x00,                    // Vertical scroll zero
   0x3A, 1, 0x55,
-  0xB1, 2, 0x00, 0x18,              // Framerate control
+  0xB1, 2, 0x00, 0x10,              // Framerate control
+  0xB2, 2, 0x00, 0x10,              // Framerate control
+  0xB3, 2, 0x00, 0x10,              // Framerate control
   0xB6, 3, 0x08, 0x82, 0x27,        // Display Function Control
   0xF2, 1, 0x00,                    // 3Gamma Function Disable
   0x26, 1, 0x01,                    // Gamma curve selected
