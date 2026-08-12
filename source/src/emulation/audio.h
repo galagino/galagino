@@ -20,7 +20,7 @@
 // disctrete notes
 #define A5_3      880.00
 #define C6_4      1046.50
-#define F5_5      739.989   
+#define F5_5      739.989
 #define G5_6      783.991
 #define E6_7      1318.51
 #define B6_8      1975.53 //??
@@ -47,6 +47,7 @@ private:
   void bagman_render_buffer(void);
   void galaxian_render_buffer(void);
   void spaceinvaders_render_buffer(void);
+  void phoenix_render_buffer(void);
   void dkong3_render_buffer(void);
   void generateSinusWave(int32_t amplitude, short* buffer, uint16_t length);
 
@@ -97,7 +98,7 @@ private:
   // Ladybug
   uint32_t noise_lfsr[NUM_SN_CHIPS] = {0x4000, 0x4000, 0x4000};
 
-  // Bagman 
+  // Bagman
   unsigned short positionLast;
   short sinusWaveBuffer[256];
 
@@ -148,6 +149,47 @@ private:
   int si_coin_toggle2 = 1;              // overtone square wave
   int si_coin_timer = 0;                // samples remaining for coin sound
   int si_coin_env = 0;                  // envelope level (decays)
+
+  // ==========================================================================
+  // Phoenix discrete audio — porting FEDELE da MAME src/mame/phoenix/phoenix_a.cpp
+  // (phoenix_sound_device + phoenix_discrete netlist). Sostituisce la precedente
+  // approssimazione "Galaxian-style" ereditata da SPINNERINO.
+  // ==========================================================================
+
+  // -- Noise generator (bit 6-7 latch sound A; NE555 + doppio inviluppo RC C24/C25) --
+  int32_t  ph_c24_level = 0;   long ph_c24_counter = 0;
+  int32_t  ph_c25_level = 0;   long ph_c25_counter = 0;
+  uint32_t ph_noise_shiftreg = 0x1FFFF;   // LFSR 18-bit (EXNOR bit16/bit17)
+  long     ph_noise_counter = 0;    int ph_noise_polybit = 0;
+  long     ph_noise_lp_counter = 0; int ph_noise_lp_polybit = 0;
+
+  // NB: tutto lo stato analogico e' in float (NON double): l'ESP32 ha la FPU solo
+  // single-precision, i double sono emulati in software e a 24kHz sforano il budget
+  // CPU del core (visto su HW: loopTask inchiodato in transmit() -> task watchdog).
+
+  // -- Effect 1 (sound B: NODE_20 RCDISC4 -> NODE_21 555 CV -> NODE_22 NOTE -> NODE_25 filtro) --
+  float    ph_e1_vc1 = 0;                          // NODE_20 (inviluppo pitch)
+  float    ph_e1_555_cap = 0; uint8_t ph_e1_555_ff = 1;  // NODE_21
+  int      ph_e1_note_c1 = 0, ph_e1_note_c2 = 0;   // NODE_22
+  float    ph_e1_rcfilt = 0;                       // NODE_25
+
+  // -- Effect 2 (sound A: NODE_33/34 555 -> mixer -> NODE_37 filtro lento -> NODE_39 555 CV -> NODE_40 NOTE) --
+  float    ph_e2_555a_cap = 0; uint8_t ph_e2_555a_ff = 1;  // NODE_33
+  float    ph_e2_555b_cap = 0; uint8_t ph_e2_555b_ff = 1;  // NODE_34
+  float    ph_e2_rcfilt = 0;                               // NODE_37
+  float    ph_e2_555cv_cap = 0; uint8_t ph_e2_555cv_ff = 1;// NODE_39
+  int      ph_e2_note_c1 = 0, ph_e2_note_c2 = 0;           // NODE_40
+
+  // -- Mixer finale (DISCRETE_MIXER4): cap di accoppiamento DC-block per canale + cAmp --
+  float    ph_mix_vcap1 = 0, ph_mix_vcap2 = 0, ph_mix_vcamp = 0;
+
+  // -- Melodia MM6221AA (4 tune brevi, approssimazione mantenuta da SPINNERINO) --
+  uint8_t  ph_mel_idx  = 0;        // indice nota corrente
+  uint8_t  ph_mel_tune = 0;        // 0..3 tune corrente
+  uint16_t ph_mel_phase= 0;
+  uint16_t ph_mel_freq = 0;
+  uint16_t ph_mel_timer= 0;        // sample fino a prossima nota
+  bool     ph_mel_active = false;
 };
 
 #endif
