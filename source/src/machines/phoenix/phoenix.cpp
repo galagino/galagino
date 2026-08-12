@@ -49,19 +49,10 @@ void phoenix::reset() {
   // Lazy alloc: ~32.5 KB DRAM interna, solo al primo avvio di Phoenix.
   if (!cache_done) {
     const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-    bg_decoded    = (unsigned char*)  heap_caps_malloc(16384, CAPS);
-    fg_decoded    = (unsigned char*)  heap_caps_malloc(16384, CAPS);
-    palette_cache = (unsigned short*) heap_caps_malloc(256 * sizeof(unsigned short), CAPS);
-    if (bg_decoded && fg_decoded && palette_cache) {
-      decode_tile_pens(phoenix_bgtiles, bg_decoded);
-      decode_tile_pens(phoenix_fgtiles, fg_decoded);
-      for (int i = 0; i < 256; i++)
-        palette_cache[i] = pgm_read_word(&phoenix_palette[i]);
-      cache_done = true;
-      Serial.println(F("[PHOENIX] tiles/palette cached in DRAM (~32.5 KB)"));
-    } else {
-      Serial.println(F("[PHOENIX] cache alloc FAILED"));
-    }
+    bg_decoded    = phoenix_bgtiles_pens;
+    fg_decoded    = phoenix_fgtiles_pens;
+    palette_cache = phoenix_palette;
+    cache_done=true;
   }
 
   videoreg = 0;
@@ -128,7 +119,6 @@ void phoenix::wrZ80(unsigned short Addr, unsigned char Value) {
 
   // videoreg_w 0x5000-0x57FF (bit0 page sel, bit1 palette bank)
   if (Addr >= 0x5000 && Addr <= 0x57FF) {
-    unsigned char old_pb = palette_bank;
     videoreg = Value;
     palette_bank = (Value >> 1) & 0x01;
     return;

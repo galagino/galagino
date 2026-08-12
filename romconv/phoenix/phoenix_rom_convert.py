@@ -25,11 +25,10 @@ def emit_byte_array(name, data, comment=""):
     for i in range(0, len(data), 16):
         chunk = data[i:i + 16]
         lines.append(" " + ", ".join(f"0x{b:02x}" for b in chunk) +
-                     ("," if i + 16 < len(data) else ""))
+                    ("," if i + 16 < len(data) else ""))
     lines.append("};")
     lines.append("")
     return "\n".join(l for l in lines if l is not None)
-
 
 def emit_word_array(name, words, comment=""):
   lines = [
@@ -45,11 +44,9 @@ def emit_word_array(name, words, comment=""):
   lines.append("")
   return "\n".join(l for l in lines if l is not None)
 
-
 def to_rgb565_swap(r, g, b):
   rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
   return ((rgb565 >> 8) | (rgb565 << 8)) & 0xFFFF
-
 
 def decode_palette(prom_lo, prom_hi):
     LEVELS = [0, 0, 202, 255]
@@ -81,6 +78,16 @@ def decode_palette(prom_lo, prom_hi):
 
     return palette
 
+def decode_tile_pens(gfx_p0, gfx_p1):
+  out = bytearray(0x4000)
+  for code in range(0, 256):
+    for py in range(0, 8):
+      p0 = gfx_p0[code * 8 + py];
+      p1 = gfx_p1[code * 8 + py];
+      for px in range(0, 9):
+        pen = ((p0 >> px) & 1) | (((p1 >> px) & 1) << 1)
+        out[(code << 6) | (py << 3) | px] = pen;
+  return out
 
 def main():
   print(f"Load ROM from: {os.path.abspath(ROM_SET)}")
@@ -126,16 +133,21 @@ def main():
   prom_hi = load_file(ROM_SET, ["mmi6301.ic41"], "e2184dd495ed579f10b6da0b78379e02d7a6229f")
   palette_rgb = decode_palette(prom_lo, prom_hi)
 
+  bg_decoded = decode_tile_pens(bg_p0, bg_p1)
+  fg_decoded = decode_tile_pens(fg_p0, fg_p1)
+
   with open(os.path.join(OUT_DIR, "phoenix_rom.h"), "w", encoding="utf-8", newline="\n") as f:
     f.write(emit_byte_array("phoenix_rom", cpu_rom, "Z80 CPU ROM 16 KB (ic45..ic52)"))
   print(f"[OK] phoenix_rom.h ({len(cpu_rom)} bytes)")
 
   with open(os.path.join(OUT_DIR, "phoenix_bgtiles.h"), "w", encoding="utf-8", newline="\n") as f:
-    f.write(emit_byte_array("phoenix_bgtiles", bg_data, "BG tiles 4 KB (256 char × 8x8 × 2bpp), plane0 + plane1"))
+    f.write(emit_byte_array("phoenix_bgtiles",      bg_data, "BG tiles 4 KB (256 char × 8x8 × 2bpp), plane0 + plane1"))
+    f.write(emit_byte_array("phoenix_bgtiles_pens", bg_decoded, "BG tiles decoded"))
   print(f"[OK] phoenix_bgtiles.h ({len(bg_data)} bytes)")
 
   with open(os.path.join(OUT_DIR, "phoenix_fgtiles.h"), "w", encoding="utf-8", newline="\n") as f:
-    f.write(emit_byte_array("phoenix_fgtiles", fg_data, "FG tiles 4 KB (256 char × 8x8 × 2bpp), plane0 + plane1"))
+    f.write(emit_byte_array("phoenix_fgtiles",      fg_data,    "FG tiles 4 KB (256 char × 8x8 × 2bpp), plane0 + plane1"))
+    f.write(emit_byte_array("phoenix_fgtiles_pens", fg_decoded, "FG tiles decoded"))
   print(f"[OK] phoenix_fgtiles.h ({len(fg_data)} bytes)")
 
   with open(os.path.join(OUT_DIR, "phoenix_palette.h"), "w", encoding="utf-8", newline="\n") as f:
