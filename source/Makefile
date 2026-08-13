@@ -65,6 +65,13 @@ cyd-esp32-s3-display-usb-up:
 image-info:
 	esptool --chip esp32s3 --port $(DEVICE_PATH) image-info .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
 
+verify-flash:
+	esptool --chip esp32s3 --port $(DEVICE_PATH) \
+	  verify-flash --diff 0x10000 .pio/build/cyd-esp32-s3-display-usb-up/GALAGINO_*_release.bin
+
+erase-flash:
+	esptool --chip esp32s3 --port $(DEVICE_PATH) erase-flash
+
 flash-id:
 	esptool --port $(DEVICE_PATH) flash-id
 
