@@ -25,9 +25,21 @@ typedef struct m6502_s {
     uint8_t  a, x, y, sp, p;
     uint8_t (*read) (struct m6502_s *cpu, uint16_t addr);
     void    (*write)(struct m6502_s *cpu, uint16_t addr, uint8_t val);
+    // Optional opcode-fetch hook. When non-NULL it is used INSTEAD of read()
+    // for the first byte of each instruction only (operands still use read()).
+    // NULL (default) means fetch == read, no overhead. Used by the Data East
+    // encrypted CPUs (DECO CPU-7 / C10707) whose opcodes are bit-swapped at
+    // fetch time while data reads stay raw.
+    uint8_t (*fetch)(struct m6502_s *cpu, uint16_t addr);
     void    *user;
     uint8_t  irq;
     uint8_t  nmi;
+    // Set to 1 for CPU variants whose ALU hardware ignores the Decimal flag
+    // (e.g. Ricoh RP2A03/2A07 used in the NES and dkong3's sound CPUs: the
+    // BCD circuitry was omitted in silicon, SED/CLD still set the flag bit
+    // but ADC/SBC always compute in binary regardless). Default 0 (from
+    // struct zero-init) = real 6502 behaviour, decimal mode works normally.
+    uint8_t  decimal_disabled;
 } m6502_t;
 
 #ifdef __cplusplus

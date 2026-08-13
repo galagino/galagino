@@ -34,6 +34,7 @@
 #define ENABLE_DKONG3
 #define ENABLE_POOYAN
 #define ENABLE_PHOENIX
+#define ENABLE_BURGERTIME
 
 #endif
 

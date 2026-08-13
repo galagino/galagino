@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino) and additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3) plus Moon Cresta, Scramble and Super Cobra.
+It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino), additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3), [SurvivalHacking](https://github.com/SurvivalHacking/spinnerino) and [VirtualClaudioBoy](https://github.com/VirtualClaudioBoy/GalaginoPlus) plus Moon Cresta, Scramble and Super Cobra.
 
 
 ### Quality of Life, improvements and fixes
@@ -38,10 +38,10 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 | ---      | ---                                                             | ---                                     | ---                 |
 | fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ST7789 - SPI 80MHz  |
 |          |                                                                 |                                         |                     |
-| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ILI9341 - SPI 60MHz |
+| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ILI9341 - SPI 40MHz |
 |          |                                                                 |                                         |                     |
 | fnk0104a | [github](https://github.com/Freenove/Freenove_ESP32_S3_Display) | [Amzn](https://amazon.es/dp/B0FSQLPQ6M) | ESP32-S3 - IPS Display - External DAC |
-|          |                                                                 |                                         | ILI9341 - SPI 60MHz - 16MiB Flash     |
+|          |                                                                 |                                         | ILI9341 - SPI 40MHz - 16MiB Flash     |
 
 ### 3d printed enclosure
 
@@ -49,7 +49,7 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 
 ### Games
 
-| Game                           | Marque                        | Screenshot                     | Notes |
+| Game                           | Marquee                       | Screenshot                     | Notes |
 | ---                            | ---                           | ---                            | ---   |
 | Pac-Man (pacman.zip)           | ![ ](/logos/pacman.png)       | ![ ](/images/pacman.gif)       |       |
 | Galaga (galaga.zip)            | ![ ](/logos/galaga.png)       | ![ ](/images/galagino.gif)     |       |
@@ -82,5 +82,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Donkey Kong 3 (dkong3.zip)     | ![_](/logos/dkong3.png)       | ![_](/images/dkong3.png)       |       |
 | Pooyan (pooyan.zip)            | ![_](/logos/pooyan.png)       | ![_](/images/pooyan.png)       |       |
 | Phoenix (phoenix.zip)          | ![_](/logos/phoenix.png)      | ![_](/images/phoenix.png)      |       |
+| Burger Time (btime.zip)        | ![_](/logos/burgertime.png)   | ![_](/images/burgertime.png)   |       |
 
 ### ...

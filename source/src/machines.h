@@ -127,6 +127,10 @@
   #include "machines/phoenix/phoenix.h"
 #endif
 
+#ifdef ENABLE_BURGERTIME
+  #include "machines/burgertime/burgertime.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -220,7 +224,10 @@ machineBase *machines[] = {
   new pooyan(),
 #endif
 #ifdef ENABLE_PHOENIX
-  new phoenix()
+  new phoenix(),
+#endif
+#ifdef ENABLE_BURGERTIME
+  new burgertime(),
 #endif
 };
 

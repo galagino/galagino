@@ -29,17 +29,68 @@ static uint16_t rd16_bug(m6502_t *cpu, uint16_t addr) {
     return (uint16_t)RD(addr) | ((uint16_t)RD(hi_addr) << 8);
 }
 
+// Decimal-mode ADC/SBC: algoritmo portato 1:1 da py65 (devices/mpu6502.py,
+// opADC/opSBC), gia' usato/verificato negli harness offline del progetto
+// (harness_boot.py ecc.) -- NON una derivazione originale, stessa fonte
+// affidabile. Necessario perche' Burger Time usa SED per la matematica BCD
+// del punteggio: senza correzione decimale un riporto di cifra (es. 90+10)
+// produce 0xA0 in binario puro invece di 0x00 con riporto, e il byte finisce
+// come indice tile 0xA = lettera 'A' invece della cifra corretta.
 static void do_adc(m6502_t *cpu, uint8_t v) {
-    uint16_t tmp = (uint16_t)cpu->a + v + (cpu->p & FC);
-    uint8_t  res = (uint8_t)tmp;
-    cpu->p = (cpu->p & ~(FC|FV|FN|FZ))
-           | (tmp > 0xFF ? FC : 0)
-           | ((~(cpu->a ^ v) & (cpu->a ^ res) & 0x80) ? FV : 0);
-    cpu->a = res;
-    SET_NZ(cpu->a);
+    uint8_t a = cpu->a;
+    uint8_t carry_in = cpu->p & FC;
+    if ((cpu->p & FD) && !cpu->decimal_disabled) {
+        int halfcarry = 0, decimalcarry = 0, adjust0 = 0, adjust1 = 0;
+        int nibble0 = (v & 0xF) + (a & 0xF) + carry_in;
+        if (nibble0 > 9) { adjust0 = 6; halfcarry = 1; }
+        int nibble1 = ((v >> 4) & 0xF) + ((a >> 4) & 0xF) + halfcarry;
+        if (nibble1 > 9) { adjust1 = 6; decimalcarry = 1; }
+        nibble0 &= 0xF;
+        nibble1 &= 0xF;
+        uint8_t aluresult = (uint8_t)((nibble1 << 4) | nibble0);
+        nibble0 = (nibble0 + adjust0) & 0xF;
+        nibble1 = (nibble1 + adjust1) & 0xF;
+        cpu->p &= ~(FC|FV|FN|FZ);
+        if (aluresult == 0) cpu->p |= FZ;
+        else cpu->p |= (aluresult & FN);
+        if (decimalcarry) cpu->p |= FC;
+        if ((~(a ^ v) & (a ^ aluresult) & 0x80)) cpu->p |= FV;
+        cpu->a = (uint8_t)((nibble1 << 4) | nibble0);
+    } else {
+        uint16_t tmp = (uint16_t)a + v + carry_in;
+        uint8_t  res = (uint8_t)tmp;
+        cpu->p = (cpu->p & ~(FC|FV|FN|FZ))
+               | (tmp > 0xFF ? FC : 0)
+               | ((~(a ^ v) & (a ^ res) & 0x80) ? FV : 0);
+        cpu->a = res;
+        SET_NZ(cpu->a);
+    }
 }
 
-static void do_sbc(m6502_t *cpu, uint8_t v) { do_adc(cpu, v ^ 0xFF); }
+static void do_sbc(m6502_t *cpu, uint8_t v) {
+    if ((cpu->p & FD) && !cpu->decimal_disabled) {
+        uint8_t a = cpu->a;
+        uint8_t carry_in = cpu->p & FC;
+        int halfcarry = 1, decimalcarry = 0, adjust0 = 0, adjust1 = 0;
+        int nibble0 = (a & 0xF) + (~v & 0xF) + carry_in;
+        if (nibble0 <= 0xF) { halfcarry = 0; adjust0 = 10; }
+        int nibble1 = ((a >> 4) & 0xF) + ((~v >> 4) & 0xF) + halfcarry;
+        if (nibble1 <= 0xF) adjust1 = 10 << 4;
+        int aluresult = a + (uint8_t)(~v) + carry_in;
+        if (aluresult > 0xFF) decimalcarry = 1;
+        aluresult &= 0xFF;
+        nibble0 = (aluresult + adjust0) & 0xF;
+        nibble1 = ((aluresult + adjust1) >> 4) & 0xF;
+        cpu->p &= ~(FC|FZ|FN|FV);
+        if (aluresult == 0) cpu->p |= FZ;
+        else cpu->p |= (aluresult & FN);
+        if (decimalcarry) cpu->p |= FC;
+        if (((a ^ v) & (a ^ aluresult) & 0x80)) cpu->p |= FV;
+        cpu->a = (uint8_t)((nibble1 << 4) | nibble0);
+    } else {
+        do_adc(cpu, v ^ 0xFF);
+    }
+}
 
 static void do_cmp(m6502_t *cpu, uint8_t reg, uint8_t v) {
     uint8_t r = reg - v;
@@ -111,7 +162,10 @@ M6502_IRAM int m6502_step(m6502_t *cpu) {
         return 7;
     }
 
-    op    = RD(cpu->pc++);
+    {
+        uint16_t _op_pc = cpu->pc++;
+        op = cpu->fetch ? cpu->fetch(cpu, _op_pc) : cpu->read(cpu, _op_pc);
+    }
     cross = 0;
 
     switch (op) {

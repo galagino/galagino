@@ -219,18 +219,22 @@ void dkong3::start() {
     memset(&apu[0], 0, sizeof(dk3_apu_t)); apu[0].n_lfsr = 1;
     memset(&apu[1], 0, sizeof(dk3_apu_t)); apu[1].n_lfsr = 1;
 
-    // Sound CPU #0
+    // Sound CPU #0 (RP2A03: BCD circuitry omitted in silicon, ADC/SBC always
+    // binary regardless of the Decimal flag -- well-documented NES hardware
+    // quirk, see m6502_t::decimal_disabled)
     memset(&snd_cpu[0], 0, sizeof(m6502_t));
     snd_cpu[0].read  = snd0_read;
     snd_cpu[0].write = snd0_write;
     snd_cpu[0].user  = this;
+    snd_cpu[0].decimal_disabled = 1;
     m6502_reset(&snd_cpu[0]);
 
-    // Sound CPU #1
+    // Sound CPU #1 (RP2A03)
     memset(&snd_cpu[1], 0, sizeof(m6502_t));
     snd_cpu[1].read  = snd1_read;
     snd_cpu[1].write = snd1_write;
     snd_cpu[1].user  = this;
+    snd_cpu[1].decimal_disabled = 1;
     m6502_reset(&snd_cpu[1]);
 }
 
