@@ -17,31 +17,21 @@
 #define ARCADE_COLS 26      // tile per riga portrait (208 px)
 
 phoenix::phoenix() {
-  memset(vram, 0, sizeof(vram));
 }
 
 void phoenix::init(Input *in, unsigned short *fb,
                    sprite_S *sb, unsigned char *mem) {
   machineBase::init(in, fb, sb, mem);
+  vram = (vram_t*)memory;
 }
 
 void phoenix::reset() {
   machineBase::reset();
-  memset(vram, 0, sizeof(vram));
 
-  videoreg = 0;
   scroll_x = 0;
+  video_page = 0;
   palette_bank = 0;
   vblank_active = false;       // fase iniziale = display attivo
-
-  /*
-  ph_c24_level = ph_c25_level = 0;
-  ph_noise_shiftreg = 0x1fff;
-  ph_e1_vc1 = 0;
-  ph_e2_note_c1 = ph_e2_note_c2 = 0;
-  ph_mix_vcap1 = ph_mix_vcap2 = ph_mix_vcamp = 0;
-  ph_mel_active = false;
-  */
 }
 
 const unsigned short *phoenix::logo(void) {
@@ -49,7 +39,10 @@ const unsigned short *phoenix::logo(void) {
 }
 
 unsigned char phoenix::opZ80(unsigned short Addr) {
-  return rdZ80(Addr);
+  if (Addr < 0x4000)
+    return phoenix_rom[Addr];
+
+  return 0x00;
 }
 
 unsigned char phoenix::rdZ80(unsigned short Addr) {
@@ -59,7 +52,7 @@ unsigned char phoenix::rdZ80(unsigned short Addr) {
 
   // VRAM 0x4000-0x4FFF (page corrente)
   if (Addr >= 0x4000 && Addr <= 0x4FFF) {
-    return vram[videoreg & 0x01][Addr & 0x0FFF];
+    return (*vram)[video_page][Addr & 0x0FFF];
   }
 
   // I/O area: 0x5000-0x6FFF write-only (read open bus)
@@ -91,18 +84,18 @@ unsigned char phoenix::rdZ80(unsigned short Addr) {
 
 // ── Z80 memory write ──
 void phoenix::wrZ80(unsigned short Addr, unsigned char Value) {
-  if (Addr < 0x4000) return;                 // ROM: ignore
+  if (Addr < 0x4000) return; // ROM: ignore
 
   // VRAM 0x4000-0x4FFF (page corrente)
   if (Addr <= 0x4FFF) {
-    vram[videoreg & 0x01][Addr & 0x0FFF] = Value;
+    (*vram)[video_page][Addr & 0x0FFF] = Value;
     if (!game_started) game_started = 1;
     return;
   }
 
   // videoreg_w 0x5000-0x57FF (bit0 page sel, bit1 palette bank)
   if (Addr >= 0x5000 && Addr <= 0x57FF) {
-    videoreg = Value;
+    video_page = Value & 0x01;
     palette_bank = (Value >> 1) & 0x01;
     return;
   }
@@ -166,8 +159,7 @@ void phoenix::prepare_frame() {}
 void phoenix::render_row(short row) {
   if (row < 2 || row > 33) return;
 
-  unsigned char idx = videoreg & 0x01;
-  unsigned char *vp = vram[idx];
+  unsigned char *vp = (*vram)[video_page];
   int prow = row - 2;                    // 0..31 = colonna arcade tx (FG)
 
   for (int ry = 0; ry < 8; ry++) {

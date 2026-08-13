@@ -48,32 +48,30 @@ public:
   void reset() override;
 
   signed char machineType()      override { return MCH_PHOENIX; }
-  signed char videoFlipY()       override { return 0; }
-  signed char videoFlipX()       override { return 0; }
 
   unsigned char rdZ80(unsigned short Addr) override;
   void          wrZ80(unsigned short Addr, unsigned char Value) override;
   unsigned char opZ80(unsigned short Addr) override;
 
-  void run_frame()      override;
-  void prepare_frame()  override;
+  void run_frame()           override;
+  void prepare_frame()       override;
   void render_row(short row) override;
 
   const unsigned short *logo(void) override;
 
 private:
-  // Render NATURALE (non trasposto): row_arcade=strip_r, col_arcade variabile.
-  // Display SPINNERINO con MV rotation mostra il game ruotato 90° CW per l'utente
-  // → vedrà arcade portrait nativo.
   void blit_tile_t(short strip_r, char col_arcade);
 
   // VRAM 4 KB × 2 pagine: page index = bit 0 di videoreg (write a 0x5000)
   // FG = vram[idx][0..0x3FF], BG = vram[idx][0x800..0xBFF]
-  unsigned char vram[2][0x1000];
+  //unsigned char vram[2][0x1000];
+  typedef unsigned char vram_t[2][0x1000];
+  vram_t* vram = nullptr;
+  static_assert(sizeof(vram_t) <= RAMSIZE, "RAMSIZE is too low");
 
-  unsigned char videoreg;        // bit 0 = page select, bit 1 = palette bank
   unsigned char scroll_x;        // BG horizontal scroll
-  unsigned char palette_bank;    // bit 1 di videoreg
+  unsigned char video_page;      // bit 0 from videoreg - page select
+  unsigned char palette_bank;    // bit 1 from videoreg - palette bank
 
   // VBLANK polling (no IRQ): pilotato deterministicamente in 2 fasi dentro
   // run_frame (vblank_active=true → bit 7 = 0; false → bit 7 = 1).
