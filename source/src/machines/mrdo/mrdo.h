@@ -47,11 +47,9 @@ protected:
 
 private:
   unsigned char protection_r();
-  void protection_w(unsigned char data);
   void render_background_strip(short screen_strip_row);
   void SN76489_Write_2chip(int chip, unsigned char data);
 
-  unsigned char m_pal_u001 = 0xFF;
   unsigned char flipscreen_w = 0; // 0 = normale, 1 = flip attivo
   unsigned char scrollx_w = 0;
   unsigned char scrolly_w = 0;

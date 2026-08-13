@@ -91,11 +91,9 @@ void mrdo::wrZ80(unsigned short Addr, unsigned char Value) {
   if (Addr >= 0x8000 && Addr <= 0x87FF) {
     if (Addr < 0x8400) { // Indirizzi 0x8000-0x83FF -> bg_colorram
       memory[Addr - 0x8000] = Value;
-      protection_w(Value);
     }
     else { // Indirizzi 0x8400-0x87FF -> bg_videoram
       memory[Addr - 0x8400 + 0x400] = Value;
-      protection_w(Value);
     }
     return;
   }
@@ -103,11 +101,9 @@ void mrdo::wrZ80(unsigned short Addr, unsigned char Value) {
   if (Addr >= 0x8800 && Addr <= 0x8FFF) {
     if (Addr < 0x8C00) { // Indirizzi 0x8800-0x8BFF -> fg_colorram
       memory[Addr - 0x8800 + 0x800] = Value;
-      protection_w(Value);
     }
     else { // Indirizzi 0x8C00-0x8FFF -> fg_videoram
       memory[Addr - 0x8C00 + 0xc00] = Value;
-      protection_w(Value);
     }
     return;
   }
@@ -151,35 +147,10 @@ void mrdo::wrZ80(unsigned short Addr, unsigned char Value) {
   }
 }
 
-void mrdo::protection_w(unsigned char data) {
-  const unsigned char i9 = (data >> 0) & 1;
-  const unsigned char i8 = (data >> 1) & 1;
-  // const unsigned char i7 = (data >> 2) & 1; // non usato nelle equazioni
-  const unsigned char i6 = (data >> 3) & 1;
-  const unsigned char i5 = (data >> 4) & 1;
-  const unsigned char i4 = (data >> 5) & 1;
-  const unsigned char i3 = (data >> 6) & 1;
-  const unsigned char i2 = (data >> 7) & 1;
-
-  // Equazioni booleane della PAL
-  const unsigned char t1 = i2 & !i3 & i4 & !i5 & !i6 & !i8 & i9;
-  const unsigned char t2 = !i2 & !i3 & i4 & i5 & !i6 & i8 & !i9;
-  const unsigned char t3 = i2 & i3 & !i4 & !i5 & i6 & !i8 & i9;
-  const unsigned char t4 = !i2 & i3 & i4 & !i5 & i6 & i8 & i9;
-
-  const unsigned char r13 = (t1) << 1;
-  const unsigned char r14 = (t1 | t2) << 2;
-  const unsigned char r15 = (t1 | t3) << 3;
-  const unsigned char r16 = (t1) << 4;
-  const unsigned char r17 = (t1 | t3) << 5;
-  const unsigned char r18 = (t3 | t4) << 6;
-
-  m_pal_u001 = ~(r18 | r17 | r16 | r15 | r14 | r13);
-}
-
 // Questa funzione simula la lettura dalla PAL di protezione.
 unsigned char mrdo::protection_r() {
-  return m_pal_u001;
+  unsigned short hl = cpu[0].HL.W;
+  return (hl < 0x8000) ? mrdo_rom1[hl] : 0xFF;
 }
 
 void mrdo::SN76489_Write_2chip(int chip, unsigned char data) {
@@ -254,8 +225,9 @@ void mrdo::prepare_frame(void) {
       // Applica l'offset di -16 pixel sull'asse verticale
       s->y += 16;
 
-      // Carica codice e colore
-      s->code = sprite_data[0];
+      // Carica codice e colore. Solo 128 sprite in ROM: l'hardware ignora
+      // il bit 7 (MAME wraps modulo 128)
+      s->code = sprite_data[0] & 0x7f;
       uint8_t attributes = sprite_data[2];
       s->color = attributes & 0x0F;
 
@@ -314,17 +286,20 @@ void mrdo::render_background_strip(short screen_strip_row) {
       if (attr & 0x80)
         tile_code += 256;
 
-      int tile_x = pixel_row_in_tile_world;
-      int tile_y = 7 - pixel_col_in_tile_world;
+      int tile_x = 7 - pixel_row_in_tile_world;
+      int tile_y = pixel_col_in_tile_world;
       uint8_t pixel_index = mrdo_bg_tiles[tile_code][tile_y][tile_x];
 
       uint8_t color_group_index = attr & 0x3F;
       uint16_t palette_base_offset = color_group_index * 4;
       const uint16_t *colors = &mrdo_master_palette[palette_base_offset];
 
-      uint16_t color_to_draw = colors[pixel_index];
+      uint16_t color_to_draw;
+      if (pixel_index || (attr & 0x40))
+        color_to_draw = colors[pixel_index];
+      else
+        color_to_draw = mrdo_master_palette[0];
 
-      *(ptr_row_start + screen_x) = color_to_draw;
       *(ptr_row_start + screen_x) = color_to_draw;
     }
   }
