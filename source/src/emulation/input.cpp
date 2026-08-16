@@ -176,6 +176,8 @@ unsigned int Input::buttons_get(void) {
     firePressedAtStart = false;
   }
 
+  fire_raw_state = input_states & BUTTON_FIRE;
+
   return input_states | startAndCoinState;
 }
 

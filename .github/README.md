@@ -83,5 +83,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Pooyan (pooyan.zip)            | ![_](/logos/pooyan.png)       | ![_](/images/pooyan.png)       |       |
 | Phoenix (phoenix.zip)          | ![_](/logos/phoenix.png)      | ![_](/images/phoenix.png)      |       |
 | Burger Time (btime.zip)        | ![_](/logos/burgertime.png)   | ![_](/images/burgertime.png)   |       |
+| Xevious (xevious.zip)          | ![_](/logos/xevious.png)      | ![_](/images/xevious.png)      |       |
 
 ### ...

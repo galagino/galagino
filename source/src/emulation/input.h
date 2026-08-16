@@ -36,6 +36,7 @@ public:
   void disable();
   unsigned int buttons_get(void);
   bool button_y_pressed(void);
+  unsigned char fire_raw(void) { return fire_raw_state; }
   bool demoSoundsOff();
 
   typedef std::function<void(bool up, bool down)> THandlerVolume;
@@ -58,6 +59,7 @@ private:
   bool singleMachine;
   bool switchDemoSoundsOff;
   bool firePressedAtStart;
+  unsigned char fire_raw_state = 0;
 #ifdef NUNCHUCK_INPUT
   Nunchuck nunchuck;
 #endif

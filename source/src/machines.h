@@ -131,6 +131,10 @@
   #include "machines/burgertime/burgertime.h"
 #endif
 
+#ifdef ENABLE_XEVIOUS
+  #include "machines/xevious/xevious.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -228,6 +232,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_BURGERTIME
   new burgertime(),
+#endif
+#ifdef ENABLE_XEVIOUS
+  new xevious(),
 #endif
 };
 

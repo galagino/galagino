@@ -1,0 +1,13 @@
+xevious_rom_cpu1.h
+xevious_rom_cpu2.h
+xevious_rom_cpu3.h
+xevious_planetmap.h
+xevious_fgtilemap.h
+xevious_bgtilemap.h
+xevious_spritemap.h
+xevious_cmap_fg.h
+xevious_cmap_bg.h
+xevious_cmap_sprites.h
+xevious_wavetable.h
+xevious_sample_boom.h
+xevious_sample_boom2.h

@@ -7,6 +7,7 @@
 #include "../machines/dkong3/dkong3.h"
 #include "../machines/galaga/galaga.h"
 #include "../machines/spaceinvaders/spaceinvaders.h"
+#include "../machines/xevious/xevious.h"
 #include "../config.h"
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 4)
