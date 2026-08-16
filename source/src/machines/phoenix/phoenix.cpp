@@ -62,15 +62,22 @@ unsigned char phoenix::rdZ80(unsigned short Addr) {
   // MAME phoenix_v.cpp player_input_r(). Mapping bit determinato su cabinet:
   // bit0 COIN, bit1 START, bit4 FIRE, bit5 RIGHT, bit6 LEFT, bit7 BARRIER.
   if (Addr >= 0x7000 && Addr <= 0x77FF) {
-    unsigned char b = input->buttons_get();
+    unsigned int  b = input->buttons_get();
     unsigned char v = 0xff;     // idle = all 1s (ACTIVE LOW)
     if (b & BUTTON_COIN)  v &= ~0x01;   // bit 0 COIN1
     if (b & BUTTON_START) v &= ~0x02;   // bit 1 START1
-    if (b & BUTTON_FIRE)  v &= ~0x10;   // bit 4 = FIRE
     if (b & BUTTON_LEFT)  v &= ~0x40;   // bit 6 = LEFT (MAME)
     if (b & BUTTON_RIGHT) v &= ~0x20;   // bit 5 = RIGHT (MAME)
+    #ifdef GALAGINO_CONTROLLER
+    if (b & BUTTON_A)     v &= ~0x10;   // bit 4 = FIRE
+    if (b & BUTTON_X)     v &= ~0x10;   // bit 4 = FIRE
+    if (b & BUTTON_B)     v &= ~0x80;   // bit 7 = SHIELD/BARRIER
+    if (b & BUTTON_Y)     v &= ~0x80;   // bit 7 = SHIELD/BARRIER
+    #else
+    if (b & BUTTON_FIRE)  v &= ~0x10;   // bit 4 = FIRE
     if (b & BUTTON_UP)    v &= ~0x80;   // bit 7 = SHIELD/BARRIER
     if (b & BUTTON_DOWN)  v &= ~0x80;   // bit 7 = SHIELD/BARRIER
+    #endif
     return v;
   }
 

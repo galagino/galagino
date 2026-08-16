@@ -162,6 +162,25 @@ void Audio::start(machineBase *machineBase) {
       sn_toggle[sn][c] = 1;
     }
   }
+
+  // Phoenix
+  ph_c24_level = ph_c25_level = 0;
+  ph_c24_counter = ph_c25_counter = 0;
+  ph_noise_shiftreg = 0x1FFFF;
+  ph_noise_counter = ph_noise_lp_counter = 0;
+  ph_noise_polybit = ph_noise_lp_polybit = 0;
+  ph_e1_vc1 = 0;
+  ph_e1_555_cap = 0;
+  ph_e1_555_ff = 1;
+  ph_e1_note_c1 = ph_e1_note_c2 = 0;
+  ph_e2_555a_cap = ph_e2_555b_cap = ph_e2_rcfilt = ph_e2_555cv_cap = 0;
+  ph_e2_555a_ff = ph_e2_555b_ff = ph_e2_555cv_ff = 1;
+  ph_e2_note_c1 = ph_e2_note_c2 = 0;
+  ph_mix_vcap1 = ph_mix_vcap2 = ph_mix_vcamp = 0;
+  ph_mel_idx  = ph_mel_tune = 0;
+  ph_mel_phase = ph_mel_freq = ph_mel_timer = 0;
+  ph_mel_active = false;
+
 #ifndef WORKAROUND_I2S_APLL_PROBLEM
   // The audio CPU of donkey kong runs at 6Mhz. A full bus
   // cycle needs 15 clocks which results in 400k cycles
@@ -222,7 +241,7 @@ void Audio::transmit() {
       spaceinvaders_render_buffer();
     else if (machineType == MCH_GALAXIAN || machineType == MCH_MOONCRESTA)
       galaxian_render_buffer();
-    else if (machineType == MCH_PHOENIX)
+    else if (machineType == MCH_PHOENIX && currentMachine->game_started)
       phoenix_render_buffer();
   } while(bytesOut);
 }
