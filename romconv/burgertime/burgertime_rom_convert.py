@@ -1,23 +1,11 @@
 #!/usr/bin/env python3
 # ============================================================
-# Burger Time (Data East 1982) ROM converter per galagino29-main
-#
-# Autonomo (stile xevious_rom_convert.py): legge ../roms/, scrive
-# ../../source/src/machines/btime/*.h
-#
-# Riferimento MAME MODERNO fornito dall'utente e letto per intero:
-# E:\Download\btime.cpp (driver Data East btime.cpp, classi btime_state/
-# scregg_state/mmonkey_state), E:\Download\decocpu7.h/.cpp,
-# E:\Download\deco222.h/.cpp (decrittazione CPU). NON usato mame4all
-# (esplicitamente vietato dall'utente in questa sessione).
-#
-# Set convertito: "btime" (Data East set 1) — CRC/SHA1 di romszip/btime.zip
-# verificati byte-per-byte contro ROM_START(btime) in btime.cpp.
+# Burger Time (Data East 1982) ROM converter
+# Converts "btime.zip" (Data East set 1)
 # ============================================================
 
 import os
 import sys
-import zipfile
 import hashlib
 
 sys.dont_write_bytecode = True

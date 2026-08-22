@@ -33,6 +33,9 @@ call conv_scramble.bat
 call conv_supercobra.bat
 call conv_dkong3.bat
 call conv_phoenix.bat
+call conv_burgertime.bat
+call conv_xevious.bat
+call conv_bnj.bat
 
 echo ---- Important
 echo ---- Please check if any errors occured!

@@ -135,6 +135,10 @@
   #include "machines/xevious/xevious.h"
 #endif
 
+#ifdef ENABLE_BNJ
+  #include "machines/bnj/bnj.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -235,6 +239,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_XEVIOUS
   new xevious(),
+#endif
+#ifdef ENABLE_BNJ
+  new bnj(),
 #endif
 };
 

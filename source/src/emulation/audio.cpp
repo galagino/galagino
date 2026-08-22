@@ -137,6 +137,7 @@ void Audio::start(machineBase *machineBase) {
   else if (machineType == MCH_SUPERCOBRA) { AY = 2; AY_INC = 8; AY_VOL = 7;  }
   else if (machineType == MCH_POOYAN)     { AY = 2; AY_INC = 9; AY_VOL = 11; }
   else if (machineType == MCH_BURGERTIME) { AY = 2; AY_INC = 8; AY_VOL = 7;  }
+  else if (machineType == MCH_BNJ)        { AY = 2; AY_INC = 8; AY_VOL = 7;  }
 
   for(char ay = 0; ay < NUM_AY_CHIPS; ay++) {
     for (int c = 0; c < 4; c++) {

@@ -72,7 +72,8 @@ enum {
   MCH_POOYAN,
   MCH_PHOENIX,
   MCH_BURGERTIME,
-  MCH_XEVIOUS
+  MCH_XEVIOUS,
+  MCH_BNJ
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
