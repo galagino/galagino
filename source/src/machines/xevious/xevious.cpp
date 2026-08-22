@@ -83,8 +83,7 @@ unsigned char xevious::rdZ80(unsigned short Addr) {
     // (carry=bit0=1 -> niente bomba). Come Scramble (laser+bomba sullo
     // stesso tasto, richiesta utente bring-up #28): FIRE spara e bombarda
     // insieme; il gioco ha comunque il suo cooldown interno (0x7940).
-    if (bit == 0 && (input->buttons_get() & BUTTON_FIRE))
-      b0 = 0;
+    if (bit == 0 && (input->buttons_get() & BUTTON_FIRE)) b0 = 0;
     return b0 | (b1 << 1);
   }
 
@@ -115,9 +114,9 @@ unsigned char xevious::rdZ80(unsigned short Addr) {
         if (namco_cnt > 2) return 0xff;
         return map71[namco_cnt++];
       } else {
-        static unsigned char prev_mask = 0;
+        static unsigned int  prev_mask = 0;
         static unsigned char fire_timer = 0;
-        unsigned char keymask = input->buttons_get();
+        unsigned int keymask = input->buttons_get();
 
         // Joystick Xevious: il 51xx passa un CODICE di direzione 0..8 nel nibble
         // basso di 0x8019. Derivato DISASSEMBLANDO la ROM reale (guess-free,
@@ -172,10 +171,10 @@ unsigned char xevious::rdZ80(unsigned short Addr) {
         //   -> una lettera confermata ogni ~80ms tenendo premuto. Zapper
         //   (livello, auto-repeat interno del gioco) e bomba restano sul
         //   mask autofired: comportamento in gioco invariato.
-        static unsigned char prev_fire_phys = 0;
-        unsigned char fire_phys = input->fire_raw();
+        static unsigned int prev_fire_phys = 0;
+        unsigned int fire_phys = input->fire_raw();
         unsigned char fire = 0x30;                    // bit4|bit5 = 1 a riposo
-        if (keymask & BUTTON_FIRE) fire &= ~0x20;     // livello (zapper)
+        if (keymask & BUTTON_FIRE) fire &= ~0x20;     // laser
         if (fire_phys && !prev_fire_phys) {
           fire &= ~0x10; fire_timer = 1;              // impulso (name-entry)
         } else if (fire_timer) {

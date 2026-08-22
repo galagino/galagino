@@ -494,6 +494,17 @@ void Audio::namco_render_buffer(void) {
         galagaMachine->snd_boom_cnt--;
       }
     }
+    else if(machineType == MCH_XEVIOUS) {
+      xevious *xeviousMachine = static_cast<xevious*>(currentMachine);
+
+      // Samples already at 24kHz - 1 byte per sample
+      if(xeviousMachine->snd_boom_cnt) {
+        value += *xeviousMachine->snd_boom_ptr * 3;
+        xeviousMachine->snd_boom_ptr++;
+        xeviousMachine->snd_boom_cnt--;
+      }
+    }
+
     valueToBuffer(i, value);
   }
 }
