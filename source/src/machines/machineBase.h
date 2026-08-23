@@ -73,7 +73,8 @@ enum {
   MCH_PHOENIX,
   MCH_BURGERTIME,
   MCH_XEVIOUS,
-  MCH_BNJ
+  MCH_BNJ,
+  MCH_MAPPY
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
@@ -115,6 +116,7 @@ public:
         for (int c = 0; c < 4; c++) {
           sn_period[chip][c] = 0;
           sn_volume[chip][c] = 15; // Muto
+          sn_raw_period[chip][c] = 0;
           sn_hold[chip][c] = 0;
           sn_min_volume[chip][c] = 15;
         }
@@ -154,6 +156,12 @@ public:
     virtual const signed char *waveRom(unsigned char value) { return 0; }
     virtual const unsigned short *logo(void) { return 0; };
     virtual bool hasNamcoAudio() { return false; }
+
+    // WSG 15XX a 8 voci (Mappy): register layout different from 3 voice WSG
+    // pacman/galaga. namcoSoundEnabled = mainlatch Q3 (0 = mute).
+    virtual bool hasNamco15xxAudio() { return false; }
+    virtual bool namcoSoundEnabled() { return true; }
+
 #ifdef LED_PIN
     virtual void menuLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };
     virtual void gameLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };
@@ -168,6 +176,9 @@ public:
     //Ladybug
     int sn_min_volume[3][4]; // latched min volume per audio render cycle
     int sn_hold[3][4];       // hold counter: keep sound active for N render cycles
+
+    // Circus Charlie
+    int sn_raw_period[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
 protected:
     virtual void blit_tile(short row, char col) { }

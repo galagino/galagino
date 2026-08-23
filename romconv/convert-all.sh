@@ -809,10 +809,46 @@ if [[ -f ../romszip/xevious.zip ]]; then
   #echo Xevious Logos
   #python3 ./logoconv.py ../logos/xevious.png ../source/src/machines/xevious/xevious_logo.h || die
 
-  echo Converting Burger Time
+  echo Converting Xevious
   cd xevious || die
 
   python3 ./xevious_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
+#------------------------------------
+# Bump 'n' Jump
+#------------------------------------
+
+if [[ -f ../romszip/bnj.zip ]]; then
+  #echo "Bump 'n' Jump Logo"
+  #python3 ./logoconv.py ../logos/bnj.png ../source/src/machines/bnj/bnj_logo.h || die
+
+  echo "Converting Bump 'n' Jump"
+  cd bnj || die
+
+  python3 ./bnj_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
+#------------------------------------
+# Mappy
+#------------------------------------
+
+if [[ -f ../romszip/mappy.zip ]]; then
+  #echo Mappy
+  #python3 ./logoconv.py ../logos/mappy.png ../source/src/machines/mappy/mappy_logo.h || die
+
+  echo "Converting Mappy"
+  cd mappy || die
+
+  python3 ./mappy_rom_convert.py || die
 
   cd ..
 else

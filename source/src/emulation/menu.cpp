@@ -271,6 +271,7 @@ const char *mchName(signed char machineType) {
     case MCH_BURGERTIME:    return "Burger Time";
     case MCH_XEVIOUS:       return "Xevious";
     case MCH_BNJ:           return "Bump 'n' Jump";
+    case MCH_MAPPY:         return "Mappy";
   }
 
   return "";

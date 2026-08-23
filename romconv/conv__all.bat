@@ -36,6 +36,7 @@ call conv_phoenix.bat
 call conv_burgertime.bat
 call conv_xevious.bat
 call conv_bnj.bat
+call conv_mappy.bat
 
 echo ---- Important
 echo ---- Please check if any errors occured!

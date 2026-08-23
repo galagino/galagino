@@ -16,7 +16,7 @@ if [[ -f ../romszip/xevious.zip ]]; then
   #echo Xevious Logos
   #python3 ./logoconv.py ../logos/xevious.png ../source/src/machines/xevious/xevious_logo.h || die
 
-  echo Converting Burger Time
+  echo Converting Xevious
   cd xevious || die
 
   python3 ./xevious_rom_convert.py || die

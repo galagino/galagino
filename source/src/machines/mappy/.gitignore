@@ -1,0 +1,6 @@
+mappy_cmap.h
+mappy_rom_main.h
+mappy_rom_sub.h
+mappy_spritemap.h
+mappy_tilemap.h
+mappy_wavetable.h

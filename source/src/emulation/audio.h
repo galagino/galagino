@@ -41,6 +41,7 @@ public:
 
 private:
   void namco_render_buffer(void);
+  void namco_15xx_render_buffer(void);
   void ay_render_buffer(void);
   void sn76489_render_buffer(void);
   void i8048_render_buffer(void);
@@ -70,6 +71,12 @@ private:
   unsigned long snd_freq[3];
   const signed char *snd_wave[3];
   unsigned char snd_volume[3];
+
+  // Namco WSG 15XX (Mappy): 8 voices, clock 24kHz = sample rate
+  unsigned long snd15_cnt[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  unsigned long snd15_freq[8];
+  const signed char *snd15_wave[8];
+  unsigned char snd15_vol[8];
 
   // AY 8910
   char AY;

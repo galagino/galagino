@@ -49,6 +49,19 @@ typedef struct m6809_state_S {
     uint8_t  nmi_armed;     /* NMI armed (requires S to be written first) */
 
     uint8_t  halted;     /* CPU halted (SYNC/CWAI) */
+
+    /* Optional direct-ROM window for instruction fetches (opcode and
+       operand bytes): while PC is inside [rom_base, rom_base+rom_size)
+       bytes are read straight from rom_direct[PC-rom_base], skipping the
+       m6809_read/m6809_read_opcode callback chain (global trampoline +
+       virtual dispatch), which dominates the per-instruction cost.
+       Opt-in per machine (used by mappy, dual 6809): m6809_reset() clear
+       the window, so it must be (re)installed after every reset call.
+       Do NOT use on CPUs with encrypted opcodes (KONAMI-1: gyruss sub,
+       tutankhm, rocnrope) - it would bypass m6809_read_opcode. */
+    const uint8_t *rom_direct;
+    uint16_t rom_base;
+    uint16_t rom_size;
 } m6809_state;
 
 /* Reset the CPU - sets PC from reset vector at 0xFFFE */
