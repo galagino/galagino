@@ -3,14 +3,14 @@
 
 // ============================================================================
 // Mappy (Namco 1983) — hardware "Super Pacman class":
-// 2x MC6809E @ 1.536MHz (main + sound), WSG 15XX 8 voci (clock 24000 Hz =
-// sample rate galagino, zero resampling), 2x custom I/O Namco 58XX,
-// tilemap 36x60 con scroll + 2x2 colonne fisse, 64 sprite 16x16 4bpp.
+// 2x MC6809E @ 1.536MHz (main + sound), WSG 15XX 8 voices (clock 24000 Hz =
+// galagino sample rate, zero resampling), 2x custom I/O Namco 58XX,
+// tilemap 36x60 con scroll + 2x2 fixed columns, 64 sprites 16x16 4bpp.
 //
-// Riferimenti MAME: namco/mappy.cpp, mappy_v.cpp, namcoio.cpp, sound/namco.cpp.
-// Grafica pre-ruotata ROT90 dal converter (romconv/mappy/mappy_rom_convert.py,
-// autotest contro le ROM galaga): asse X galagino (224) = asse Y MAME
-// (righe tilemap, scrollato), asse Y galagino (288) = asse X MAME (36 colonne).
+// MAME: namco/mappy.cpp, mappy_v.cpp, namcoio.cpp, sound/namco.cpp.
+// Rotated gfx ROT90 (romconv/mappy/mappy_rom_convert.py)
+// galagino X axis (224) == MAME y axis
+// galagino Y axis (288) == MAME x axis (36 columns)
 // ============================================================================
 
 #include "../machineBase.h"
@@ -24,21 +24,16 @@
 #include "mappy_dipswitches.h"
 #include "mappy_logo.h"
 
-// Interleave CPU: per frame MAPPY_SLICES iterazioni da 4 istruzioni per CPU.
-// 2x M6809E @ 1.536MHz ~ 25600 cicli/frame ~ 5700 istruzioni reali: 1600*4 =
-// 6400 e' gia' oltre la velocita' originale. ATTENZIONE (visto su HW
-// 2026-07-12): il gioco lento NON era CPU affamata ma run_frame oltre i
-// 16.6ms (frame persi) — alzare le slice PEGGIORA. La cura e' stata copiare
-// le ROM in DRAM interna (vedi reset()); tenere 1600 e alzare solo se, con
-// DEBUG_TIMING (emulation.h) attivo, i 10-frame stanno sotto i 160ms.
 #define MAPPY_SLICES 1600
 
-// Layout del buffer memory[] condiviso (RAMSIZE 16KB), indirizzi CPU main
-// IDENTICI agli offset fino a 0x27FF:
-//   0x0000-0x0FFF  VRAM (tile 0x000-0x7FF, attributi 0x800-0xFFF)
-//   0x1000-0x27FF  work RAM main con sprite RAM annegata
-//     (tab1 tile/colore @0x1780, tab2 Y/X @0x1F80, tab3 flags @0x2780)
-//   0x2800-0x2BFF  RAM condivisa main 0x4000-0x43FF / sub 0x0000-0x03FF
+// memory layout
+//
+//   0x0000-0x0fff  VRAM (tiles 0x000-0x07ff, attributes 0x0800-0x0fff)
+//   0x1000-0x27ff  work RAM main with embedded RAM
+//     (tab1 tiles/colors @0x1780, tab2 Y/X @0x1f80, tab3 flags @0x2780)
+//   0x2800-0x2BFF  shared RAM 
+//             main 0x4000-0x43ff 
+//             sub  0x0000-0x03ff
 //     (i primi 0x40 byte sono i registri WSG 15XX -> soundregs[])
 #define MAPPY_SHARED_OFF 0x2800
 
@@ -80,9 +75,9 @@ private:
     void mainlatch_w(uint16_t addr);
     void install_rom_direct(void);
 
-    // --- Namco 58XX custom I/O (2 chip), protocollo da MAME namcoio.cpp ---
+    // --- Namco 58XX custom I/O (2 chips), MAME namcoio.cpp ---
     struct n58xx_S {
-        unsigned char ram[16];      // 16 nibble visti dalla CPU (0xF0 | val)
+        unsigned char ram[16];      // 16 nibbles CPU (0xf0 | val)
         int lastcoins, lastbuttons;
         int credits;
         int coins[2];
@@ -97,25 +92,19 @@ private:
     m6809_state main_cpu;
     m6809_state sub_cpu;
 
-    // ROM + grafica tile copiate in DRAM interna (lazy alloc a reset(),
-    // stile Phoenix): le due 6809 fetchano ~770k opcode/s e il render fa
-    // due passate tile per strip; il traffico verso gli array const in
-    // flash sfratta la cache su entrambi i core -> frame persi, gioco
-    // lento (visto su HW 2026-07-12). Se l'alloc fallisce i puntatori
-    // restano sulla flash (funziona, ma lento). Totale ~37.5KB.
     const unsigned char *rom_main;               // 24KB, main 0xA000-0xFFFF
-    const unsigned char *rom_sub;                // 8KB, sub 0xE000-0xFFFF
-    const unsigned short (*tiles)[8];            // 4KB, mappy_tilemap
+    const unsigned char *rom_sub;                // 8KB,  sub 0xE000-0xFFFF
+    const unsigned short (*tiles)[8];            // 4KB,  mappy_tilemap
     const unsigned short (*cmap_tiles)[4];       // 512B
     const unsigned short (*cmap_prio)[4];        // 512B
     const unsigned short (*cmap_sprites)[16];    // 512B
     bool rom_cached;
 
     n58xx_S io[2];
-    unsigned char dipmux_sel;      // LS157: 0 = DSW2 nibble basso, 1 = alto
+    unsigned char dipmux_sel;      // LS157: 0 = DSW2 nibble low, 1 = high
 
-    // mainlatch LS259 @0x5000 main / 0x2000 sub (A0 = dato):
-    // Q0 = sub irq mask, Q1 = main irq mask, Q2 = flip (ignorato),
+    // mainlatch LS259 @0x5000 main / 0x2000 sub (A0 = data):
+    // Q0 = sub irq mask, Q1 = main irq mask, Q2 = flip (ignored),
     // Q3 = sound enable, Q4 = !reset namcoio, Q5 = !reset sub CPU
     unsigned char main_irq_mask, sub_irq_mask;
     unsigned char wsg_enable;

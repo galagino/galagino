@@ -1,15 +1,8 @@
 #include "mappy.h"
 
-// ============================================================================
-// Reset
-// ============================================================================
-
 void mappy::reset() {
   machineBase::reset();
 
-  // Lazy alloc: ~37.5KB DRAM interna al primo avvio di Mappy: ROM (core
-  // emulazione) + tilemap e colormap (core video, due passate tile per
-  // strip). Vedi commento in mappy.h. Mai liberata, come Phoenix.
   if (!rom_cached && false) {
     const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
     unsigned char *rm = (unsigned char *)heap_caps_malloc(0x6000, CAPS);
@@ -51,9 +44,6 @@ void mappy::reset() {
   install_rom_direct();
 }
 
-// fetch istruzioni diretto dalla ROM (in DRAM), senza passare da
-// trampolino globale + dispatch virtuale: e' il grosso del costo per
-// istruzione (visto con DEBUG_TIMING: Cpu 20.6ms/frame -> 48Hz).
 // m6809_reset() azzera la finestra: va reinstallata dopo OGNI reset.
 void mappy::install_rom_direct(void) {
   main_cpu.rom_direct = rom_main;
@@ -76,7 +66,7 @@ void mappy::io_chips_reset(void) {
 }
 
 // ============================================================================
-// Mainlatch LS259 (main 0x5000-0x500F, sub 0x2000-0x200F, A0 = dato)
+// Mainlatch LS259 (main 0x5000-0x500F, sub 0x2000-0x200F, A0 = data)
 // ============================================================================
 
 void mappy::mainlatch_w(uint16_t addr) {
@@ -91,33 +81,29 @@ void mappy::mainlatch_w(uint16_t addr) {
       main_irq_mask = v;
       if (!v) main_cpu.irq_pending = 0;
       break;
-    case 2:   // flip screen: ignorato (solo upright)
+    case 2:   // flip screen
       break;
     case 3:   // WSG 15XX sound enable
       wsg_enable = v;
       break;
-    case 4:   // !reset dei due namcoio 58XX
+    case 4:   // !reset both namcoio 58XX
       if (!v && !io_reset)
-        io_chips_reset();   // fronte di reset: azzera ram e contatori
+        io_chips_reset();
       io_reset = !v;
       break;
-    case 5:   // !reset della sub CPU
+    case 5:   // !reset sub CPU
       if (v && sub_reset) {
-        m6809_reset(&sub_cpu);   // rilascio del reset: riparte dal vettore
-        install_rom_direct();    // il reset azzera la finestra rom_direct
+        m6809_reset(&sub_cpu);
+        install_rom_direct();
       }
       sub_reset = !v;
       break;
   }
 }
 
-// ============================================================================
-// Bus M6809 — dispatch per puntatore di stato (main vs sub)
-// ============================================================================
-
 unsigned char IRAM_ATTR mappy::m6809_read(m6809_state *s, uint16_t addr) {
   if (s == &sub_cpu) {
-    // sub: 0x0000-0x03FF RAM condivisa (0x00-0x3F = registri WSG)
+    // sub: 0x0000-0x03FF shared RAM (0x00-0x3F = WSG registers)
     if (addr < 0x0400)
       return (addr < 0x40) ? soundregs[addr] : memory[MAPPY_SHARED_OFF + addr];
     if (addr >= 0xE000)
@@ -129,12 +115,12 @@ unsigned char IRAM_ATTR mappy::m6809_read(m6809_state *s, uint16_t addr) {
   if (addr < 0x2800)                      // VRAM + work/sprite RAM
     return memory[addr];
 
-  if ((addr & 0xFC00) == 0x4000) {        // RAM condivisa col sub
+  if ((addr & 0xFC00) == 0x4000) {        // shared RAM with subcpu
     uint16_t o = addr & 0x03FF;
     return (o < 0x40) ? soundregs[o] : memory[MAPPY_SHARED_OFF + o];
   }
 
-  if ((addr & 0xFFE0) == 0x4800)          // namcoio 0/1: 4 bit, alti a 1
+  if ((addr & 0xFFE0) == 0x4800)          // namcoio 0/1: 4 bits
     return 0xF0 | io[(addr >> 4) & 1].ram[addr & 0x0F];
 
   if (addr >= 0xA000)
@@ -158,20 +144,19 @@ void IRAM_ATTR mappy::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
   // main
   if (addr < 0x2800) {
     memory[addr] = val;
-    // primo carattere scritto in VRAM = boot avviato (sync 60Hz, attract)
     if (!game_started && addr < 0x0800 && val != 0)
       game_started = 1;
     return;
   }
 
-  if ((addr & 0xF800) == 0x3800) {        // scroll_w: valore = offset >> 3
+  if ((addr & 0xF800) == 0x3800) {        // scroll_w: val = offset >> 3
     scroll = (addr >> 3) & 0xFF;
     return;
   }
 
   if ((addr & 0xFC00) == 0x4000) {
     uint16_t o = addr & 0x03FF;
-    if (o < 0x40) soundregs[o] = val;     // registri WSG (letti da audio.cpp)
+    if (o < 0x40) soundregs[o] = val;     // WSG  registers
     else          memory[MAPPY_SHARED_OFF + o] = val;
     return;
   }
@@ -186,7 +171,7 @@ void IRAM_ATTR mappy::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
     return;
   }
 
-  // 0x8000 = watchdog: ignorato
+  // 0x8000 = watchdog: ignored
 }
 
 unsigned char IRAM_ATTR mappy::m6809_read_opcode(m6809_state *s, uint16_t addr) {
@@ -212,8 +197,8 @@ void mappy::run_frame(void) {
       m6809_step(&sub_cpu, 4);
   }
 
-  // vblank: IRQ alle CPU se abilitate dal mainlatch, poi i 58XX eseguono
-  // il comando lasciato in ram[8] (in MAME 50us dopo il vblank)
+  // vblank: CPU IRQ enabled by mainlatch, and the 58XX executes
+  // the command latched in ram[8] (in MAME 50us after vblank)
   if (main_irq_mask)
     m6809_irq(&main_cpu);
 
@@ -227,8 +212,7 @@ void mappy::run_frame(void) {
 }
 
 // ============================================================================
-// Namco 58XX — porting fedele di MAME namcoio.cpp (vedi
-// romconv/mappy/namcoio_58xx_protocol.md)
+// Namco 58XX — from MAME namcoio.cpp
 // ============================================================================
 
 // porte di input a 4 bit, ATTIVE BASSE (1 = non premuto).
