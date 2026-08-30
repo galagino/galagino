@@ -537,7 +537,6 @@ void Audio::namco_15xx_render_buffer(void) {
         value += snd15_vol[ch] * snd15_wave[ch][(snd15_cnt[ch] >> 15) & 0x1f];
       snd15_cnt[ch] += snd15_freq[ch];
     }
-    /*
     if (machineType == MCH_GAPLUS) {
       gaplus *gaplusMachine = static_cast<gaplus*>(currentMachine);
 
@@ -547,10 +546,7 @@ void Audio::namco_15xx_render_buffer(void) {
         gaplusMachine->snd_bang_cnt--;
       }
     }
-    */
 
-    // 8 voci x vol 15 x onda +/-8 = +/-960: dimezza per stare nel
-    // contratto +/-512 di valueToBuffer
     valueToBuffer(i, value >> 1);
   }
 }

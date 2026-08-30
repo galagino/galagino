@@ -272,6 +272,7 @@ const char *mchName(signed char machineType) {
     case MCH_XEVIOUS:       return "Xevious";
     case MCH_BNJ:           return "Bump 'n' Jump";
     case MCH_MAPPY:         return "Mappy";
+    case MCH_GAPLUS:        return "Gaplus";
   }
 
   return "";

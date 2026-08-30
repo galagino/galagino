@@ -6,6 +6,7 @@
 #include "../machines/dkong/dkong.h"
 #include "../machines/dkong3/dkong3.h"
 #include "../machines/galaga/galaga.h"
+#include "../machines/gaplus/gaplus.h"
 #include "../machines/spaceinvaders/spaceinvaders.h"
 #include "../machines/xevious/xevious.h"
 #include "../config.h"

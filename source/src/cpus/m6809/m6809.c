@@ -12,12 +12,30 @@
 #define REG_D(s)  ((uint16_t)((s)->A << 8) | (s)->B)
 #define SET_D(s,v) do { (s)->A = (uint8_t)((v) >> 8); (s)->B = (uint8_t)(v); } while(0)
 
-#define FETCH8(s)   m6809_read(s, (s)->PC++)
-#define FETCH_OP(s) m6809_read_opcode(s, (s)->PC++)
+/* instruction stream fetches: use the direct-ROM window when installed
+   (see rom_direct in m6809.h), else fall back to the callbacks */
+static inline uint8_t fetch8(m6809_state *s) {
+    uint16_t pc = s->PC++;
+    uint16_t off = (uint16_t)(pc - s->rom_base);
+    if (off < s->rom_size)
+        return s->rom_direct[off];
+    return m6809_read(s, pc);
+}
+
+static inline uint8_t fetch_op(m6809_state *s) {
+    uint16_t pc = s->PC++;
+    uint16_t off = (uint16_t)(pc - s->rom_base);
+    if (off < s->rom_size)
+        return s->rom_direct[off];
+    return m6809_read_opcode(s, pc);
+}
+
+#define FETCH8(s)   fetch8(s)
+#define FETCH_OP(s) fetch_op(s)
 
 static inline uint16_t FETCH16(m6809_state *s) {
-    uint8_t hi = m6809_read(s, s->PC++);
-    uint8_t lo = m6809_read(s, s->PC++);
+    uint8_t hi = fetch8(s);
+    uint8_t lo = fetch8(s);
     return ((uint16_t)hi << 8) | lo;
 }
 
@@ -489,6 +507,12 @@ void m6809_reset(m6809_state *s) {
     s->halted = 0;
     s->cycles = 0;
     s->total_cycles = 0;
+    /* clear the direct-ROM fetch window: machines that use it (mappy)
+       must re-install it after every reset; everyone else stays on the
+       callback path with no risk of a stale/garbage pointer */
+    s->rom_direct = 0;
+    s->rom_base = 0;
+    s->rom_size = 0;
     s->PC = READ16(s, 0xFFFE);
 }
 
@@ -517,18 +541,22 @@ void m6809_nmi(m6809_state *s) {
 
 int m6809_step(m6809_state *s, char count) {
   uint8_t op, val8, postbyte;
-  uint16_t ea, val16; 
+  uint16_t ea, val16;
   int16_t offset;
   s->cycles = 0;
 
-  //check_interrupts(s);
-  //if (s->halted) {
-  //    s->cycles = 1;
-  //    s->total_cycles += 1;
-  //    return 1; 
-  //}
-
   for (int i=0; i < count; i++) {
+    /* CWAI (halted==2): CPU is stopped with its state already pushed, waiting
+       for an interrupt — do not fetch. check_interrupts() clears halted and
+       vectors when the IRQ arrives. Executing past CWAI re-pushes 12 bytes per
+       loop pass and makes the eventual RTI pop a misaligned frame (wild PC).
+       SYNC (halted==1) deliberately keeps falling through as before. */
+    if (s->halted == 2) {
+        s->cycles += 1;
+        s->total_cycles += 1;
+        continue;
+    }
+
     op = FETCH_OP(s);
 
     switch (op) {
@@ -585,6 +613,17 @@ int m6809_step(m6809_state *s, char count) {
             val16 = get_reg(s, postbyte >> 4);
             set_reg(s, postbyte & 0x0F, val16);
             s->cycles = 6; break;
+
+        case 0x16: /* LBRA - long branch always (unconditional, page 0) */
+            offset = (int16_t)FETCH16(s);
+            s->PC += offset;
+            s->cycles = 5; break;
+
+        case 0x17: /* LBSR - long branch to subroutine */
+            offset = (int16_t)FETCH16(s);
+            PUSH16(s, s->PC);
+            s->PC += offset;
+            s->cycles = 9; break;
 
         /* ======== Branches (short) ======== */
         case 0x20: case 0x21: case 0x22: case 0x23:
@@ -980,7 +1019,8 @@ int m6809_step(m6809_state *s, char count) {
                 case 0xFF: ea = extended_addr(s); WRITE16(s,ea,s->S); set_nz16(s, s->S); s->CC &= ~M6809_CC_V; s->cycles = 7; break;
 
                 default:
-                    s->cycles = 2; break; /* Unknown page 2 opcode */
+                    /* Unknown page 2 opcode - treat as NOP */
+                    s->cycles = 2; break;
             }
             break;
 
@@ -1006,6 +1046,7 @@ int m6809_step(m6809_state *s, char count) {
                 case 0xBC: ea = extended_addr(s); op_cmp16(s, s->S, READ16(s,ea)); s->cycles = 8; break;
 
                 default:
+                    /* Unknown page 3 opcode - treat as NOP */
                     s->cycles = 2; break;
             }
             break;

@@ -133,7 +133,7 @@ def selftest():
     print("Autotest decoder vs tileconv/spriteconv (ROM galaga): OK")
 
 # ------------------------------------------------------------
-# scritture header
+# write header
 # ------------------------------------------------------------
 def write_tiles(tiles):
     with open(os.path.join(OUT_DIR, "mappy_tilemap.h"), "w") as f:

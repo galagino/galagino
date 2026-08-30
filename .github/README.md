@@ -86,5 +86,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Xevious (xevious.zip)          | ![_](/logos/xevious.png)      | ![_](/images/xevious.png)      |       |
 | Bump'n'Jump (bnj.zip)          | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
 | Mappy (mappy.zip)              | ![_](/logos/mappy.png)        | ![_](/images/mappy.png)        |       |
+| Gaplus (galaga3.zip)           | ![_](/logos/galaga3.png)      | ![_](/images/galaga3.png)      |       |
 
 ### ...

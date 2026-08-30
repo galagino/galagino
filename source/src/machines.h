@@ -143,6 +143,10 @@
   #include "machines/mappy/mappy.h"
 #endif
 
+#ifdef ENABLE_GAPLUS
+  #include "machines/gaplus/gaplus.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -249,6 +253,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_MAPPY
   new mappy(),
+#endif
+#ifdef ENABLE_GAPLUS
+  new gaplus(),
 #endif
 };
 
