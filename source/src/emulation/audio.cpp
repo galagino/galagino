@@ -234,7 +234,7 @@ void Audio::transmit() {
       namco_render_buffer();
     else if (currentMachine->hasNamco15xxAudio())
       namco_15xx_render_buffer();
-    else if (machineType == MCH_MRDO || machineType == MCH_LADYBUG || machineType == MCH_STARFORCE)
+    else if (machineType == MCH_MRDO || machineType == MCH_LADYBUG || machineType == MCH_STARFORCE || machineType == MCH_CIRCUSC)
       sn76489_render_buffer();
     else if (machineType == MCH_DKONG || machineType == MCH_DKONGJR)
       i8048_render_buffer();
@@ -458,6 +458,16 @@ void Audio::sn76489_render_buffer(void) {
         }
       }
     }
+
+    // Circus Charlie: mix DAC 8 bit (effects) over the two SN76489A.
+    // Like Gyruss drums: pop from the ring filled in run_frame.
+    if (machineType == MCH_CIRCUSC) {
+      static int dc = 0;
+      int s = currentMachine->renderDrumSample();  // already scaled (volume in circusc.h)
+      dc += (s - dc) >> 7;
+      sample += s - dc;
+    }
+
     valueToBuffer(i, sample);
   }
 }

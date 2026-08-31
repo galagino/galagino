@@ -1,0 +1,5 @@
+circusc_audio_rom.h
+circusc_cmap.h
+circusc_main_rom.h
+circusc_spritemap.h
+circusc_tilemap.h

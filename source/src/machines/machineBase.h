@@ -21,7 +21,7 @@
 #define LED_WHITE    CRGB::White
 #endif
 
-#define RAMSIZE     16384 // max usage is Starforce with 15.040
+#define RAMSIZE     16384 // max usage is Xevious with 16384
 
 struct sprite_S {
   int x, y;
@@ -78,7 +78,8 @@ enum {
   MCH_GAPLUS,
   MCH_ALIBABA,
   MCH_AMIDAR,
-  MCH_TURTLES
+  MCH_TURTLES,
+  MCH_CIRCUSC
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
@@ -119,8 +120,8 @@ public:
       for (int chip = 0; chip < 3; chip++) {
         for (int c = 0; c < 4; c++) {
           sn_period[chip][c] = 0;
-          sn_volume[chip][c] = 15; // Muto
           sn_raw_period[chip][c] = 0;
+          sn_volume[chip][c] = 15; // Mute
           sn_hold[chip][c] = 0;
           sn_min_volume[chip][c] = 15;
         }
@@ -165,6 +166,13 @@ public:
     // pacman/galaga. namcoSoundEnabled = mainlatch Q3 (0 = mute).
     virtual bool hasNamco15xxAudio() { return false; }
     virtual bool namcoSoundEnabled() { return true; }
+
+    // Sample-MCU drums (Gyruss i8039): called once per 24kHz output sample by
+    // the audio renderer; steps the MCU and returns the centered DAC value
+    // (-128..127), 0 = silence. Virtual so audio.cpp does not need to include
+    // the machine header (machines.h/gyruss.h can only live in main.cpp).
+    // also used by CircusCharlie
+    virtual int renderDrumSample() { return 0; }
 
 #ifdef LED_PIN
     virtual void menuLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };
