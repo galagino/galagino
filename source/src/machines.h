@@ -163,6 +163,10 @@
   #include "machines/circusc/circusc.h"
 #endif
 
+#ifdef ENABLE_ROCNROPE
+  #include "machines/rocnrope/rocnrope.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -284,6 +288,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_CIRCUSC
   new circusc(),
+#endif
+#ifdef ENABLE_ROCNROPE
+  new rocnrope(),
 #endif
 };
 
