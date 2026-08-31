@@ -71,6 +71,13 @@ void i8048_reset(struct i8048_state_S *state) {
   state->notINT = true;
   state->T0 = true;         // low when "score" sfx
   state->T1 = true;         // low when "falling" sfx
+
+  // Expander ports reset to 0, BUS latch default high
+  state->p4 = 0;
+  state->p5 = 0;
+  state->p6 = 0;
+  state->p7 = 0;
+  state->bus_latch = 0xff;
   
   state->PSW = 0x08;  // bit 3 is always rom_read as "1"
 }
@@ -92,6 +99,8 @@ static inline void tick(struct i8048_state_S *state) {
 
 static inline unsigned char fetch(struct i8048_state_S *state) {
   tick(state);
+  if (state->rom_direct)
+    return state->rom_direct[state->PC++ & state->rom_mask];
   return i8048_rom_read(state, state->PC++);
 }
 
@@ -122,6 +131,8 @@ static void handleInterrupts(struct i8048_state_S *state) {
       push(state);
       state->PC = 3;
       state->inInterrupt = true;
+    if (state->irq_oneshot)
+      state->notINT = true;  // HOLD_LINE: auto-clear on acknowledge (only gyruss)
     } else if (state->timerInterruptRequested && state->tcntInterruptsEnabled) {
       // handle timer interrupt
       state->timerInterruptRequested = false;
@@ -166,7 +177,11 @@ void i8048_step(struct i8048_state_S *state) {
   case 0x00: // NOP
     break;
     
-    /* OUTL BUS, A, 0x02. not implemented */
+  case 0x02:  // OUTL BUS, A — write to external bus (port 0)
+    tick(state);
+    state->bus_latch = state->A;
+    i8048_port_write(state, 0, state->bus_latch);
+    break;
 
   case 0x03:  // ADD A, #data
     addToAcc(state, fetch(state));
@@ -184,14 +199,22 @@ void i8048_step(struct i8048_state_S *state) {
     state->A = (state->A - 1) & 0xff;
     break;
     
-    /* INS A, BUS, 0x08. not implemented */
+  case 0x08:  // INS A, BUS — read external bus (port 0)
+    tick(state);
+    state->A = i8048_port_read(state, 0);
+    break;
 
   case 0x09: case 0x0a: // IN A, Pp
     tick(state);
     state->A = i8048_port_read(state, op & 0x3);   // FIX
     break;
 
-    /* MOVD A, Pp, 0x0c, 0x0d, 0x0e, 0x0f not implemented */
+  case 0x0c: case 0x0d: case 0x0e: case 0x0f: { // MOVD A, Pp (read expander port 4-7)
+      tick(state);
+      unsigned char *ports[] = {&state->p4, &state->p5, &state->p6, &state->p7};
+      state->A = *ports[op & 3] & 0x0F;
+    }
+    break;
     
   case 0x10: case 0x11:  // INC @Rr
     ram_write(state, readReg(state, op & 0x1), ram_read(state, readReg(state, op & 0x1)) + 1);
@@ -290,7 +313,12 @@ void i8048_step(struct i8048_state_S *state) {
     i8048_port_write(state, op & 0x3, state->A); // FIX: & 0x01
     break;
 
-    /* MOVD 0x3c, 0x3d, 0x3e, 0x3f not implemented */
+  case 0x3c: case 0x3d: case 0x3e: case 0x3f: {  // MOVD Pp, A (write expander port 4-7)
+      tick(state);
+      unsigned char *ports[] = {&state->p4, &state->p5, &state->p6, &state->p7};
+      *ports[op & 3] = state->A & 0x0F;
+    }
+    break;
     
   case 0x40: case 0x41: // ORL A, @Rr
     state->A |= ram_read(state, readReg(state, op & 0x1));
@@ -422,13 +450,22 @@ void i8048_step(struct i8048_state_S *state) {
     cjump(state, state->notINT);
     break;
     
-    /* ORL BUS, #data, 0x88. not implemented */
+  case 0x88:   // ORL BUS, #data
+    tick(state);
+    state->bus_latch |= fetch(state);
+    i8048_port_write(state, 0, state->bus_latch);
+    break;
     
   case 0x89: case 0x8a:  // ORL Pp, #data
     i8048_port_write(state, op & 0x3, (i8048_port_read(state, op & 0x3) | fetch(state)) & 0xff);
     break;
     
-    /* ORLD Pp, A, 0x8c, 0x8d, 0x8e, 0x8f not implemented */
+  case 0x8c: case 0x8d: case 0x8e: case 0x8f: {  // ORLD Pp, A (OR lower nibble of A into expander port)
+      tick(state);
+      unsigned char *ports[] = {&state->p4, &state->p5, &state->p6, &state->p7};
+      *ports[op & 3] |= state->A & 0x0F;
+    }
+    break;
 
   case 0x90: case 0x91: // MOVX @R, A
     i8048_xdm_write(state, readReg(state, op & 0x1), state->A);
@@ -452,13 +489,22 @@ void i8048_step(struct i8048_state_S *state) {
     state->PSW = CLR_BIT(state->PSW, CY_BIT);
     break;
 
-    /* ANL BUS, #data, 0x98. not implemented */
+  case 0x98:   // ANL BUS, #data
+    tick(state);
+    state->bus_latch &= fetch(state);
+    i8048_port_write(state, 0, state->bus_latch);
+    break;
     
   case 0x99: case 0x9a: // ANL Pp, #data
     i8048_port_write(state, op & 0x3, i8048_port_read(state, op & 0x3) & fetch(state));
     break;
 
-    /* ANLD Pp, A, 0x9c, 0x9d, 0x9e, 0x9f not implemented */
+  case 0x9c: case 0x9d: case 0x9e: case 0x9f: {  // ANLD Pp, A (AND lower nibble of A into expander port)
+      tick(state);
+      unsigned char *ports[] = {&state->p4, &state->p5, &state->p6, &state->p7};
+      *ports[op & 3] &= state->A & 0x0F;
+    }
+    break;
     
   case 0xa0: case 0xa1:  // MOV @Rr, A
     ram_write(state, readReg(state, op & 0x1), state->A);

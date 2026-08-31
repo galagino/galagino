@@ -46,6 +46,30 @@ struct i8048_state_S {
   unsigned char ram[128];
 
   int p2_state;
+
+  // Expander ports P4-P7 (4-bit each, directly latched for MOVD/ORLD/ANLD)
+  unsigned char p4;
+  unsigned char p5;
+  unsigned char p6;
+  unsigned char p7;
+  // BUS port latch (for OUTL BUS / ORL BUS / ANL BUS)
+  unsigned char bus_latch;
+
+  // IRQ edge one-shot: se 1, notINT viene riportata alta all'acknowledge
+  // dell'interrupt (semantica HOLD_LINE, usata da gyruss per l'i8039 drums).
+  // Default 0 = livello puro, come sempre: dkongjr POLLA il pin INT via JNI
+  // (death sound) e l'auto-clear ne corromperebbe lo stato (divergenza DAC
+  // verificata offline su ROM vere) — NON attivare per dkong/dkongjr.
+  boolean irq_oneshot;
+
+  // Fast path opzionale per il fetch: se rom_direct != NULL il fetch legge
+  // rom_direct[PC & rom_mask] direttamente, senza passare per la doppia
+  // dispatch virtuale i8048_rom_read -> currentMachine->rdI8048_rom.
+  // Usato da gyruss (ROM 8039 copiata in RAM interna: il fetch a 576k/s in
+  // flash sfratta dalla cache il resto dell'emulazione). Default NULL
+  // (azzerato da i8048_reset) = comportamento storico, dkong/dkongjr intatti.
+  const unsigned char *rom_direct;
+  unsigned short rom_mask;
 };
 
 void i8048_reset(struct i8048_state_S *state);
