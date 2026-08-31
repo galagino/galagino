@@ -268,12 +268,11 @@ void gaplus::run_frame(void) {
 }
 
 // ============================================================================
-// Namco 56XX (chip0, input) + 58XX (chip1, dip) — porting fedele di MAME
-// namcoio.cpp, riuso diretto da todruaga.cpp (qui i RUOLI sono INVERTITI:
-// 56xx=input/crediti, 58xx=SOLO dip, vedi project_gaplus.md)
+// Namco 56XX (chip0, input)
+// Namco 58XX (chip1, dip)
 // ============================================================================
 
-// porte a 4 bit, ATTIVE BASSE (1 = non premuto).
+// port with 4 bits, ACTIVE LOW (1 = not pressed).
 // chip 0 (56XX): 0=COINS 1=P1 2=P2 3=BUTTONS
 // chip 1 (58XX): 0=DSWA_HIGH 1=DSWB_LOW 2=DSWB_HIGH 3=DSWA_LOW
 unsigned char gaplus::io_in(unsigned char chip, unsigned char port) {
@@ -285,15 +284,15 @@ unsigned char gaplus::io_in(unsigned char chip, unsigned char port) {
       case 0:   // COINS: bit0 coin1, bit1 coin2, bit3 service
         if (keymask & BUTTON_COIN)  v &= ~0x01;
         break;
-      case 1:   // P1 joystick: bit0 su, bit1 destra, bit2 giu', bit3 sinistra
+      case 1:   // P1 joystick: bit0 UP, bit1 RIGHT, bit2 DOWN, bit3 LEFT
         if (keymask & BUTTON_UP)    v &= ~0x01;
         if (keymask & BUTTON_RIGHT) v &= ~0x02;
         if (keymask & BUTTON_DOWN)  v &= ~0x04;
         if (keymask & BUTTON_LEFT)  v &= ~0x08;
         break;
-      case 2:   // P2 (cocktail): non collegato
+      case 2:   // P2 (cocktail)
         break;
-      case 3:   // BUTTONS: bit0 btn1 (fuoco), bit2 start1, bit3 start2
+      case 3:   // BUTTONS: bit0 btn1 (fire), bit2 start1, bit3 start2
         if (keymask & BUTTON_FIRE)  v &= ~0x01;
         if (keymask & BUTTON_START) v &= ~0x04;
         break;
@@ -302,7 +301,7 @@ unsigned char gaplus::io_in(unsigned char chip, unsigned char port) {
   }
 
   // chip 1: DIP switch (58XX, 4 porte indipendenti, nessun multiplex)
-  unsigned char dswa_low = GAPLUS_DSWA_LOW & ~(input->demoSoundsOff() ? 0x08 : 0x00);
+  unsigned char dswa_low = GAPLUS_DSWA_LOW & ~(input->demoSoundsOff() ? 0x00 : 0x08);
   switch (port) {
     case 0: return GAPLUS_DSWA_HIGH & 0x0F;
     case 1: return GAPLUS_DSWB_LOW  & 0x0F;
