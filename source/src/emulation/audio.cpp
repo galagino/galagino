@@ -1,6 +1,5 @@
 #include "audio.h"
 #include <math.h>
-#include "machines-enabled.h"
 #ifdef ES8311_AUDIO
 #include <es8311.h>
 #endif

@@ -278,6 +278,7 @@ const char *mchName(signed char machineType) {
     case MCH_TURTLES:       return "Turtles";
     case MCH_CIRCUSC:       return "Circus Charlie";
     case MCH_ROCNROPE:      return "Roc'n Rope";
+    case MCH_TODRUAGA:      return "Tower of Druaga";
   }
 
   return "";

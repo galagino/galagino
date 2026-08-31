@@ -93,5 +93,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Turtles (turtles.zip)          | ![_](/logos/turtles.png)      | ![_](/images/turtles.png)      |       |
 | Circus Charlie (circusc.zip)   | ![_](/logos/circusc.png)      | ![_](/images/circusc.png)      |       |
 | Roc'n Rope (rocnrope.zip)      | ![_](/logos/rocnrope.png)     | ![_](/images/rocnrope.png)     |       |
+| Tower of Druaga (todruaga.zip) | ![_](/logos/todruaga.png)     | ![_](/images/todruaga.png)     |       |
 
 ### ...

@@ -80,7 +80,8 @@ enum {
   MCH_AMIDAR,
   MCH_TURTLES,
   MCH_CIRCUSC,
-  MCH_ROCNROPE
+  MCH_ROCNROPE,
+  MCH_TODRUAGA
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame

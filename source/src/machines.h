@@ -1,8 +1,6 @@
 #ifndef _MACHINES_H_
 #define _MACHINES_H_
 
-#include "machines-enabled.h"
-
 #ifdef ENABLE_PACMAN  
   #include "machines/pacman/pacman.h"
 #endif
@@ -167,6 +165,10 @@
   #include "machines/rocnrope/rocnrope.h"
 #endif
 
+#ifdef ENABLE_TODRUAGA
+  #include "machines/todruaga/todruaga.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -291,6 +293,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_ROCNROPE
   new rocnrope(),
+#endif
+#ifdef ENABLE_TODRUAGA
+  new todruaga(),
 #endif
 };
 
