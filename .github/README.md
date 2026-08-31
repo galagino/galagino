@@ -16,17 +16,19 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * Time Pilot sprite multiplexing
 
-* Bluetooth Controller over i2c -> [galagino-controller](https://github.com/galagino/galagino-controller)
+* Bluetooth Controller over i2c see: [galagino-controller](https://github.com/galagino/galagino-controller)
 
-* Support for ESP32-S3
+* Support for ESP32-S3 CYD clone with 16MiB Flash
 
 * Support for External DAC (es8311)
 
 * Linux `romconv` scripts
 
-* `pengo.zip`, `pengoj.zip` romsets conversion
+* `pengo.zip`, `pengoj.zip` romsets conversion (which gives you popcorn music)
 
 * File generation without unziping, some roms cause name clashes and is much cleaner. Not all roms yet.
+
+* Flash and PSRAM SPI configs for maximum speed available on each ESP32 version
 
 * mos6502 emulation (WIP)
 
