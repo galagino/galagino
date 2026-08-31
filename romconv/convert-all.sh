@@ -855,7 +855,78 @@ else
   die
 fi
 
+#------------------------------------
+# Gaplus
+#------------------------------------
+
+if [[ -f ../romszip/gaplus.zip ]] || [[ -f ../romszip/galaga3.zip ]]; then
+  #echo Gaplus
+  #python3 ./logoconv.py ../logos/gaplus.png ../source/src/machines/gaplus/gaplus_logo.h || die
+
+  echo "Converting Gaplus"
+  cd gaplus || die
+
+  python3 ./gaplus_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
+#------------------------------------
+# Ali Baba and 40 Thieves
+#------------------------------------
+
+if [[ -f ../romszip/alibaba.zip ]]; then
+  #echo Ali Baba and 40 Thieves
+  #python3 ./logoconv.py ../logos/alibaba.png ../source/src/machines/alibaba/alibaba_logo.h || die
+
+  echo "Converting Ali Baba and 40 Thieves"
+  cd alibaba || die
+
+  python3 ./alibaba_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
+#------------------------------------
+# Amidar
+#------------------------------------
+
+if [[ -f ../romszip/amidar.zip ]]; then
+  #echo Amidar Logos
+  #python3 ./logoconv.py ../logos/amidar.png ../source/src/machines/amidar/amidar_logo.h || die
+
+  echo Converting Amidar
+  cd amidar || die
+
+  python3 ./amidar_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
+#------------------------------------
+# Turtles
+#------------------------------------
+
+if [[ -f ../romszip/turtles.zip ]]; then
+  #echo Turtles Logos
+  #python3 ./logoconv.py ../logos/turtles.png ../source/src/machines/turtles/turtles_logo.h || die
+
+  echo Converting Turtles
+  cd turtles || die
+
+  python3 ./turtles_rom_convert.py || die
+
+  cd ..
+else
+  die
+fi
+
 echo -- -------------------------------------------------
 echo -- END
 echo -- -------------------------------------------------
-

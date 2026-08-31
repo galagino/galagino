@@ -89,5 +89,7 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Bump'n'Jump (bnj.zip)          | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
 | Mappy (mappy.zip)              | ![_](/logos/mappy.png)        | ![_](/images/mappy.png)        |       |
 | Gaplus (gaplus.zip)            | ![_](/logos/gaplus.png)       | ![_](/images/gaplus.png)       |       |
+| Amidar (amidar.zip)            | ![_](/logos/amidar.png)       | ![_](/images/amidar.png)       |       |
+| Turtles (turtles.zip)          | ![_](/logos/turtles.png)      | ![_](/images/turtles.png)      |       |
 
 ### ...

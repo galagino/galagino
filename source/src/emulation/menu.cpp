@@ -274,6 +274,8 @@ const char *mchName(signed char machineType) {
     case MCH_MAPPY:         return "Mappy";
     case MCH_GAPLUS:        return "Gaplus";
     case MCH_ALIBABA:       return "Ali Baba and 40 Thieves";
+    case MCH_AMIDAR:        return "Amidar";
+    case MCH_TURTLES:       return "Turtles";
   }
 
   return "";

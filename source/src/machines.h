@@ -151,6 +151,14 @@
   #include "machines/alibaba/alibaba.h"
 #endif
 
+#ifdef ENABLE_AMIDAR
+  #include "machines/amidar/amidar.h"
+#endif
+
+#ifdef ENABLE_TURTLES
+  #include "machines/turtles/turtles.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN  
@@ -263,6 +271,12 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_ALIBABA
   new alibaba(),
+#endif
+#ifdef ENABLE_AMIDAR
+  new amidar(),
+#endif
+#ifdef ENABLE_TURTLES
+  new turtles(),
 #endif
 };
 
