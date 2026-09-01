@@ -55,7 +55,7 @@ unsigned char amidar::rdZ80(unsigned short Addr) {
           if (keymask & BUTTON_START) retval &= ~0x80;
           return retval;
         case 2: // Port C = IN2: Down=b6, Up=b4, DemoSounds=b1, BonusLife=b2
-          retval = AMIDAR_IN2_VALUE;
+          retval = AMIDAR_IN2_VALUE | input->demoSoundsOff() ? AMIDAR_IN2_DEMO_OFF : AMIDAR_IN2_DEMO_ON ;
           if (keymask & BUTTON_DOWN) retval &= ~0x40;
           if (keymask & BUTTON_UP)   retval &= ~0x10;
           return retval;
