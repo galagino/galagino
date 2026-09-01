@@ -1,7 +1,7 @@
 #ifndef _MACHINES_H_
 #define _MACHINES_H_
 
-#ifdef ENABLE_PACMAN  
+#ifdef ENABLE_PACMAN
   #include "machines/pacman/pacman.h"
 #endif
 
@@ -41,27 +41,27 @@
   #include "machines/theglob/theglob.h"
 #endif
 
-#ifdef ENABLE_CRUSH 
+#ifdef ENABLE_CRUSH
   #include "machines/crush/crush.h"
 #endif
 
-#ifdef ENABLE_ANTEATER 
+#ifdef ENABLE_ANTEATER
   #include "machines/anteater/anteater.h"
 #endif
 
-#ifdef ENABLE_BOMBJACK 
+#ifdef ENABLE_BOMBJACK
   #include "machines/bombjack/bombjack.h"
 #endif
 
-#ifdef ENABLE_MRDO 
+#ifdef ENABLE_MRDO
   #include "machines/mrdo/mrdo.h"
 #endif
 
-#ifdef ENABLE_BAGMAN 
+#ifdef ENABLE_BAGMAN
   #include "machines/bagman/bagman.h"
 #endif
 
-#ifdef ENABLE_PENGO 
+#ifdef ENABLE_PENGO
   #include "machines/pengo/pengo.h"
 #endif
 
@@ -169,54 +169,58 @@
   #include "machines/todruaga/todruaga.h"
 #endif
 
+#ifdef ENABLE_VANVAN
+  #include "machines/vanvan/vanvan.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
-#ifdef ENABLE_PACMAN  
+#ifdef ENABLE_PACMAN
   new pacman(),
 #endif
-#ifdef ENABLE_GALAGA  
-  new galaga(), 
-#endif  
-#ifdef ENABLE_DIGDUG  
-  new digdug(), 
-#endif  
-#ifdef ENABLE_FROGGER  
-  new frogger(), 
-#endif  
-#ifdef ENABLE_DKONG  
-  new dkong(), 
-#endif  
-#ifdef ENABLE_1942  
-  new _1942(), 
-#endif  
-#ifdef ENABLE_LIZWIZ  
+#ifdef ENABLE_GALAGA
+  new galaga(),
+#endif
+#ifdef ENABLE_DIGDUG
+  new digdug(),
+#endif
+#ifdef ENABLE_FROGGER
+  new frogger(),
+#endif
+#ifdef ENABLE_DKONG
+  new dkong(),
+#endif
+#ifdef ENABLE_1942
+  new _1942(),
+#endif
+#ifdef ENABLE_LIZWIZ
   new lizwiz(),
-#endif  
-#ifdef ENABLE_EYES  
-  new eyes(), 
-#endif  
-#ifdef ENABLE_MRTNT  
-  new mrtnt(), 
-#endif  
-#ifdef ENABLE_THEGLOB 
+#endif
+#ifdef ENABLE_EYES
+  new eyes(),
+#endif
+#ifdef ENABLE_MRTNT
+  new mrtnt(),
+#endif
+#ifdef ENABLE_THEGLOB
   new theglob(),
 #endif
-#ifdef ENABLE_CRUSH 
+#ifdef ENABLE_CRUSH
   new crush(),
 #endif
-#ifdef ENABLE_ANTEATER 
+#ifdef ENABLE_ANTEATER
   new anteater(),
 #endif
-#ifdef ENABLE_BOMBJACK 
+#ifdef ENABLE_BOMBJACK
   new bombjack(),
 #endif
-#ifdef ENABLE_MRDO 
+#ifdef ENABLE_MRDO
   new mrdo(),
 #endif
-#ifdef ENABLE_BAGMAN 
+#ifdef ENABLE_BAGMAN
   new bagman(),
 #endif
-#ifdef ENABLE_PENGO 
+#ifdef ENABLE_PENGO
   new pengo(),
 #endif
 #ifdef ENABLE_MSPACMAN
@@ -234,7 +238,7 @@ machineBase *machines[] = {
 #ifdef ENABLE_TIMEPLT
   new timeplt(),
 #endif
-#ifdef ENABLE_GYRUSS 
+#ifdef ENABLE_GYRUSS
   new gyruss(),
 #endif
 #ifdef ENABLE_TUTANKHM
@@ -296,6 +300,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_TODRUAGA
   new todruaga(),
+#endif
+#ifdef ENABLE_VANVAN
+  new vanvan(),
 #endif
 };
 

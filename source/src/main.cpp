@@ -57,9 +57,10 @@ bool doReset = false;
 uint32_t ESP_getFlashChipId(void);
 
 void setup() {
-#if CONFIG_IDF_TARGET_ESP32S3
+  #if CONFIG_IDF_TARGET_ESP32S3
   delay(2000); // USB delay
-#endif
+  #endif
+
   Serial.begin(115200);
   delay(200); // let serial initialize
   printf("Galagino\n");
@@ -92,6 +93,18 @@ void setup() {
   printf("Free heap: %d\n", ESP.getFreeHeap());
   printf("Main core: %d\n", xPortGetCoreID());
   printf("Main priority: %d\n", uxTaskPriorityGet(NULL));
+
+
+  #ifdef CONFIG_IDF_TARGET_ESP32
+  printf("CONFIG_IDF_TARGET_ESP32:   defined\n");
+  #endif
+  #ifdef CONFIG_IDF_TARGET_ESP32S2
+  printf("CONFIG_IDF_TARGET_ESP32S2: defined\n");
+  #endif
+  #ifdef CONFIG_IDF_TARGET_ESP32S3
+  printf("CONFIG_IDF_TARGET_ESP32S3: defined\n");
+  #endif
+  printf("TFT_SPI_HOST:  %d\n", TFT_SPI_HOST);
 
   switch (TFT_SPI_HOST) {
     case SPI1_HOST: printf("TFT_SPI_HOST:  %s\n", "SPI1_HOST"); break;

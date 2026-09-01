@@ -24,14 +24,15 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * Linux `romconv` scripts
 
-* `pengo.zip`, `pengoj.zip` romsets conversion (which gives you popcorn music)
+* `pengo.zip`, `pengoj.zip` romsets conversion (which is the one with the popcorn music).
+
+* Enabled machines selection moved to `platformio.ini`
 
 * File generation without unziping, some roms cause name clashes and is much cleaner. Not all roms yet.
 
 * Flash and PSRAM SPI configs for maximum speed available on each ESP32 version
 
 * mos6502 emulation (WIP)
-
 
 
 ### Hardware Used
@@ -86,13 +87,15 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Phoenix (phoenix.zip)          | ![_](/logos/phoenix.png)      | ![_](/images/phoenix.png)      |       |
 | Burger Time (btime.zip)        | ![_](/logos/burgertime.png)   | ![_](/images/burgertime.png)   |       |
 | Xevious (xevious.zip)          | ![_](/logos/xevious.png)      | ![_](/images/xevious.png)      |       |
-| Bump'n'Jump (bnj.zip)          | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
+| Bump 'n' Jump (bnj.zip)        | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
 | Mappy (mappy.zip)              | ![_](/logos/mappy.png)        | ![_](/images/mappy.png)        |       |
 | Gaplus (gaplus.zip)            | ![_](/logos/gaplus.png)       | ![_](/images/gaplus.png)       |       |
+| Alibaba (alibaba.zip)          | ![_](/logos/alibaba.png)      | ![_](/images/alibaba.png)      |       |
 | Amidar (amidar.zip)            | ![_](/logos/amidar.png)       | ![_](/images/amidar.png)       |       |
 | Turtles (turtles.zip)          | ![_](/logos/turtles.png)      | ![_](/images/turtles.png)      |       |
 | Circus Charlie (circusc.zip)   | ![_](/logos/circusc.png)      | ![_](/images/circusc.png)      |       |
 | Roc'n Rope (rocnrope.zip)      | ![_](/logos/rocnrope.png)     | ![_](/images/rocnrope.png)     |       |
 | Tower of Druaga (todruaga.zip) | ![_](/logos/todruaga.png)     | ![_](/images/todruaga.png)     |       |
+| Van Van Car (vanvan.zip)       | ![_](/logos/vanvan.png)       | ![_](/images/vanvan.png)       |       |
 
 ### ...
