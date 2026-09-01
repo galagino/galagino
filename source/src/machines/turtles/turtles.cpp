@@ -1,7 +1,7 @@
 #include "turtles.h"
 
 void turtles::start() {
-  ignoreFireButton = 0;
+  ignoreFireButton = 1;
   game_started = 1;
 }
 
@@ -63,6 +63,8 @@ unsigned char turtles::rdZ80(unsigned short Addr) {
     if (Addr >= 0xB000 && Addr < 0xB040) {
       unsigned char port = (Addr >> 4) & 3;
       keymask = input->buttons_get();
+      if(ignoreFireButton && !(keymask & BUTTON_START))
+        ignoreFireButton = 0;
       switch (port) {
         case 0: // Port A = IN0: Coin1=b7, Coin2=b6, Left=b5, Right=b4, Fire=b3
           retval = TURTLES_IN0_VALUE;
@@ -73,7 +75,7 @@ unsigned char turtles::rdZ80(unsigned short Addr) {
           return retval;
         case 1: // Port B = IN1: Start1=b7, Start2=b6, lives=b1:0
           retval = TURTLES_IN1_VALUE;
-          if (keymask & BUTTON_START) retval &= ~0x80;
+          if (!ignoreFireButton && (keymask & BUTTON_START)) retval &= ~0x80;
           return retval;
         case 2: // Port C = IN2: Down=b6, Up=b4
           retval = TURTLES_IN2_VALUE;

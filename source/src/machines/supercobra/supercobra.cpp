@@ -56,7 +56,7 @@ unsigned char supercobra::rdZ80(unsigned short Addr) {
         if(keymask & BUTTON_LEFT)  retval &= ~0x20;
         if(keymask & BUTTON_RIGHT) retval &= ~0x10;
 
-        if(ignoreFireButton && !(keymask & BUTTON_FIRE) && (keymask & BUTTON_START))
+        if(ignoreFireButton && !(keymask & BUTTON_FIRE) && !(keymask & BUTTON_START))
           ignoreFireButton = 0;
 
         if(!ignoreFireButton && (keymask & BUTTON_FIRE))  retval &= ~0x08; // Laser

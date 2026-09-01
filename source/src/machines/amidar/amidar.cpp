@@ -1,6 +1,6 @@
 #include "amidar.h"
 
-// Amidar ROM is 16KB (0x0000-0x3FFF); reads above that return 0xFF.
+// Amidar ROM is 20KB (0x0000-0x4FFF); reads above that return 0xFF.
 // wrZ80(), run_frame(), prepare_frame(), render_row() inherited from turtles.
 // inZ80(), outZ80() inherited from scramble (AY-3-8910 identical wiring).
 
@@ -42,6 +42,8 @@ unsigned char amidar::rdZ80(unsigned short Addr) {
     if (Addr >= 0xB000 && Addr < 0xB040) {
       unsigned char port = (Addr >> 4) & 3;
       keymask = input->buttons_get();
+      if (ignoreFireButton && !(keymask & BUTTON_START))
+        ignoreFireButton = 0;
       switch (port) {
         case 0: // Port A = IN0: Coin1=b7, Coin2=b6, Left=b5, Right=b4, Fire=b3
           retval = AMIDAR_IN0_VALUE;
@@ -52,10 +54,10 @@ unsigned char amidar::rdZ80(unsigned short Addr) {
           return retval;
         case 1: // Port B = IN1: Start1=b7, Start2=b6, Lives=b1:0
           retval = AMIDAR_IN1_VALUE;
-          if (keymask & BUTTON_START) retval &= ~0x80;
+          if (!ignoreFireButton && (keymask & BUTTON_START)) retval &= ~0x80;
           return retval;
         case 2: // Port C = IN2: Down=b6, Up=b4, DemoSounds=b1, BonusLife=b2
-          retval = AMIDAR_IN2_VALUE | input->demoSoundsOff() ? AMIDAR_IN2_DEMO_OFF : AMIDAR_IN2_DEMO_ON ;
+          retval = AMIDAR_IN2_VALUE | input->demoSoundsOff() ? AMIDAR_IN2_DEMO_OFF : AMIDAR_IN2_DEMO_ON;
           if (keymask & BUTTON_DOWN) retval &= ~0x40;
           if (keymask & BUTTON_UP)   retval &= ~0x10;
           return retval;

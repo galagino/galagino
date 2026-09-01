@@ -12,6 +12,7 @@
 
 // ============================================================
 // Amidar (Konami 1982) — runs on identical hardware to Turtles
+// ROM set: amidar  (5 x 4KB main ROMs = 16KB)
 // ROM set: amidar1 (4 x 4KB main ROMs = 16KB)
 //
 // Memory map: identical to Turtles except CPU1_ROM_SIZE = 0x4000 (amidar1)
