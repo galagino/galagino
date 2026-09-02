@@ -1,0 +1,6 @@
+pbaction_audio_rom.h
+pbaction_bg_tiles.h
+pbaction_fg_tiles.h
+pbaction_main_rom.h
+pbaction_sprites16.h
+pbaction_sprites32.h

@@ -173,6 +173,10 @@
   #include "machines/vanvan/vanvan.h"
 #endif
 
+#ifdef ENABLE_PBACTION
+  #include "machines/pbaction/pbaction.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN
@@ -303,6 +307,9 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_VANVAN
   new vanvan(),
+#endif
+#ifdef ENABLE_PBACTION
+  new pbaction(),
 #endif
 };
 

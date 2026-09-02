@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # ============================================================
-# Xevious (Namco 1982) ROM converter per galagino29-main
-#
-# Autonomo (stile mappy/gaplus_rom_convert.py): legge ../roms/, scrive
-# ../../source/src/machines/xevious/*.h
+# Xevious (Namco 1982) ROM converter for galagino
 #
 # Riferimenti MAME CORRENTI forniti dall'utente e letti per intero:
 # E:\Download\galaga.cpp (driver condiviso Galaga/Xevious/Bosconian/...,

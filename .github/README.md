@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino), additional games from [SurvivalHacking](https://github.com/SurvivalHacking/galagino3), [SurvivalHacking](https://github.com/SurvivalHacking/spinnerino) and [VirtualClaudioBoy](https://github.com/VirtualClaudioBoy/GalaginoPlus) plus Moon Cresta, Scramble and Super Cobra.
+It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/galagino](https://github.com/speckhoiler/galagino), from [SurvivalHacking/galagino3](https://github.com/SurvivalHacking/galagino3), [SurvivalHacking/spinnerino](https://github.com/SurvivalHacking/spinnerino), [VirtualClaudioBoy/GalaginoPlus](https://github.com/VirtualClaudioBoy/GalaginoPlus) and [BaasPierre/GalaginoPlusGoldstar](https://github.com/BaasPierre/GalaginoPlusGoldstar).
 
 
 ### Quality of Life, improvements and fixes
@@ -18,11 +18,13 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * Bluetooth Controller over i2c see: [galagino-controller](https://github.com/galagino/galagino-controller)
 
+* Bluetooth Controller supports multiple action/fire/bomb buttons.
+
 * Support for ESP32-S3 CYD clone with 16MiB Flash
 
-* Support for External DAC (es8311)
+* Support for External DAC (es8311). ESP32-S3's don't have internal DACs.
 
-* Linux `romconv` scripts
+* Linux `romconv` scripts.
 
 * `pengo.zip`, `pengoj.zip` romsets conversion (which is the one with the popcorn music).
 
@@ -30,9 +32,13 @@ It has all the games from [speckhoiler](https://github.com/speckhoiler/galagino)
 
 * File generation without unziping, some roms cause name clashes and is much cleaner. Not all roms yet.
 
-* Flash and PSRAM SPI configs for maximum speed available on each ESP32 version
+* Flash and PSRAM SPI configs for maximum speed available on each ESP32 version.
 
 * mos6502 emulation (WIP)
+
+### Limitations
+
+* You need an ESP32 board with at least 8MiB of flash to have a build with all the games. See below for an ESP32-S3 CYD clone with 16MiB Flash.
 
 
 ### Hardware Used
@@ -97,5 +103,6 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Roc'n Rope (rocnrope.zip)      | ![_](/logos/rocnrope.png)     | ![_](/images/rocnrope.png)     |       |
 | Tower of Druaga (todruaga.zip) | ![_](/logos/todruaga.png)     | ![_](/images/todruaga.png)     |       |
 | Van Van Car (vanvan.zip)       | ![_](/logos/vanvan.png)       | ![_](/images/vanvan.png)       |       |
+| Pinball Action (pbaction.zip)  | ![_](/logos/pbaction.png)     | ![_](/images/pbaction.png)     |       |
 
 ### ...

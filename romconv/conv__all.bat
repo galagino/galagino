@@ -38,6 +38,13 @@ call conv_xevious.bat
 call conv_bnj.bat
 call conv_mappy.bat
 call conv_gaplus.bat
+call conv_alibaba.bat
+call conv_amidar.bat
+call conv_turtles.bat
+call conv_circusc.bat
+call conv_rocnrope.bat
+call conv_vanvan.bat
+call conv_pbaction.bat
 
 echo ---- Important
 echo ---- Please check if any errors occured!
