@@ -216,6 +216,10 @@ void Audio::volumeUpDown(bool up, bool down) {
     printf("VolumeUpDown: %d\n", volumeSetting);
 }
 
+void Audio::mute(int m) {
+  muted = m;
+}
+
 void Audio::transmit() {
   // (try to) transmit as much audio data as possible. Since we
   // write data in exact the size of the DMA buffers we can be sure
@@ -255,7 +259,6 @@ void Audio::transmit() {
 void Audio::ay_render_buffer(void) {
   for(char ay = 0; ay < AY; ay++) {
     int ay_off = 16 * ay;
-
     // three tone channels
     for(char c = 0; c < 3; c++) {
       ay_period[ay][c] = currentMachine->soundregs[ay_off + (2 * c)] + (256 * (currentMachine->soundregs[ay_off + (2 * c) + 1] & 0x0f)); // 12bit
@@ -287,77 +290,95 @@ void Audio::ay_render_buffer(void) {
     short value = 0; // silence
 
     for(char ay = 0; ay < AY; ay++) {
-        // --- LOGICA INVILUPPO: Esegui un passo di emulazione ---
-        if (!ay_envelope_holding[ay] && ay_envelope_period[ay] > 0) {
-          ay_envelope_counter[ay] += AY_INC;
-          if (ay_envelope_counter[ay] >= ay_envelope_period[ay]) {
-            ay_envelope_counter[ay] -= ay_envelope_period[ay];
-            // Avanza lo step del volume dell'inviluppo in base alla forma
-            if (ay_envelope_shape[ay] < 8) { // Forme d'attacco (volume cresce da 0 a 15)
-              ay_envelope_step[ay]++;
-              if (ay_envelope_step[ay] > 15) {
-                // Se la forma è "alternata" (bit 0 settato), riparte da 0, altrimenti rimane a 15
-                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 0 : 15;
-                // Se la forma è "hold" (bit 1 settato), si ferma qui
-                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
-              }
-            }
-            else { // Forme di decadimento (volume decresce da 15 a 0)
-              ay_envelope_step[ay]--;
-              if (ay_envelope_step[ay] < 0) {
-                // Se la forma è "alternata" (bit 0 settato), riparte da 15, altrimenti rimane a 0
-                ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 15 : 0;
-                // Se la forma è "hold" (bit 1 settato), si ferma qui
-                if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
-              }
+      // --- LOGICA INVILUPPO: Esegui un passo di emulazione ---
+      if (!ay_envelope_holding[ay] && ay_envelope_period[ay] > 0) {
+        ay_envelope_counter[ay] += AY_INC;
+        if (ay_envelope_counter[ay] >= ay_envelope_period[ay]) {
+          ay_envelope_counter[ay] -= ay_envelope_period[ay];
+          // Avanza lo step del volume dell'inviluppo in base alla forma
+          if (ay_envelope_shape[ay] < 8) { // Forme d'attacco (volume cresce da 0 a 15)
+            ay_envelope_step[ay]++;
+            if (ay_envelope_step[ay] > 15) {
+              // Se la forma è "alternata" (bit 0 settato), riparte da 0, altrimenti rimane a 15
+              ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 0 : 15;
+              // Se la forma è "hold" (bit 1 settato), si ferma qui
+              if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
             }
           }
-        }
-
-        // Elabora il generatore di rumore (R6)
-        if(ay_period[ay][3]) {
-          audio_cnt[ay][3] += AY_INC;
-          if(audio_cnt[ay][3] > ay_period[ay][3]) {
-            audio_cnt[ay][3] -= ay_period[ay][3];
-            // progress rng
-            ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
-            ay_noise_rng[ay] >>= 1;
-          }
-        }
-
-        // Elabora i 3 canali di tono e li mixa con il rumore
-        for(char c = 0; c < 3; c++) {
-          // For a tone to be heard, the corresponding channel must have its volume set, and the tone must be enabled in the Mixer R7
-          if((ay_period[ay][c] || ay_envelope[ay][c]) && ay_volume[ay][c] && ay_enable[ay][c]) {
-            // --- LOGICA INVILUPPO: Scegli il volume corretto ---
-            int current_channel_volume = 0;
-            if (ay_volume[ay][c] & 0x10) { // Se il bit 4 del registro volume è 1, usa l'inviluppo
-              current_channel_volume = ay_envelope_step[ay];
-            }
-            else { // Altrimenti, usa il volume fisso (bit 0-3)
-              current_channel_volume = ay_volume[ay][c] & 0x0F;
-            }
-
-            if (current_channel_volume > 0) { // Solo se il volume non è zero
-              short bit = 1;
-              // Applica il mixing Tono/Rumore in base ai bit di ay_enable (ottenuti da R7)
-              if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1:0; // Bit 0 di ay_enable -> Tono
-              if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1:0;     // Bit 1 di ay_enable -> Rumore
-
-              // Se il bit risultante è 0, il segnale è invertito per l'onda quadra
-              if(bit == 0) bit = -1;
-              value += AY_VOL * bit * current_channel_volume;
-            }
-
-            // Avanza il contatore del tono (R0-R5)
-            audio_cnt[ay][c] += AY_INC;
-            if(audio_cnt[ay][c] > ay_period[ay][c]) {
-              audio_cnt[ay][c] -= ay_period[ay][c];
-              audio_toggle[ay][c] = -audio_toggle[ay][c];
+          else { // Forme di decadimento (volume decresce da 15 a 0)
+            ay_envelope_step[ay]--;
+            if (ay_envelope_step[ay] < 0) {
+              // Se la forma è "alternata" (bit 0 settato), riparte da 15, altrimenti rimane a 0
+              ay_envelope_step[ay] = (ay_envelope_shape[ay] & 1) ? 15 : 0;
+              // Se la forma è "hold" (bit 1 settato), si ferma qui
+              if (ay_envelope_shape[ay] & 2) ay_envelope_holding[ay] = 1;
             }
           }
         }
       }
+
+      // Elabora il generatore di rumore (R6)
+      if(ay_period[ay][3]) {
+        audio_cnt[ay][3] += AY_INC;
+        if(audio_cnt[ay][3] > ay_period[ay][3]) {
+          audio_cnt[ay][3] -= ay_period[ay][3];
+          // progress rng
+          ay_noise_rng[ay] ^= (((ay_noise_rng[ay] & 1) ^ ((ay_noise_rng[ay] >> 3) & 1)) << 17);
+          ay_noise_rng[ay] >>= 1;
+        }
+      }
+
+      // Elabora i 3 canali di tono e li mixa con il rumore
+      for(char c = 0; c < 3; c++) {
+        // For a tone to be heard, the corresponding channel must have its volume set, and the tone must be enabled in the Mixer R7
+        if((ay_period[ay][c] || ay_envelope[ay][c]) && ay_volume[ay][c] && ay_enable[ay][c]) {
+          // --- LOGICA INVILUPPO: Scegli il volume corretto ---
+          int current_channel_volume = 0;
+          if (ay_volume[ay][c] & 0x10) { // Se il bit 4 del registro volume è 1, usa l'inviluppo
+            current_channel_volume = ay_envelope_step[ay];
+          }
+          else { // Altrimenti, usa il volume fisso (bit 0-3)
+            current_channel_volume = ay_volume[ay][c] & 0x0F;
+          }
+
+          if (current_channel_volume > 0) { // Solo se il volume non è zero
+            short bit = 1;
+            // Applica il mixing Tono/Rumore in base ai bit di ay_enable (ottenuti da R7)
+            if(ay_enable[ay][c] & 1) bit &= (audio_toggle[ay][c] > 0) ? 1:0; // Bit 0 di ay_enable -> Tono
+            if(ay_enable[ay][c] & 2) bit &= (ay_noise_rng[ay] & 1) ? 1:0;     // Bit 1 di ay_enable -> Rumore
+
+            // Se il bit risultante è 0, il segnale è invertito per l'onda quadra
+            if(bit == 0) bit = -1;
+            value += AY_VOL * bit * current_channel_volume;
+          }
+
+          // Avanza il contatore del tono (R0-R5)
+          audio_cnt[ay][c] += AY_INC;
+          if(audio_cnt[ay][c] > ay_period[ay][c]) {
+            audio_cnt[ay][c] -= ay_period[ay][c];
+            audio_toggle[ay][c] = -audio_toggle[ay][c];
+          }
+        }
+      }
+    }
+
+    // Drums Gyruss: somma al mix dei 5 AY un campione DAC dell'i8039 preso
+    // dal ring riempito da run_frame sul core emulazione — NON steppare
+    // l'8039 qui: sul loopTask congela gyruss su HW (isolato con stub
+    // 2026-07-11). renderDrumSample() e' una virtual di machineBase (default
+    // 0): evita di includere gyruss.h qui — ENABLE_GYRUSS non e' visibile
+    // fuori da main.cpp e l'include duplicherebbe le ROM const in flash.
+    // On/off e volume si regolano SOLO in gyruss.h (GYRUSS_ENABLE_DRUMS,
+    // GYRUSS_DRUMS_VOLUME): il campione arriva gia' scalato.
+    // DC blocker (high-pass ~40Hz) per togliere l'offset di riposo dell'8039
+    // -> niente pop/distorsione costante.
+    if (machineType == MCH_GYRUSS) {
+      static int dc = 0;
+      int s = currentMachine->renderDrumSample();  // gia' scalato (volume in gyruss.h)
+      dc += (s - dc) >> 7;                         // media lenta = livello DC
+      value += s - dc;                             // componente AC
+    }
+
     valueToBuffer(i, value);
   }
 }
@@ -1347,17 +1368,19 @@ void Audio::dkong3_render_buffer(void) {
 }
 
 void Audio::valueToBuffer(int index, short value) {
-    // value is now in the range of +/- 512, so expand to +/- 15 bit
-    value = value * 64;
+  if (muted) value = 0;
+
+  // value is now in the range of +/- 512, so expand to +/- 15 bit
+  value = value * 64;
 
 #ifdef SND_DIFF
-    // generate differential output
-    snd_buffer[2 * index]   = 0x8000 + (value / volumeSetting);    // positive signal on GPIO26
-    snd_buffer[2 * index + 1] = 0x8000 - (value / volumeSetting);    // negative signal on GPIO25 
+  // generate differential output
+  snd_buffer[2 * index]   = 0x8000 + (value / volumeSetting);    // positive signal on GPIO26
+  snd_buffer[2 * index + 1] = 0x8000 - (value / volumeSetting);    // negative signal on GPIO25 
 #else
-    // work-around weird byte order bug, see 
-    // https://github.com/espressif/arduino-esp32/issues/8467#issuecomment-1656616015
-    snd_buffer[index ^ 1]   = 0x8000 + (value / volumeSetting); 
+  // work-around weird byte order bug, see 
+  // https://github.com/espressif/arduino-esp32/issues/8467#issuecomment-1656616015
+  snd_buffer[index ^ 1]   = 0x8000 + (value / volumeSetting); 
 #endif
 }
 

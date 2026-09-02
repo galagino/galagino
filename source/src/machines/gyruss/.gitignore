@@ -4,3 +4,4 @@ gyruss_rom_main.h
 gyruss_rom_sub.h
 gyruss_spritemap.h
 gyruss_tilemap.h
+gyruss_rom_i8039.h

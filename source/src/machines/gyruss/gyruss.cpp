@@ -47,6 +47,34 @@ unsigned char gyruss::m6809_read_opcode(m6809_state *s, uint16_t addr) {
 }
 
 // ============================================================
+// i8039 sample MCU (drums) — callback i8048
+// port 0 = BUS (legge il comando = soundlatch2), 1 = P1 (->DAC), 2 = P2 (irq clear)
+// Vedi MAME konami/gyruss.cpp: p1_out_cb->dac_w, io_map 0x00-0xff->soundlatch2.
+void gyruss::wrI8048_port(struct i8048_state_S *state, unsigned char port, unsigned char val) {
+  (void)state;
+  if (port == 1) {
+    i8039_dac = val;            // P1 -> DAC: campione corrente dei drums
+  }
+  // port 2 (P2) = irq_clear: l'IRQ e' edge-trigger one-shot nel core -> no-op
+}
+
+unsigned char gyruss::rdI8048_port(struct i8048_state_S *state, unsigned char port) {
+  (void)state;
+  if (port == 0) return soundlatch2;   // INS A,BUS -> comando latchato
+  return 0xFF;
+}
+
+unsigned char gyruss::rdI8048_xdm(struct i8048_state_S *state, unsigned char addr) {
+  (void)state; (void)addr;
+  return soundlatch2;                  // MOVX A,@R -> comando latchato (alternativa al BUS)
+}
+
+unsigned char gyruss::rdI8048_rom(struct i8048_state_S *state, unsigned short addr) {
+  (void)state;
+  return gyruss_rom_i8039[addr & 0x0FFF];
+}
+
+// ============================================================
 // Audio Z80 dual-core task
 // ============================================================
 
@@ -120,6 +148,20 @@ void gyruss::reset() {
   memset(sub_ram, 0, sizeof(sub_ram));
   memset(multiplexPart1, 0, sizeof(multiplexPart1));
   memset(shared_ram, 0, sizeof(shared_ram));
+
+  // i8039 sample MCU (drums)
+  i8048_reset(&i8039_cpu);
+  i8039_cpu.irq_oneshot = 1;   // HOLD_LINE: auto-clear all'acknowledge (solo gyruss, dk/dkjr non toccati)
+  // ROM 8039 copiata in RAM interna + fetch diretto (niente dispatch virtuale
+  // ne' letture flash nel loop di produzione: vedi GYR_I8039ROM_OFF)
+  memcpy(&memory[GYR_I8039ROM_OFF], gyruss_rom_i8039, 4096);
+  i8039_cpu.rom_direct = &memory[GYR_I8039ROM_OFF];
+  i8039_cpu.rom_mask = 0x0FFF;
+  soundlatch2 = 0;
+  i8039_dac = 128;             // DAC a riposo = centro (silenzio)
+  i8039_irq_pending = 0;
+  drum_wr = drum_rd = 0;       // ring campioni vuoto
+  drum_last = 128;             // fallback a riposo = silenzio
 }
 
 // ============================================================
@@ -271,8 +313,12 @@ void gyruss::outZ80(unsigned short Port, unsigned char Value) {
   // AY5: addr=0x10, read=0x11, write=0x12
   // 0x14: i8039 IRQ trigger (ignored)
   // 0x18: soundlatch2 (ignored, no 8039)
+  // 0x14: i8039 IRQ trigger -> asserisce l'IRQ dell'8039 (drums)
+  // 0x18: soundlatch2 -> comando campione per l'8039
 
   uint8_t port_lo = Port & 0xFF;
+  if (port_lo == 0x18) { soundlatch2 = Value; return; }       // comando drums
+  if (port_lo == 0x14) { i8039_irq_pending = 1; return; }     // pulsa IRQ 8039 (flag cross-core)
   if (port_lo > 0x12) return;
 
   int ay_chip = port_lo / 4;    // 0-4 = AY1-AY5
@@ -314,6 +360,22 @@ unsigned char gyruss::inZ80(unsigned short Port) {
   return 0xFF;
 }
 
+// Produce campioni drums nel ring, chiamata da run_frame (core emulazione).
+// Steppare l'8039 nel render audio (loopTask) congela gyruss su HW (isolato
+// con stub 2026-07-11): qui produciamo in anticipo fino a GYR_DRUM_FILL
+// campioni (~32ms), il render li consuma uno per campione a 24kHz.
+// GYRUSS_DRUMS_SPEED step per slot = timeline 8039 costante -> pitch
+// corretto anche se la produzione avviene a raffiche (stesso principio dei
+// transfer buffer di dkong). A regime: ~400 slot/frame sul core emu.
+void gyruss::produce_drum_samples(void) {
+  while (((unsigned short)(drum_wr - drum_rd) & (GYR_DRUM_RING - 1)) < GYR_DRUM_FILL) {
+    service_i8039_irq();
+    for (int k = 0; k < GYRUSS_DRUMS_SPEED; k++) step_i8039();
+    drum_ring[drum_wr] = i8039_dac;
+    drum_wr = (drum_wr + 1) & (GYR_DRUM_RING - 1);
+  }
+}
+
 // ============================================================
 // Frame execution
 // ============================================================
@@ -337,6 +399,10 @@ void gyruss::run_frame(void) {
   m6809_irq(&sub_cpu);
 
   if (irq_enable[0]) IntZ80(&cpu[0], INT_NMI);
+
+#if GYRUSS_ENABLE_DRUMS
+  produce_drum_samples();
+#endif
 }
 
 // ============================================================

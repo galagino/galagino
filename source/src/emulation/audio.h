@@ -39,6 +39,7 @@ public:
   void start(machineBase *machineBase);
   void transmit();
   void volumeUpDown(bool up, bool down);
+  void mute(int m);
 
 private:
   void namco_render_buffer(void);
@@ -66,6 +67,7 @@ private:
   short volumeSetting = 3;
   bool volumeUpLast;
   bool volumeDownLast;
+  int  muted = 0;
 
   // Namco
   unsigned long snd_cnt[3] = {0, 0, 0};

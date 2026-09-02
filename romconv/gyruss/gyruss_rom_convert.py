@@ -156,6 +156,21 @@ def assemble_audio_rom():
     rom[0x2000:0x4000] = load_file("gyrussk.2a")
     return rom
 
+def write_i8039_rom_h(rom, filepath):
+    """Write i8039 sample MCU ROM header (drums, 4KB from gyrussk.3a)."""
+    with open(filepath, "w") as f:
+        f.write("// Gyruss i8039 sample MCU ROM (4KB: 0x000-0xFFF)\n")
+        f.write("// Generated from gyrussk.3a — drums/percussioni via DAC su P1\n\n")
+        f.write("const unsigned char gyruss_rom_i8039[] = {\n")
+        for i in range(len(rom)):
+            if i % 16 == 0:
+                f.write("  ")
+            f.write("0x{:02X}".format(rom[i]))
+            if i < len(rom) - 1:
+                f.write(",")
+            if i % 16 == 15 or i == len(rom) - 1:
+                f.write("\n")
+        f.write("};\n")
 
 # ============================================================
 # Tile decoding (8x8, 2bpp, 512 tiles from gyrussk.4)
@@ -568,7 +583,7 @@ def main():
     required_files = [
         "gyrussk.1", "gyrussk.2", "gyrussk.3", "gyrussk.4", "gyrussk.5",
         "gyrussk.6", "gyrussk.7", "gyrussk.8", "gyrussk.9",
-        "gyrussk.1a", "gyrussk.2a",
+        "gyrussk.1a", "gyrussk.2a", "gyrussk.3a",
         "gyrussk.pr1", "gyrussk.pr2", "gyrussk.pr3"
     ]
     
@@ -617,6 +632,13 @@ def main():
     path = os.path.join(OUT_DIR, "gyruss_rom_audio.h")
     write_audio_rom_h(audio_rom, path)
     print(f"  Written: {path} ({len(audio_rom)} bytes)")
+
+    # 3b. i8039 sample MCU ROM (drums, no patch)
+    print("Assembling i8039 sample MCU ROM (4KB)...")
+    i8039_rom = load_file("gyrussk.3a")
+    path = os.path.join(OUT_DIR, "gyruss_rom_i8039.h")
+    write_i8039_rom_h(i8039_rom, path)
+    print(f"  Written: {path} ({len(i8039_rom)} bytes)")    
 
     # 4. Tiles from gyrussk.4
     print("\n=== GENERAZIONE TILEMAP ===")
