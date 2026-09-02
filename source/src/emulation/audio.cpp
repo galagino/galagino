@@ -141,6 +141,7 @@ void Audio::start(machineBase *machineBase) {
   else if (machineType == MCH_AMIDAR)     { AY = 2; AY_INC = 8; AY_VOL = 7;  }
   else if (machineType == MCH_ROCNROPE)   { AY = 2; AY_INC = 8; AY_VOL = 7;  }
   else if (machineType == MCH_PBACTION)   { AY = 1; AY_INC = 8; AY_VOL = 7;  }
+  else if (machineType == MCH_MOTORACE)   { AY = 2; AY_INC = 5; AY_VOL = 5;  }
 
   for(char ay = 0; ay < NUM_AY_CHIPS; ay++) {
     for (int c = 0; c < 4; c++) {
@@ -263,6 +264,10 @@ void Audio::ay_render_buffer(void) {
     for(char c = 0; c < 3; c++) {
       ay_period[ay][c] = currentMachine->soundregs[ay_off + (2 * c)] + (256 * (currentMachine->soundregs[ay_off + (2 * c) + 1] & 0x0f)); // 12bit
       ay_enable[ay][c] = (((currentMachine->soundregs[ay_off + 7] >> c) & 1) | ((currentMachine->soundregs[ay_off + 7] >> (c + 2)) & 2)) ^ 3; // 1=Tone; 2=Noise
+      // MotoRace: muta il noise channel AY (engine drone) che sovrasta la
+      // musica. Il LFSR continua a girare, ma non viene mixato sui canali tone.
+      if (machineType == MCH_MOTORACE) ay_enable[ay][c] &= 1;
+
       ay_volume[ay][c] = currentMachine->soundregs[ay_off + 8 + c];
       // envelope is used by Anteater and Tutankhm. Gyruss envelope not working, because it is updated multiple during one vblank.
       ay_envelope[ay][c] = ((ay_volume[ay][c] & 0x10) == 0x10) && machineType != MCH_GYRUSS;
@@ -435,7 +440,11 @@ void Audio::i8048_render_buffer(void) {
 }
 
 void Audio::sn76489_render_buffer(void) {
-  const int sn_inc = 11;  // SN_CLOCK / SAMPLE_RATE
+  int sn_inc = 11;  // SN_CLOCK / SAMPLE_RATE
+  #ifdef ENABLE_ROADFIGHTER
+  // roadf: SN76489A @ 1.79 MHz (XTAL 14.318/8) -> note molto piu' basse di gigas.
+  if (machineType == MCH_ROADFIGHTER) sn_inc = 5;
+  #endif
 
   // Volumi con hold
   int vol[NUM_SN_CHIPS][4];
@@ -490,6 +499,13 @@ void Audio::sn76489_render_buffer(void) {
       sample += s - dc;
     }
 
+#ifdef ENABLE_ROADFIGHTER
+    // DAC 8-bit R2R (motore/crash). dac_sample = signed -128..127, valore
+    // latchato (qualita' base per-buffer); da rifinire con coda stile DKong
+    // se il motore suona troppo "grezzo".
+    if (machineType == MCH_ROADFIGHTER)
+      sample += ((roadfighter*)currentMachine)->roadf_dac_sample() * 2;
+#endif
     valueToBuffer(i, sample);
   }
 }

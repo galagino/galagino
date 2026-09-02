@@ -73,7 +73,7 @@ public:
 
     unsigned char m6809_read(m6809_state *s, uint16_t addr) override;
     void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) override;
-    unsigned char  m6809_read_opcode(m6809_state *s, uint16_t addr) override;
+    unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr) override;
 
     // --- i8039 sample MCU (drums/percussioni) ---
     // 4a CPU reale di Gyruss: lo Z80 audio scrive il comando su soundlatch2

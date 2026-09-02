@@ -9,6 +9,7 @@
 #include "../machines/gaplus/gaplus.h"
 #include "../machines/spaceinvaders/spaceinvaders.h"
 #include "../machines/xevious/xevious.h"
+#include "../machines/roadfighter/roadfighter.h"
 #include "../config.h"
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 4)
