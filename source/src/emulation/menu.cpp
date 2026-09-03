@@ -60,6 +60,7 @@ bool Menu::attract_gameTimeout() {
       menu_sel = 1;
 
     printf("MASTER ATTRACT game timeout, return to menu\n");
+    printf("Heap: Free=%d MaxAlloc=%d MinFree=%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getMinFreeHeap());
     return true;
   }
 #endif
@@ -67,7 +68,7 @@ bool Menu::attract_gameTimeout() {
 }
 
 void Menu::attract_resetTimer() {
-  if (master_attract_timeout  != 0) {
+  if (master_attract_timeout != 0) {
     master_attract_timeout = 0;
     printf("MASTER ATTRACT timer reset!!!\n");
   }
@@ -115,6 +116,7 @@ void Menu::handle() {
       machineIndex,
       machines[machineIndexSelected()]->machineType(),
       mchName(machines[machineIndexSelected()]->machineType()));
+    printf("Heap: Free=%d MaxAlloc=%d MinFree=%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getMinFreeHeap());
   }
 #endif
 }

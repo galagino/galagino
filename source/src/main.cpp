@@ -156,8 +156,10 @@ void setup() {
   memory = (uint8_t *)malloc(RAMSIZE);
   currentMachine = machines[0];
 
+  printf("Before init - Heap: Free=%d MaxAlloc=%d MinFree=%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getMinFreeHeap());
   for (int i = 0; i < machinesCount; i++)
     machines[i]->init(&input, frame_buffer, sprite_buffer, memory);
+  printf("After  init - Heap: Free=%d MaxAlloc=%d MinFree=%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getMinFreeHeap());
 
   audio.init();
   audio.start(currentMachine);
@@ -173,7 +175,7 @@ void setup() {
 #endif
 
   video.begin();
-  printf("Free heap: %d\n", ESP.getFreeHeap());
+  printf("setup() Heap: Free=%d MaxAlloc=%d MinFree=%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getMinFreeHeap());
 }
 
 void loop(void) {
