@@ -47,7 +47,7 @@ public:
     todruaga() : rom_main(todruaga_rom_main), rom_sub(todruaga_rom_sub),
                  tiles(todruaga_tilemap), cmap_tiles(todruaga_colormap_tiles),
                  cmap_prio(todruaga_colormap_tiles_prio),
-                 cmap_sprites(todruaga_colormap_sprites), rom_cached(false) { }
+                 cmap_sprites(todruaga_colormap_sprites) { }
     ~todruaga() { }
 
     signed char machineType() override { return MCH_TODRUAGA; }
@@ -108,7 +108,6 @@ private:
     const unsigned short (*cmap_tiles)[4];       // 512B
     const unsigned short (*cmap_prio)[4];        // 512B
     const unsigned short (*cmap_sprites)[16];    // 2KB (64 gruppi x 16)
-    bool rom_cached;
 
     nio_S io[2];
     unsigned char dipmux_sel;      // LS157: 0 = DSW2 nibble basso, 1 = alto

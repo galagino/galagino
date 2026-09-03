@@ -3,33 +3,6 @@
 void mappy::reset() {
   machineBase::reset();
 
-  if (!rom_cached && false) {
-    const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-    unsigned char *rm = (unsigned char *)heap_caps_malloc(0x6000, CAPS);
-    unsigned char *rs = (unsigned char *)heap_caps_malloc(0x2000, CAPS);
-    // tilemap 4KB + cmap tiles/prio/sprites 3x512B in un blocco unico
-    unsigned char *gx = (unsigned char *)heap_caps_malloc(4096 + 3 * 512, CAPS);
-    if (rm && rs && gx) {
-      memcpy(rm, mappy_rom_main, 0x6000);
-      memcpy(rs, mappy_rom_sub, 0x2000);
-      memcpy(gx,        mappy_tilemap,             4096);
-      memcpy(gx + 4096, mappy_colormap_tiles,       512);
-      memcpy(gx + 4608, mappy_colormap_tiles_prio,  512);
-      memcpy(gx + 5120, mappy_colormap_sprites,     512);
-      rom_main = rm;
-      rom_sub = rs;
-      tiles        = (const unsigned short (*)[8])gx;
-      cmap_tiles   = (const unsigned short (*)[4])(gx + 4096);
-      cmap_prio    = (const unsigned short (*)[4])(gx + 4608);
-      cmap_sprites = (const unsigned short (*)[16])(gx + 5120);
-      rom_cached = true;
-    } else {
-      if (rm) heap_caps_free(rm);
-      if (rs) heap_caps_free(rs);
-      if (gx) heap_caps_free(gx);
-    }
-  }
-
   main_irq_mask = sub_irq_mask = 0;
   wsg_enable = 0;
   sub_reset = 1;          // mainlatch Q5=0 al power-on: sub CPU in reset

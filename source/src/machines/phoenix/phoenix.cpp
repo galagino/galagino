@@ -16,9 +16,6 @@
 #define PX_OFFSET   8       // (224-208)/2, centratura orizzontale portrait
 #define ARCADE_COLS 26      // tile per riga portrait (208 px)
 
-phoenix::phoenix() {
-}
-
 void phoenix::init(Input *in, unsigned short *fb,
                    sprite_S *sb, unsigned char *mem) {
   machineBase::init(in, fb, sb, mem);
@@ -31,7 +28,7 @@ void phoenix::reset() {
   scroll_x = 0;
   video_page = 0;
   palette_bank = 0;
-  vblank_active = false;       // fase iniziale = display attivo
+  vblank_active = false;
 }
 
 const unsigned short *phoenix::logo(void) {

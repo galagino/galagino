@@ -357,47 +357,6 @@ void xevious::wrZ80(unsigned short Addr, unsigned char Value) {
 
 void xevious::start(void) {
   game_started = 1;
-
-  // Lazy cache DRAM (bring-up #27, ricetta mappy — vedi mappy::reset()):
-  // ROM cpu1/2/3 (fetch opZ80/rdZ80), planet-map (CPU2 la martella in gioco
-  // via bb_r) e gfx tile + colormap (render). ~58KB in due blocchi; sprite
-  // (160KB) volutamente esclusi. Fallback trasparente sulla flash se
-  // l'alloc fallisce. Mai liberata (come mappy/phoenix).
-  if (!rom_cached && false) {
-    const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-    const size_t sz_rom = sizeof(xevious_rom_cpu1) + sizeof(xevious_rom_cpu2)
-                        + sizeof(xevious_rom_cpu3) + sizeof(xevious_planetmap);
-    const size_t sz_gfx = sizeof(xevious_fgtilemap) + sizeof(xevious_bgtilemap)
-                        + sizeof(xevious_colormap_fg) + sizeof(xevious_colormap_bg)
-                        + sizeof(xevious_colormap_sprites);
-    unsigned char *r = (unsigned char *)heap_caps_malloc(sz_rom, CAPS);
-    unsigned char *g = (unsigned char *)heap_caps_malloc(sz_gfx, CAPS);
-    if (r && g) {
-      unsigned char *p = r;
-      memcpy(p, xevious_rom_cpu1,  sizeof(xevious_rom_cpu1));  rom_cpu1  = p; p += sizeof(xevious_rom_cpu1);
-      memcpy(p, xevious_rom_cpu2,  sizeof(xevious_rom_cpu2));  rom_cpu2  = p; p += sizeof(xevious_rom_cpu2);
-      memcpy(p, xevious_rom_cpu3,  sizeof(xevious_rom_cpu3));  rom_cpu3  = p; p += sizeof(xevious_rom_cpu3);
-      memcpy(p, xevious_planetmap, sizeof(xevious_planetmap)); planetmap = p;
-      p = g;
-      memcpy(p, xevious_fgtilemap, sizeof(xevious_fgtilemap));
-      fgtiles = (const unsigned char (*)[8])p;   p += sizeof(xevious_fgtilemap);
-      memcpy(p, xevious_bgtilemap, sizeof(xevious_bgtilemap));
-      bgtiles = (const unsigned short (*)[8])p;  p += sizeof(xevious_bgtilemap);
-      memcpy(p, xevious_colormap_fg, sizeof(xevious_colormap_fg));
-      cmap_fg = (const unsigned short (*)[2])p;  p += sizeof(xevious_colormap_fg);
-      memcpy(p, xevious_colormap_bg, sizeof(xevious_colormap_bg));
-      cmap_bg = (const unsigned short (*)[4])p;  p += sizeof(xevious_colormap_bg);
-      memcpy(p, xevious_colormap_sprites, sizeof(xevious_colormap_sprites));
-      cmap_spr = (const unsigned short (*)[8])p;
-      rom_cached = true;
-      printf("[XEVIOUS] ROM+gfx in RAM (%u+%u byte)\n",
-                    (unsigned)sz_rom, (unsigned)sz_gfx);
-    } else {
-      if (r) heap_caps_free(r);
-      if (g) heap_caps_free(g);
-      printf("[XEVIOUS] alloc DRAM failed: ROM/gfx from flash\n");
-    }
-  }
 }
 
 // ============================================================================

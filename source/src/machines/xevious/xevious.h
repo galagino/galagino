@@ -114,7 +114,6 @@ private:
   const unsigned short (*cmap_fg)[2]  = xevious_colormap_fg;
   const unsigned short (*cmap_bg)[4]  = xevious_colormap_bg;
   const unsigned short (*cmap_spr)[8] = xevious_colormap_sprites;
-  bool rom_cached = false;
 
   // planet-map lookup (schematic 9B), formula esatta da xevious_bb_r()
   unsigned char xevious_bb_r(unsigned char offset);

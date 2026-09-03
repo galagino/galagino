@@ -5,39 +5,6 @@ void gaplus::reset() {
 
   memset(namco15xx_ram, 0, sizeof(namco15xx_ram));
 
-  // Lazy alloc DRAM interna (stile mappy/todruaga, vedi project_mappy.md):
-  // main 24KB + sub 24KB + sub2 8KB + tilemap 8KB + colormap ~2.5KB (~66KB).
-  if (!rom_cached && false) {
-    const uint32_t CAPS = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
-    unsigned char *rm  = (unsigned char *)heap_caps_malloc(0x6000, CAPS);
-    unsigned char *rs  = (unsigned char *)heap_caps_malloc(0x6000, CAPS);
-    unsigned char *rs2 = (unsigned char *)heap_caps_malloc(0x2000, CAPS);
-    // tilemap 512*8*2=8192B + cmap tiles/prio 2x512B + cmap sprite 1024B
-    unsigned char *gx = (unsigned char *)heap_caps_malloc(8192 + 2*512 + 1024, CAPS);
-    if (rm && rs && rs2 && gx) {
-      memcpy(rm,  gaplus_rom_main, 0x6000);
-      memcpy(rs,  gaplus_rom_sub,  0x6000);
-      memcpy(rs2, gaplus_rom_sub2, 0x2000);
-      memcpy(gx,        gaplus_tilemap,             8192);
-      memcpy(gx + 8192, gaplus_colormap_tiles,      512);
-      memcpy(gx + 8704, gaplus_colormap_tiles_prio, 512);
-      memcpy(gx + 9216, gaplus_colormap_sprites,    1024);
-      rom_main = rm;
-      rom_sub  = rs;
-      rom_sub2 = rs2;
-      tiles        = (const unsigned short (*)[8])gx;
-      cmap_tiles   = (const unsigned short (*)[4])(gx + 8192);
-      cmap_prio    = (const unsigned short (*)[4])(gx + 8704);
-      cmap_sprites = (const unsigned short (*)[8])(gx + 9216);
-      rom_cached = true;
-    } else {
-      if (rm)  heap_caps_free(rm);
-      if (rs)  heap_caps_free(rs);
-      if (rs2) heap_caps_free(rs2);
-      if (gx)  heap_caps_free(gx);
-    }
-  }
-
   main_irq_mask = sub_irq_mask = sub2_irq_mask = 0;
   subs_reset = 1;     // sreset_w: al power-on sub+sub2 in reset, suono muto
   wsg_enable = 0;

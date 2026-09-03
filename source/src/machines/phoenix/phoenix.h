@@ -41,7 +41,7 @@
 
 class phoenix : public machineBase {
 public:
-  phoenix();
+  phoenix() {};
 
   void init(Input *input, unsigned short *framebuffer,
             sprite_S *spritebuffer, unsigned char *memorybuffer) override;
@@ -62,9 +62,6 @@ public:
 private:
   void blit_tile_t(short strip_r, char col_arcade);
 
-  // VRAM 4 KB × 2 pagine: page index = bit 0 di videoreg (write a 0x5000)
-  // FG = vram[idx][0..0x3FF], BG = vram[idx][0x800..0xBFF]
-  //unsigned char vram[2][0x1000];
   typedef unsigned char vram_t[2][0x1000];
   vram_t* vram = nullptr;
   static_assert(sizeof(vram_t) <= RAMSIZE, "RAMSIZE is too low");

@@ -40,10 +40,12 @@
 class mappy : public machineBase
 {
 public:
-    mappy() : rom_main(mappy_rom_main), rom_sub(mappy_rom_sub),
-              tiles(mappy_tilemap), cmap_tiles(mappy_colormap_tiles),
+    mappy() : rom_main(mappy_rom_main), 
+              rom_sub(mappy_rom_sub),
+              tiles(mappy_tilemap), 
+              cmap_tiles(mappy_colormap_tiles),
               cmap_prio(mappy_colormap_tiles_prio),
-              cmap_sprites(mappy_colormap_sprites), rom_cached(false) { }
+              cmap_sprites(mappy_colormap_sprites) { }
     ~mappy() { }
 
     signed char machineType() override { return MCH_MAPPY; }
@@ -98,7 +100,6 @@ private:
     const unsigned short (*cmap_tiles)[4];       // 512B
     const unsigned short (*cmap_prio)[4];        // 512B
     const unsigned short (*cmap_sprites)[16];    // 512B
-    bool rom_cached;
 
     n58xx_S io[2];
     unsigned char dipmux_sel;      // LS157: 0 = DSW2 nibble low, 1 = high

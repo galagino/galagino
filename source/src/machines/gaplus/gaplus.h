@@ -56,8 +56,7 @@ public:
                tiles(gaplus_tilemap),
                cmap_tiles(gaplus_colormap_tiles), 
                cmap_prio(gaplus_colormap_tiles_prio),
-               cmap_sprites(gaplus_colormap_sprites), 
-               rom_cached(false) { }
+               cmap_sprites(gaplus_colormap_sprites) { }
     ~gaplus() { }
 
     signed char machineType() override { return MCH_GAPLUS; }
@@ -135,7 +134,6 @@ private:
     const unsigned short (*cmap_tiles)[4];        // 512B
     const unsigned short (*cmap_prio)[4];         // 512B
     const unsigned short (*cmap_sprites)[8];      // 1KB (64 gruppi x8 pen)
-    bool rom_cached;
 
     nio_S io[2];
     unsigned char dipmux_sel;
