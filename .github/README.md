@@ -34,6 +34,8 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 * Flash and PSRAM SPI configs for maximum speed available on each ESP32 version.
 
+* Many code cleanups for reduced RAM used - with 44 games around 260k free heap (Flash is the limiting factor, you need and ESP32 with 8MiB of flash).
+
 * mos6502 emulation (WIP)
 
 ### Limitations
