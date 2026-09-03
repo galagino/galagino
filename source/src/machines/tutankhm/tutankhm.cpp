@@ -68,15 +68,18 @@ unsigned char tutankhm::m6809_read(m6809_state *s, uint16_t addr) {
 
   // IN1 0x81A0 (mirror 0x0F) — P1 controls
   if ((addr & 0xFFF0) == 0x81A0) {
-    unsigned char keymask = input->buttons_get();
+    unsigned int  keymask = input->buttons_get();
     unsigned char retval = 0xFF;
     if (keymask & BUTTON_LEFT)   retval &= ~0x01;  // Move Left
     if (keymask & BUTTON_RIGHT)  retval &= ~0x02;  // Move Right
     if (keymask & BUTTON_UP)     retval &= ~0x04;  // Move Up
     if (keymask & BUTTON_DOWN)   retval &= ~0x08;  // Move Down
-    if (keymask & BUTTON_FIRE)   retval &= ~0x10;  // Shoot Left
-    if (keymask & BUTTON_FIRE)   retval &= ~0x20;  // Shoot Right
-    if (keymask & BUTTON_EXTRA)  retval &= ~0x40;  // Flash Bomb
+    // Fire is ABXY
+    // EXTRA is COIN/START 
+    // GALAGINO CONTROLLER maps L2=EXTRA and R2=COIN. 
+    if (keymask & BUTTON_FIRE)                                                retval &= ~0x10;  // Shoot Left
+    if (keymask & BUTTON_FIRE)                                                retval &= ~0x20;  // Shoot Right
+    if (keymask & BUTTON_EXTRA || keymask & BUTTON_L1 || keymask & BUTTON_R1) retval &= ~0x40;  // Flash Bomb
       return retval;
   }
 

@@ -42,7 +42,7 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
     if (Addr >= CPU1_RAM2_ADDR && Addr < CPU1_RAM2_ADDR + CPU1_RAM2_SIZE)
       return cpu_ram2[Addr - CPU1_RAM2_ADDR];
 
-    unsigned char keymask;
+    unsigned int  keymask;
     unsigned char retval;
     unsigned char bit;
 
@@ -62,8 +62,15 @@ unsigned char scramble::rdZ80(unsigned short Addr) {
         if(ignoreFireButton && !(keymask & BUTTON_FIRE) && !(keymask & BUTTON_START))
           ignoreFireButton = 0;
 
+        #ifdef GALAGINO_CONTROLLER
+        if(!ignoreFireButton)
+        if(keymask & BUTTON_A || keymask & BUTTON_X || keymask & BUTTON_L1 )                retval &= ~0x08; // Laser
+        if(!ignoreFireButton)
+        if(keymask & BUTTON_B || keymask & BUTTON_Y || keymask & BUTTON_R1 || BUTTON_START) retval &= ~0x02; // Bomb
+        #else
         if(!ignoreFireButton && (keymask & BUTTON_FIRE))  retval &= ~0x08; // Laser
         if(!ignoreFireButton && (keymask & BUTTON_START)) retval &= ~0x02; // Bomb
+        #endif
         return retval;
       case 0x8101: // PPI0 - Port B
       case 0x8111:

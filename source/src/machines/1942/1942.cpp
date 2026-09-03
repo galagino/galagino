@@ -58,14 +58,14 @@ unsigned char _1942::rdZ80(unsigned short Addr) {
     
     // P1: X,X,B2,B1,U,D,L,R
     if(Addr == 0xc001) {
-      unsigned char keymask = input->buttons_get();
+      unsigned int  keymask = input->buttons_get();
       unsigned char retval = 0xff;
       if(keymask & BUTTON_RIGHT) retval &= ~0x01;
       if(keymask & BUTTON_LEFT)  retval &= ~0x02;
       if(keymask & BUTTON_DOWN)  retval &= ~0x04;
       if(keymask & BUTTON_UP)    retval &= ~0x08;
-      if(keymask & BUTTON_FIRE)  retval &= ~0x10;
-      if(keymask & BUTTON_START) retval &= ~0x20;
+      if(keymask & BUTTON_FIRE  || keymask & BUTTON_L1) retval &= ~0x10; // ABXY  + L1 fire
+      if(keymask & BUTTON_START || keymask & BUTTON_R1) retval &= ~0x20; // START + R1 loop
       last_coin = keymask & BUTTON_COIN;
       return retval;
     }
