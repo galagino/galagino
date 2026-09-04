@@ -185,6 +185,22 @@
   #include "machines/roadfighter/roadfighter.h"
 #endif
 
+#ifdef ENABLE_FANTASY
+  #include "machines/fantasy/fantasy.h"
+#endif
+
+#ifdef ENABLE_NIBBLER
+  #include "machines/nibbler/nibbler.h"
+#endif
+
+#ifdef ENABLE_SCREGG
+  #include "machines/scregg/scregg.h"
+#endif
+
+#ifdef ENABLE_VANGUARD
+  #include "machines/vanguard/vanguard.h"
+#endif
+
 // change machine order is possible here...
 machineBase *machines[] = {
 #ifdef ENABLE_PACMAN
@@ -324,6 +340,18 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_ROADFIGHTER
   new roadfighter(),
+#endif
+#ifdef ENABLE_FANTASY
+  new fantasy(),
+#endif
+#ifdef ENABLE_NIBBLER
+  new nibbler(),
+#endif
+#ifdef ENABLE_SCREGG
+  new scregg(),
+#endif
+#ifdef ENABLE_VANGUARD
+  new vanguard(),
 #endif
 };
 

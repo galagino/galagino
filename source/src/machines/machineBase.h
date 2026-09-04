@@ -85,7 +85,11 @@ enum {
   MCH_VANVAN,
   MCH_PBACTION,
   MCH_MOTORACE,
-  MCH_ROADFIGHTER
+  MCH_ROADFIGHTER,
+  MCH_FANTASY,
+  MCH_NIBBLER,
+  MCH_SCREGG,
+  MCH_VANGUARD
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
@@ -165,6 +169,14 @@ public:
     virtual void render_row(short row) { };
     
     virtual const signed char *waveRom(unsigned char value) { return 0; }
+    virtual unsigned char vanguardSoundRom(unsigned short addr) { return 0xff; }
+    virtual bool vanguardMusic0Muted() { return true; }
+    virtual void vanguardMusic0Ended() { }
+    virtual bool vanguardMusic1Muted() { return true; }
+    virtual bool vanguardMusic2Muted() { return true; }
+    virtual const signed char *vanguardSample(unsigned char index) { return 0; }
+    virtual unsigned long vanguardSampleLength(unsigned char index) { return 0; }
+    virtual unsigned char vanguardSampleDivider(unsigned char index) { return 1; }
     virtual const unsigned short *logo(void) { return 0; };
     virtual bool hasNamcoAudio() { return false; }
 

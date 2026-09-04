@@ -285,6 +285,10 @@ const char *mchName(signed char machineType) {
     case MCH_PBACTION:      return "Pinball Action";
     case MCH_MOTORACE:      return "Moto Race USA";
     case MCH_ROADFIGHTER:   return "Road Fighter";
+    case MCH_FANTASY:       return "Fantasy";
+    case MCH_NIBBLER:       return "Nibbler";
+    case MCH_SCREGG:        return "Scrambled Egg";
+    case MCH_VANGUARD:      return "Vanguard";
   }
 
   return "";
