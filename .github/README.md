@@ -106,6 +106,10 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Tower of Druaga (todruaga.zip) | ![_](/logos/todruaga.png)     | ![_](/images/todruaga.png)     |       |
 | Van Van Car (vanvan.zip)       | ![_](/logos/vanvan.png)       | ![_](/images/vanvan.png)       |       |
 | Pinball Action (pbaction.zip)  | ![_](/logos/pbaction.png)     | ![_](/images/pbaction.png)     |       |
+| Fantasy Island (fantasyu.zip)  | ![_](/logos/fantasy.png)      | ![_](/images/fantasy.png)      |       |
+| Nibbler (nibblerp.zip)         | ![_](/logos/nibbler.png)      | ![_](/images/nibbler.png)      |       |
+| Vanguard (vanguard.zip)        | ![_](/logos/vanguard.png)     | ![_](/images/vanguard.png)     |       |
+| Scrambled Egg (scregg.zip)     | ![_](/logos/scregg.png)       | ![_](/images/scregg.png)       | Broken             |
 | Road Fighter (roadf2.zip)      | ![_](/logos/roadfighter.png)  | ![_](/images/roadfighter.png)  | WIP - doesn't work |                
 | Motorace USA (motorace.zip)    | ![_](/logos/motorace.png)     | ![_](/images/motorace.png)     | x.y = 256x240      |
 
