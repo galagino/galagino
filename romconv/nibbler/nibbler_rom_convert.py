@@ -4,9 +4,7 @@
 
    ROMSET from MAME 0.288 names
 
-   nibbler.zip - not
-
-   nibblerp.zip
+   nibblerp.zip - "Nibbler (rev 6, Pioneer Balloon conversion)"
    
 """
 from pathlib import Path

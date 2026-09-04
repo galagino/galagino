@@ -2,7 +2,7 @@
 """
    Convert the MAME Fantasy (US) ROM set into Galagino Plus headers.
  
-   MAME 0.288 romset is fantasyu.zip
+   MAME 0.288 romset is fantasyu.zip - "Fantasy (US)"
 
 """
 from pathlib import Path
