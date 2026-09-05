@@ -1,8 +1,6 @@
 #ifndef SCREGG_H
 #define SCREGG_H
 
-#ifdef ENABLE_SCREGG
-
 #include "scregg_rom.h"
 #include "scregg_chartiles.h"
 #include "scregg_spritetiles.h"
@@ -56,5 +54,4 @@ private:
   unsigned char sprite_count = 0;
 };
 
-#endif
 #endif

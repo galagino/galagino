@@ -151,7 +151,7 @@ void setup() {
   #endif
 
   // allocate memory for a single tile/character row
-  frame_buffer = (unsigned short*)malloc(224 * 8 * 2);
+  frame_buffer = (unsigned short*)malloc(240 * 8 * 2);
   sprite_buffer = (sprite_S*)malloc(128 * sizeof(sprite_S));
   memory = (uint8_t *)malloc(RAMSIZE);
   currentMachine = machines[0];
@@ -219,12 +219,14 @@ void updateAudioVideo(void) {
 #ifndef VIDEO_HALF_RATE
   videoHalfRate = currentMachine->useVideoHalfRate() && !isMenu;
 #endif
+  const unsigned short renderWidth = (!isMenu && currentMachine->machineType() == MCH_SCREGG) ? 240 : 224;
+  video.setViewport(renderWidth);
 
   if (!videoHalfRate) {
     // render and transmit screen at once as the display running at 80Mhz can update at full 60 hz game frame
     for(int c = 0; c < 36; c += 6) {
       for (int i = 0; i < 6; i++) {
-        renderRow(c + i, isMenu); video.write(frame_buffer, 224 * 8);
+        renderRow(c + i, isMenu); video.write(frame_buffer, renderWidth * 8);
       }
 
       // audio is updated 6 times per 60 Hz frame
@@ -247,13 +249,13 @@ void updateAudioVideo(void) {
     // render and transmit screen in two halfs as the display running at 40Mhz can only update every second 60 hz game frame
     for(int half = 0; half < 2; half++) {
       for(int c = 18 * half; c < 18 * (half + 1); c += 3) {
-        renderRow(c + 0, isMenu); video.write(frame_buffer, 224 * 8);
-        renderRow(c + 1, isMenu); video.write(frame_buffer, 224 * 8);
-        renderRow(c + 2, isMenu); video.write(frame_buffer, 224 * 8);
+        renderRow(c + 0, isMenu); video.write(frame_buffer, renderWidth * 8);
+        renderRow(c + 1, isMenu); video.write(frame_buffer, renderWidth * 8);
+        renderRow(c + 2, isMenu); video.write(frame_buffer, renderWidth * 8);
 
         // audio is refilled 6 times per screen update. The screen is updated
         // every second frame. So audio is refilled 12 times per 30 Hz frame.
-        // Audio registers are udated by CPU3 two times per 30hz frame.
+        // Audio registers are updated by CPU3 two times per 30hz frame.
         audio.transmit();
       }
 
@@ -273,12 +275,14 @@ void updateAudioVideo(void) {
 }
 
 // render one of 36 tile rows (8 x 224 pixel lines)
+// render one of 36 strips (8 lines, width supplied by the active machine)
 void renderRow(short row, bool isMenu) {
   if(isMenu) {
     menu.render_row(row);
   }
   else {
-    memset(frame_buffer, 0, 2 * 224 * 8);
+    const unsigned short width = currentMachine->machineType() == MCH_SCREGG ? 240 : 224;
+    memset(frame_buffer, 0, 2 * width * 8);
     currentMachine->render_row(row);
   }
 }

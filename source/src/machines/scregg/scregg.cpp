@@ -1,7 +1,5 @@
 #include "scregg.h"
 
-#ifdef ENABLED_SCREGG
-
 unsigned short scregg::xy_swap(unsigned short offset) {
   return 32 * (offset & 31) + (offset >> 5);
 }
@@ -196,5 +194,3 @@ void scregg::render_row(short row) {
   for (char col = 0; col < 30; col++) blit_tile(row, col);
   for (unsigned char i = 0; i < sprite_count; i++) blit_sprite(row, i);
 }
-
-#endif
