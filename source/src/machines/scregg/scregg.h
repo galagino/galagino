@@ -22,6 +22,9 @@ public:
   void render_row(short row) override;
   const unsigned short *logo() override { return scregg_logo; }
 
+  const int   renderWidth() { return 240; }
+  const int   renderBuffer() { return 240 * 2 * 8; }
+
 private:
   static constexpr unsigned short WORK_RAM_OFFSET = 0x0000;
   static constexpr unsigned short VIDEO_RAM_OFFSET = 0x0800;

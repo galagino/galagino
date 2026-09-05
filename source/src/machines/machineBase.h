@@ -144,6 +144,9 @@ public:
     virtual signed char videoFlipY() { return 0; } 
     virtual signed char videoFlipX() { return 0; }
     virtual signed char useVideoHalfRate() { return 0; } 
+
+    virtual const int   renderWidth() { return 224; }
+    virtual const int   renderBuffer() { return 224 * 2 * 8; }
     
     virtual unsigned char rdZ80(unsigned short Addr) { return 0xff; }
     virtual void wrZ80(unsigned short Addr, unsigned char Value) { };

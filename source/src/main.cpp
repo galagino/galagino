@@ -219,14 +219,15 @@ void updateAudioVideo(void) {
 #ifndef VIDEO_HALF_RATE
   videoHalfRate = currentMachine->useVideoHalfRate() && !isMenu;
 #endif
-  const unsigned short renderWidth = (!isMenu && currentMachine->machineType() == MCH_SCREGG) ? 240 : 224;
+  const int renderWidth = !isMenu ? currentMachine->renderWidth() : 224;
+  const int renderWrite = renderWidth << 3;
   video.setViewport(renderWidth);
 
   if (!videoHalfRate) {
     // render and transmit screen at once as the display running at 80Mhz can update at full 60 hz game frame
     for(int c = 0; c < 36; c += 6) {
       for (int i = 0; i < 6; i++) {
-        renderRow(c + i, isMenu); video.write(frame_buffer, renderWidth * 8);
+        renderRow(c + i, isMenu); video.write(frame_buffer, renderWrite);
       }
 
       // audio is updated 6 times per 60 Hz frame
@@ -249,9 +250,9 @@ void updateAudioVideo(void) {
     // render and transmit screen in two halfs as the display running at 40Mhz can only update every second 60 hz game frame
     for(int half = 0; half < 2; half++) {
       for(int c = 18 * half; c < 18 * (half + 1); c += 3) {
-        renderRow(c + 0, isMenu); video.write(frame_buffer, renderWidth * 8);
-        renderRow(c + 1, isMenu); video.write(frame_buffer, renderWidth * 8);
-        renderRow(c + 2, isMenu); video.write(frame_buffer, renderWidth * 8);
+        renderRow(c + 0, isMenu); video.write(frame_buffer, renderWrite);
+        renderRow(c + 1, isMenu); video.write(frame_buffer, renderWrite);
+        renderRow(c + 2, isMenu); video.write(frame_buffer, renderWrite);
 
         // audio is refilled 6 times per screen update. The screen is updated
         // every second frame. So audio is refilled 12 times per 30 Hz frame.
@@ -281,8 +282,7 @@ void renderRow(short row, bool isMenu) {
     menu.render_row(row);
   }
   else {
-    const unsigned short width = currentMachine->machineType() == MCH_SCREGG ? 240 : 224;
-    memset(frame_buffer, 0, 2 * width * 8);
+    memset(frame_buffer, 0, currentMachine->renderBuffer());
     currentMachine->render_row(row);
   }
 }
