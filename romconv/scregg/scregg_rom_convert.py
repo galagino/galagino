@@ -63,22 +63,10 @@ def rot_galagino(tile):
     return [[tile[n - 1 - x][y] for x in range(n)] for y in range(n)]
 
 # ------------------------------------------------------------
-# Layout MAME letti PER INTERO da btime.cpp (righe 2087-2130):
-#
-# gfx_8x8x3_planar (char set #1, gfx1, MACRO STANDARD MAME): 8x8 3bpp,
-# RGN_FRAC(1,3), planeoffset {RGN_FRAC(2,3),RGN_FRAC(1,3),RGN_FRAC(0,3)}
-# IDENTICO a tile16layout (stessa regione gfx1, stesso schema di piani —
-# char e sprite leggono LO STESSO ROM fisico con granularita' diversa,
-# 8x8 vs 16x16). xoffset/yoffset per la variante 8x8 NON split sono lo
-# standard MAME ascendente (STEP8(0,1)/STEP8(0,8)), a differenza della
-# variante 16x16 che usa lo split "meta' rovesciata" (STEP8(16*8,1) poi
-# STEP8(0,1)) visibile in tile16layout stesso.
 CHAR_XOFFS = [0,1,2,3,4,5,6,7]
 CHAR_YOFFS = [y*8 for y in range(8)]
 CHAR_BITS_PER_TILE = 8*8
 
-# tile16layout (sprite gfx1 E sfondo gfx2): 16x16 3bpp, RGN_FRAC(1,3),
-# stesso planeoffset del char, xoffset split (meta' destra prima)
 TILE16_XOFFS = [16*8+x for x in range(8)] + [x for x in range(8)]
 TILE16_YOFFS = [y*8 for y in range(16)]
 TILE16_BITS_PER_TILE = 32*8
@@ -97,10 +85,7 @@ def write_rom(name, sym, data, comment):
 
 def write_char_tiles(tiles):
     with open(os.path.join(OUT_DIR, "scregg_chartiles.h"), "w") as f:
-        print("// Burger Time char set #1 (aa12.7k+ab13.9k+ab10.10k+ab11.12k+aa8.13k+ab9.15k)", file=f)
-        print("// 1024 tile 8x8 3bpp (valori pixel 0-7). pen0 = trasparente quando il", file=f)
-        print("// tilemap speciale e' attivo (m_bnj_scroll[0]&0x10), opaco altrimenti.", file=f)
-        print("// Colore SEMPRE fisso a palette RAM[0..7] (color group 0, vedi btime.cpp).", file=f)
+        print("// Scrambled Egg char set #1", file=f)
         print("const unsigned char scregg_chartiles[][8][8] = {", file=f)
         rows = []
         for t in tiles:
@@ -113,10 +98,7 @@ def write_char_tiles(tiles):
 
 def write_sprite_tiles(tiles):
     with open(os.path.join(OUT_DIR, "scregg_spritetiles.h"), "w") as f:
-        print("// Burger Time sprites (STESSA ROM del char set #1, gfx1, granularita'", file=f)
-        print("// 16x16 invece di 8x8 -- tile16layout). 256 sprite 16x16 3bpp.", file=f)
-        print("// pen0 = trasparente (transpen ultimo parametro 0 in btime.cpp).", file=f)
-        print("// Colore SEMPRE fisso a palette RAM[0..7] (color group 0).", file=f)
+        print("// Scrambled Egg sprites", file=f)
         print("const unsigned char scregg_spritetiles[][16][16] = {", file=f)
         rows = []
         for t in tiles:
@@ -127,7 +109,7 @@ def write_sprite_tiles(tiles):
         print(",\n".join(rows), file=f)
         print("};", file=f)
 
-def preview(char_tiles, sprite_tiles, bg_tiles, outpng):
+def preview(char_tiles, sprite_tiles, outpng):
     try:
         from PIL import Image
     except ImportError:
@@ -142,8 +124,7 @@ def preview(char_tiles, sprite_tiles, bg_tiles, outpng):
     W = 32*9
     char_rows = (len(char_tiles) + 31) // 32
     spr_rows = (len(sprite_tiles) + 15) // 16
-    bg_rows = (len(bg_tiles) + 15) // 16
-    H = char_rows*9 + spr_rows*18 + bg_rows*18 + 24
+    H = char_rows*9 + spr_rows*18 + 24
     img = Image.new("RGB", (W, H), (32, 32, 96))
     px = img.load()
 
@@ -156,13 +137,6 @@ def preview(char_tiles, sprite_tiles, bg_tiles, outpng):
     base = char_rows*9 + 8
     for s, tile in enumerate(sprite_tiles):
         gx, gy = (s % 16) * 18, base + (s // 16) * 18
-        for y in range(16):
-            for x in range(16):
-                px[gx + x, gy + y] = gray(tile[y][x])
-
-    base2 = base + spr_rows*18 + 8
-    for b, tile in enumerate(bg_tiles):
-        gx, gy = (b % 16) * 18, base2 + (b // 16) * 18
         for y in range(16):
             for x in range(16):
                 px[gx + x, gy + y] = gray(tile[y][x])
@@ -244,13 +218,13 @@ def convert_scregg(romset, files):
   maincpu = cpu01 + cpu02 + cpu03 + cpu04 + cpu05
   assert len(maincpu) == 0x5000  # 0x3000-0x7fff
   write_rom("scregg_rom.h", "scregg_rom", bytes(maincpu),
-            "Burger Time main CPU ROM 0xb000-0xffff (0xb000-0xbfff empty in this"
+            "Scrambled Egg main CPU ROM 0xb000-0xffff (0xb000-0xbfff empty in this"
            )
 
   write_c_array(os.path.join(OUT_DIR, 'scregg_colorprom.h'), 
                 'scregg_colorprom', prom1, 'Scregg color PROMs')
 
-  #preview(char_tiles, sprite_tiles, bg_tiles, "scregg_preview.png")
+  #preview(char_tiles, sprite_tiles, "scregg_preview.png")
   print("Scrambled Egg conversion finished.")
 
 # -------------------------------------------------------------------
