@@ -8,36 +8,13 @@
 
 #ifdef ENABLE_ROADFIGHTER
 
-/*
-// ---- callback bus M6809 (puntatori a funzione globali della destinazione) ----
-static uint8_t roadf_m6809_read(uint16_t addr) {
-  return g_roadfighter_instance ? g_roadfighter_instance->main_read(addr) : 0xFF;
-}
-static void roadf_m6809_write(uint16_t addr, uint8_t val) {
-  if (g_roadfighter_instance) g_roadfighter_instance->main_write(addr, val);
-}
-static uint8_t roadf_m6809_read_opcode(uint16_t addr) {
-  return g_roadfighter_instance ? g_roadfighter_instance->main_read_opcode(addr) : 0xFF;
-}
-
-static void roadf_set_m6809_callbacks() {
-  m6809_read_fn   = roadf_m6809_read;          // dati/operandi -> RAW
-  m6809_write_fn  = roadf_m6809_write;
-  m6809_opcode_fn = roadf_m6809_read_opcode;   // opcode-fetch -> DECRYPTED (KONAMI-1)
-}
-*/
-
 void roadfighter::init(Input *input, unsigned short *framebuffer,
                        sprite_S *spritebuffer, unsigned char *memorybuffer) {
   machineBase::init(input, framebuffer, spritebuffer, memorybuffer);
-  //g_roadfighter_instance = this;
-  //roadf_set_m6809_callbacks();
 }
 
 void roadfighter::reset() {
   machineBase::reset();
-  //g_roadfighter_instance = this;
-  //roadf_set_m6809_callbacks();
 
   memset(&main_cpu, 0, sizeof(main_cpu));
   memset(snd_ram, 0, sizeof(snd_ram));
@@ -143,21 +120,24 @@ unsigned char roadfighter::input_system() {
 unsigned char roadfighter::input_p1() {
   unsigned char keymask = input->buttons_get();
   unsigned char val = 0xFF;
-  // Mapping provvisorio (rifinito in FASE 5 con EC11->sterzo digitale sx/dx).
-  if (keymask & BUTTON_LEFT)  val &= ~0x01;   // EC11 INVERTITO -> sterzo destra
-  if (keymask & BUTTON_RIGHT) val &= ~0x02;   // EC11 INVERTITO -> sterzo sinistra
-  // Acceleratore a TOGGLE (stato calcolato in run_frame):
-  //   gear_state 0 = marcia LENTA (BUTTON1), 1 = marcia VELOCE (BUTTON2)
-  if (gear_state == 0) val &= ~0x10;          // BUTTON1 = marcia lenta
-  else                 val &= ~0x20;          // BUTTON2 = marcia veloce
+  if (keymask & BUTTON_LEFT)  val &= ~0x01;   // LEFT
+  if (keymask & BUTTON_RIGHT) val &= ~0x02;   // RIGHT
+  // Toggle accelerator
+  //   gear_state 0 = SLOW (BUTTON1), 1 = FAST (BUTTON2)
+  if (gear_state == 0) val &= ~0x10; // BUTTON1 = slow speed 
+  else                 val &= ~0x20; // BUTTON2 = fast speed
   return val;
 }
 
 // ============================================================
 // Audio Z80 map (roadf sound_map):
-//   $0000-$3FFF ROM (8 KB mirror)  $4000-$4FFF RAM
-//   $6000 sound latch read         $8000 timer (trackfld_audio)
-//   $E000 DAC write   $E001 SN76489A latch   $E002 SN76489A strobe
+//   $0000-$3FFF ROM (8 KB mirror)  
+//   $4000-$4FFF RAM
+//   $6000 sound latch read         
+//   $8000 timer (trackfld_audio)
+//   $E000 DAC write   
+//   $E001 SN76489A latch   
+//   $E002 SN76489A strobe
 // ============================================================
 
 unsigned char roadfighter::opZ80(unsigned short Addr) { return rdZ80(Addr); }
@@ -170,7 +150,7 @@ unsigned char roadfighter::rdZ80(unsigned short Addr) {
   if (Addr == 0x6000)
     return sound_latch;
   if (Addr == 0x8000)
-    return (snd_icnt >> 8) & 0x0F;     // timer (approssimato come hyperolympic)
+    return (snd_icnt >> 8) & 0x0F;     // timer
   return 0xFF;
 }
 
@@ -184,7 +164,7 @@ void roadfighter::wrZ80(unsigned short Addr, unsigned char Value) {
 unsigned char roadfighter::inZ80(unsigned short Port) { return 0xFF; }
 void roadfighter::outZ80(unsigned short Port, unsigned char Value) { }
 
-// SN76489 byte-stream -> framework sn_*[0] (mix vero in audio.cpp, FASE 4)
+// SN76489 byte-stream -> framework sn_*[0] (mixed in audio.cpp)
 void roadfighter::sn76489_write(unsigned char data) {
   if (data & 0x80) {
     sn_latch_reg = (data >> 4) & 0x07;
@@ -244,8 +224,6 @@ void roadfighter::run_frame(void) {
 
   if (irq_mask)
     m6809_irq(&main_cpu);
-
-  dbg_pc = main_cpu.PC;        // cattura PC per overlay (se bloccato = indirizzo del loop)
 
   if (coin_hold)  coin_hold--;
   if (start_hold) start_hold--;

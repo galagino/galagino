@@ -32,8 +32,8 @@
 // IRQ: IRQ0 (non NMI) a vblank quando irq_mask=1; ack su irq_mask=0.
 // ============================================================================
 
-#define ROADF_SCREEN_W 256
-#define ROADF_SCREEN_H 224
+#define ROADF_SCREEN_H 256
+#define ROADF_SCREEN_W 224
 
 // Offset nel buffer condiviso memory[] (16 KB, copre CPU $0000-$3FFF)
 #define ROADF_SPRRAM_OFF  0x1000   // 0x1000-0x10BF (192 byte)
@@ -65,11 +65,6 @@ public:
   unsigned char inZ80(unsigned short Port) override;
   void          outZ80(unsigned short Port, unsigned char Value) override;
 
-  // M6809 main CPU bus (chiamate dalle callback C globali)
-  //uint8_t main_read(uint16_t addr);
-  //void    main_write(uint16_t addr, uint8_t val);
-  //uint8_t main_read_opcode(uint16_t addr);
-
   unsigned char m6809_read(m6809_state *s, uint16_t addr) override;
   void m6809_write(m6809_state *s, uint16_t addr, uint8_t val) override;
   unsigned char m6809_read_opcode(m6809_state *s, uint16_t addr) override;
@@ -94,7 +89,6 @@ private:
   int           dac_sample;
 
   // Main I/O state
-  unsigned short dbg_pc;            // PC M6809 catturato per overlay debug
   unsigned char irq_mask;
   unsigned char flip_screen;
   unsigned char coin_latch, coin_hold;
