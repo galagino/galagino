@@ -102,11 +102,10 @@ private:
   unsigned char input_system();
   unsigned char input_p1();
 
-  // Video snapshot (tearing-free): catturati in prepare_frame
-  unsigned char vram_snap[0x800];
-  unsigned char cram_snap[0x800];
-  unsigned char scroll_snap[0x40];
-  unsigned char spr_snap[0xC0];
+  unsigned char *vram_snap;
+  unsigned char *cram_snap;
+  unsigned char *scroll_snap;
+  unsigned char *spr_snap;
   void blit_sprite_strip(short row, unsigned char s);
 };
 

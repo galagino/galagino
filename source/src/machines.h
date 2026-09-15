@@ -177,14 +177,6 @@
   #include "machines/pbaction/pbaction.h"
 #endif
 
-#ifdef ENABLE_MOTORACE
-  #include "machines/motorace/motorace.h"
-#endif
-
-#ifdef ENABLE_ROADFIGHTER
-  #include "machines/roadfighter/roadfighter.h"
-#endif
-
 #ifdef ENABLE_FANTASY
   #include "machines/fantasy/fantasy.h"
 #endif
@@ -199,6 +191,14 @@
 
 #ifdef ENABLE_VANGUARD
   #include "machines/vanguard/vanguard.h"
+#endif
+
+#ifdef ENABLE_MOTORACE
+  #include "machines/motorace/motorace.h"
+#endif
+
+#ifdef ENABLE_ROADFIGHTER
+  #include "machines/roadfighter/roadfighter.h"
 #endif
 
 // change machine order is possible here...
@@ -335,12 +335,6 @@ machineBase *machines[] = {
 #ifdef ENABLE_PBACTION
   new pbaction(),
 #endif
-#ifdef ENABLE_MOTORACE
-  new motorace(),
-#endif
-#ifdef ENABLE_ROADFIGHTER
-  new roadfighter(),
-#endif
 #ifdef ENABLE_FANTASY
   new fantasy(),
 #endif
@@ -352,6 +346,12 @@ machineBase *machines[] = {
 #endif
 #ifdef ENABLE_VANGUARD
   new vanguard(),
+#endif
+#ifdef ENABLE_MOTORACE
+  new motorace(),
+#endif
+#ifdef ENABLE_ROADFIGHTER
+  new roadfighter(),
 #endif
 };
 

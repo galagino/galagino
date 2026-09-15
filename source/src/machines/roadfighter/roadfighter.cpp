@@ -236,12 +236,14 @@ void roadfighter::run_frame(void) {
 // Sprite (48, draw_sprites base_state): code=byte2+8*(flags&0x20), color=flags&0x0f,
 //   flipx=~flags&0x40, flipy=flags&0x80, sx=byte3, sy=241-byte1, doppio draw a sx e sx-256.
 // ============================================================
+// Video - roadfighter ROT90
+// ============================================================
 
 void roadfighter::prepare_frame(void) {
-  memcpy(vram_snap,   memory + ROADF_VRAM_OFF,   sizeof(vram_snap));
-  memcpy(cram_snap,   memory + ROADF_CRAM_OFF,   sizeof(cram_snap));
-  memcpy(scroll_snap, memory + ROADF_SCROLL_OFF, sizeof(scroll_snap));
-  memcpy(spr_snap,    memory + ROADF_SPRRAM_OFF, sizeof(spr_snap));
+  vram_snap   = memory + ROADF_VRAM_OFF;
+  cram_snap   = memory + ROADF_CRAM_OFF;
+  scroll_snap = memory + ROADF_SCROLL_OFF;
+  spr_snap    = memory + ROADF_SPRRAM_OFF;
 
   // Popola sprite[] in coordinate buffer (y in 0..223 = game_y - 16).
   active_sprites = 0;
@@ -267,65 +269,14 @@ void roadfighter::prepare_frame(void) {
     // La tilemap (sfondo/banner/HUD percorso) e' corretta, ma gli sprite risultano
     // ruotati 180° rispetto ad essa (auto "verso il basso", HUD laterale/menu sprite
     // specchiati). Ruoto 180° SOLO gli sprite nel buffer (256x224).
-    sp.x = (short)(ROADF_SCREEN_W - 16 - (int)sp.x);   // 256-16-x  (flip orizzontale)
-    sp.y = (short)(ROADF_SCREEN_H - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
+    sp.x = (short)(256 - 16 - (int)sp.x);   // 256-16-x  (flip orizzontale)
+    sp.y = (short)(224 - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
     sp.flags ^= 0x03;                                  // inverti flipx + flipy
     active_sprites++;
   }
 }
 
-// Overlay di debug (P4 senza seriale): top 5 righe mostrano diagnostica.
-//   riga 0: barra VERDE = #byte VRAM non-zero (0..2048 scalato a 256px)
-//   riga 1: barra CIANO = #byte CRAM non-zero
-//   riga 2: PC del M6809 (16 px, bianco = bit 1) — deve CAMBIARE se la CPU gira
-//   riga 3: ROSSO se irq_mask=1, GIALLO se game_started
-//   riga 4: nera (separatore)
-// Disattivare mettendo a 0 dopo la diagnosi.
-#define ROADF_DEBUG_OVERLAY 0
-
 void roadfighter::render_row(short row) {
-#if ROADF_DEBUG_OVERLAY
-  if (row < 5) {
-    int vnz = 0;
-    for (int i = 0; i < 0x800; i++) if (vram_snap[i]) vnz++;
-    unsigned short pc = dbg_pc;          // PC catturato STABILE in run_frame
-    unsigned char hi = pc >> 8, lo = pc & 0xFF;
-    for (int line = 0; line < 8; line++) {
-      unsigned short *p = frame_buffer + line * ROADF_SCREEN_W;
-      for (int x = 0; x < ROADF_SCREEN_W; x++) p[x] = 0x0000;
-      if (row == 0) { int w = vnz >> 3; for (int x = 0; x < w && x < 256; x++) p[x] = 0xE007; }   // verde = VRAM
-      // PC byte ALTO (riga 1) e BASSO (riga 2): 8 quadrati SEMPRE visibili,
-      // bianco = bit 1, grigio scuro = bit 0 (MSB a sinistra/in alto).
-      else if (row == 1) { for (int b = 0; b < 8; b++) { unsigned short c = (hi & (0x80 >> b)) ? 0xFFFF : 0x0841;
-                           for (int x = 0; x < 28; x++) p[b * 32 + x] = c; } }
-      else if (row == 2) { for (int b = 0; b < 8; b++) { unsigned short c = (lo & (0x80 >> b)) ? 0xFFFF : 0x0841;
-                           for (int x = 0; x < 28; x++) p[b * 32 + x] = c; } }
-      else if (row == 3) { unsigned short c = irq_mask ? 0x00F8 : 0x0000; for (int x = 0; x < 128; x++) p[x] = c;
-                           unsigned short g = game_started ? 0xE0FF : 0x0000; for (int x = 128; x < 256; x++) p[x] = g; }
-    }
-    return;
-  }
-#endif
-#define ROADF_TEST_TILES 0
-#if ROADF_TEST_TILES
-  // TEST: riempi lo schermo con tile consecutivi (IGNORA la VRAM) per validare
-  // la pipeline di render. Se vedi una griglia di caratteri/grafica leggibile e
-  // colorata -> render OK (e il viola del gioco e' contenuto VRAM, non bug mio).
-  // Se vedi viola/garbage -> pipeline rotta. Mettere a 0 dopo la diagnosi.
-  for (int line = 0; line < 8; line++) {
-    unsigned short *ptr = frame_buffer + line * ROADF_SCREEN_W;
-    for (int x = 0; x < ROADF_SCREEN_W; x++) {
-      int tcol = x >> 3;
-      int code = (row * 32 + tcol) % ROADF_NTILES;     // tile consecutivi
-      const unsigned short *cm = roadfighter_tile_colormap[(tcol + 1) & 0x0F];
-      uint32_t pr = roadfighter_tiles[code][line];
-      unsigned char pix = (pr >> ((x & 7) * 4)) & 0x0F;
-      ptr[x] = cm[pix];
-    }
-  }
-  return;
-#endif
-
   // Contenuto MAME-fedele (flip_screen: scroll negato + sprite sy/flipy gia' gestiti),
   // poi flip 180° GLOBALE dell'immagine composta (display montato ruotato): rendo la
   // strip speculare eff_row e inverto righe+colonne. Tile e sprite ruotano INSIEME.
@@ -337,7 +288,7 @@ void roadfighter::render_row(short row) {
   if (flip_screen) scrollx = -scrollx;                 // MAME: flip_screen nega lo scroll
 
   for (int line = 0; line < 8; line++) {
-    unsigned short *ptr = frame_buffer + line * ROADF_SCREEN_W;
+    unsigned short *ptr = frame_buffer + line * 224;
     int tile_r = line;                                 // game_y & 7 = line
     int prev_col = -1;
     uint32_t prow = 0;
