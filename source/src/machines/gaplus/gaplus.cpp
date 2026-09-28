@@ -103,7 +103,7 @@ unsigned char IRAM_ATTR gaplus::m6809_read(m6809_state *s, uint16_t addr) {
     uint16_t o = addr & 0x03FF;
     return (o < 0x40) ? soundregs[o] : namco15xx_ram[o - 0x40];
   }
-  if ((addr & 0xFFF0) == 0x6800) return 0xF0 | io[0].ram[addr & 0x0F];   // 56XX input
+  if ((addr & 0xFFF0) == 0x6800) return 0xF0 | io[0].ram[addr & 0x0F];  // 56XX input
   if ((addr & 0xFFF0) == 0x6810) return 0xF0 | io[1].ram[addr & 0x0F];  // 58XX dip
   if ((addr & 0xFFF0) == 0x6820) return customio3_r(addr & 0x0F);
 
