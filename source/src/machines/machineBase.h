@@ -89,7 +89,8 @@ enum {
   MCH_FANTASY,
   MCH_NIBBLER,
   MCH_SCREGG,
-  MCH_VANGUARD
+  MCH_VANGUARD,
+  MCH_MPATROL
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame
@@ -194,6 +195,20 @@ public:
     // the machine header (machines.h/gyruss.h can only live in main.cpp).
     // also used by CircusCharlie
     virtual int renderDrumSample() { return 0; }
+
+    // GnG: 2x YM2203 FM (3+3 channels).  Called once per 24 kHz output sample
+    // by the audio renderer; returns the mixed FM value centered at 0.
+    virtual int renderFmSample() { return 0; }
+
+    // Per-device AY/SSG volume, 0-15 (15 = unattenuated, 0 = muted). Boards
+    // with an external volume-control chip drive this from the game code;
+    // flstory's TA7630 is wired to the AY's own PORT A (see its
+    // sound_control_2_w). Default 15 = no attenuation, so every other
+    // machine is unaffected.
+    virtual unsigned char ayDeviceVolume() { return 15; }
+
+    //
+    virtual unsigned char ayEnvelopeRestarts(unsigned char ay) { return 0; }
 
 #ifdef LED_PIN
     virtual void menuLeds(CRGB *leds) { memcpy(leds, menu_leds, NUM_LEDS*sizeof(CRGB)); };

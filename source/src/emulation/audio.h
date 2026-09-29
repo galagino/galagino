@@ -55,6 +55,7 @@ private:
   void phoenix_render_buffer(void);
   void dkong3_render_buffer(void);
   void vanguard_render_buffer(void);
+  void boblbobl_render_buffer(void);
   void generateSinusWave(int32_t amplitude, short* buffer, uint16_t length);
 
   machineBase *currentMachine;
