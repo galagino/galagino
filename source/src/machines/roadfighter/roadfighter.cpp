@@ -269,8 +269,8 @@ void roadfighter::prepare_frame(void) {
     // La tilemap (sfondo/banner/HUD percorso) e' corretta, ma gli sprite risultano
     // ruotati 180° rispetto ad essa (auto "verso il basso", HUD laterale/menu sprite
     // specchiati). Ruoto 180° SOLO gli sprite nel buffer (256x224).
-    sp.x = (short)(256 - 16 - (int)sp.x);   // 256-16-x  (flip orizzontale)
-    sp.y = (short)(224 - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
+    sp.x = (short)(ROADF_SCREEN_W - 16 - (int)sp.x);   // 256-16-x  (flip orizzontale)
+    sp.y = (short)(ROADF_SCREEN_H - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
     sp.flags ^= 0x03;                                  // inverti flipx + flipy
     active_sprites++;
   }
@@ -288,7 +288,7 @@ void roadfighter::render_row(short row) {
   if (flip_screen) scrollx = -scrollx;                 // MAME: flip_screen nega lo scroll
 
   for (int line = 0; line < 8; line++) {
-    unsigned short *ptr = frame_buffer + line * 224;
+    unsigned short *ptr = frame_buffer + line * 240;
     int tile_r = line;                                 // game_y & 7 = line
     int prev_col = -1;
     uint32_t prow = 0;

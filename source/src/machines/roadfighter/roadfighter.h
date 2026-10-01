@@ -1,10 +1,8 @@
 #ifndef ROADFIGHTER_H
 #define ROADFIGHTER_H
 
-#include "../machineBase.h"
-
 #ifdef ENABLE_ROADFIGHTER
-
+#include "../machineBase.h"
 #include "../../cpus/m6809/m6809.h"
 #include "roadfighter_rom_main.h"     // roadfighter_rom_main_raw + _decrypted (KONAMI-1)
 #include "roadfighter_rom_audio.h"    // roadfighter_rom_audio (Z80 sound)
@@ -33,7 +31,7 @@
 // ============================================================================
 
 #define ROADF_SCREEN_H 256
-#define ROADF_SCREEN_W 224
+#define ROADF_SCREEN_W 240
 
 // Offset nel buffer condiviso memory[] (16 KB, copre CPU $0000-$3FFF)
 #define ROADF_SPRRAM_OFF  0x1000   // 0x1000-0x10BF (192 byte)
@@ -56,7 +54,10 @@ public:
             sprite_S *spritebuffer, unsigned char *memorybuffer) override;
   void reset() override;
 
-  signed char machineType()      override { return MCH_ROADFIGHTER; }
+  signed char machineType()  override { return MCH_ROADFIGHTER; }
+
+  const int   renderWidth()  override { return 240; }
+  const int   renderBuffer() override { return 240 * 2 * 8; }
 
   // Audio Z80 (sound CPU)
   unsigned char rdZ80(unsigned short Addr) override;
