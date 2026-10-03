@@ -263,7 +263,7 @@ void Audio::transmit() {
       namco_render_buffer();
     else if (currentMachine->hasNamco15xxAudio())
       namco_15xx_render_buffer();
-    else if (machineType == MCH_MRDO || machineType == MCH_LADYBUG || machineType == MCH_STARFORCE || machineType == MCH_VANVAN || machineType == MCH_CIRCUSC)
+    else if (machineType == MCH_MRDO || machineType == MCH_LADYBUG || machineType == MCH_STARFORCE || machineType == MCH_VANVAN || machineType == MCH_CIRCUSC | ENABLE_ROADFIGHTER)
       sn76489_render_buffer();
     else if (machineType == MCH_DKONG || machineType == MCH_DKONGJR)
       i8048_render_buffer();

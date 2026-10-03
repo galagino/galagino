@@ -216,7 +216,7 @@ void roadfighter::run_frame(void) {
       m6809_cycles += c;
       safety++;
     }
-    current_cpu = 0;
+  
     // Audio Z80: piu' step/slice = audio piu' veloce (CPU sonora + timer $8000,
     // che deriva da snd_icnt). 20 = ~2x del 10 iniziale (10 troppo lento, 30 troppo veloce).
     for (int z = 0; z < 20; z++) { StepZ80(&cpu[0]); snd_icnt++; }
@@ -252,7 +252,7 @@ void roadfighter::prepare_frame(void) {
     unsigned char sy_raw = spr_snap[offs + 1];
     unsigned char code_l = spr_snap[offs + 2];
     unsigned char sx     = spr_snap[offs + 3];
-    if ((flags | sy_raw | code_l | sx) == 0) continue;   // slot vuoto
+    if ((flags | sy_raw | code_l | sx) == 0) continue;   // empty slot
 
     // flip_screen MAME: sy = 240-(240-sy_raw)=sy_raw, poi +1; flipy invertito. flipx invariato.
     int flipy = (flags & 0x80) ? 1 : 0;
@@ -264,13 +264,14 @@ void roadfighter::prepare_frame(void) {
     sp.color = flags & 0x0F;
     sp.flags = (((flags & 0x40) == 0) ? 1 : 0)        // flipx (~flags & 0x40), NON cambia con flip_screen
              | (flipy ? 2 : 0);
-    sp.x = (short)sx;
-    sp.y = (short)(sy - 16);                           // buffer coords
+    sp.x = (short)sx - 16;
+    sp.y = (short)sy - 00;                           // buffer coords
     // La tilemap (sfondo/banner/HUD percorso) e' corretta, ma gli sprite risultano
     // ruotati 180° rispetto ad essa (auto "verso il basso", HUD laterale/menu sprite
     // specchiati). Ruoto 180° SOLO gli sprite nel buffer (256x224).
     sp.x = (short)(ROADF_SCREEN_W - 16 - (int)sp.x);   // 256-16-x  (flip orizzontale)
-    sp.y = (short)(ROADF_SCREEN_H - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
+    //sp.y = (short)(ROADF_SCREEN_H - 16 - (int)sp.y);   // 224-16-y  (flip verticale)
+    sp.y = (short)(240            - 16 - (int)sp.y);
     sp.flags ^= 0x03;                                  // inverti flipx + flipy
     active_sprites++;
   }

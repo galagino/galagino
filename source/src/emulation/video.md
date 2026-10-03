@@ -8,7 +8,7 @@ The ST7789 display controller uses command 0x36 (Memory Data Access Control or M
 * Bit 5 (MV):  Row/Column Exchange    (0=Normal, 1=Reverse)
 * Bit 4 (ML):  Vertical Refresh Order (0=Refresh Top-to-Bottom, 1=Refresh Bottom-to-Top)
 * Bit 3 (RGB): Color Order            (0=RGB, 1=BGR)
-* Bit 2 (MH): Horizontal Refresh Order
+* Bit 2 (MH):  Horizontal Refresh Order
 
 Portrait (0x00):  Normal, Left-to-Right, Top-to-Bottom
 Landscape (0x60): Row/Column exchange (MV) + Column order (MX)
@@ -28,10 +28,10 @@ Common 0x36 MADCTL Settings
 
 MADCTL (0x36) Bit Definition
 
-* Bit 7 (MY): Row Address Order
-* Bit 6 (MX): Column Address Order
-* Bit 5 (MV): Row/Column Exchange (swaps Width/Height)
-* Bit 4 (ML): Vertical Refresh Order
+* Bit 7 (MY):  Row Address Order
+* Bit 6 (MX):  Column Address Order
+* Bit 5 (MV):  Row/Column Exchange (swaps Width/Height)
+* Bit 4 (ML):  Vertical Refresh Order
 * Bit 3 (BGR): RGB-BGR Order
-* Bit 2 (MH): Horizontal Refresh Order
+* Bit 2 (MH):  Horizontal Refresh Order
 

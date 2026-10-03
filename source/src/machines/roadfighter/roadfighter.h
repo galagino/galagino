@@ -58,6 +58,8 @@ public:
 
   const int   renderWidth()  override { return 240; }
   const int   renderBuffer() override { return 240 * 2 * 8; }
+  signed char videoFlipX()   override { return 1; }
+  signed char isLandscape()  override { return 1; }
 
   // Audio Z80 (sound CPU)
   unsigned char rdZ80(unsigned short Addr) override;

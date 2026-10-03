@@ -12,8 +12,11 @@ public:
   void begin(void);
   void write(uint16_t *colors, uint32_t len);
   void setViewport(uint16_t width);
-  void flip(char flipY, char flipX);
-  void flipReset(char flipY, char flipX);
+  void flip(char flipY, char flipX, char landscape);
+  void flipReset(char flipY, char flipX, char landscape);
+  void clearScreen();
+
+  int renderRows = 36;
 
 private:
   void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
@@ -28,6 +31,7 @@ private:
   unsigned char *dma_buffer;  // use a second buffer for dma transfers
   uint8_t madctl_last;
   uint16_t viewport_width = 224;
+  uint8_t  isLandscape = 0;
 };
 
 #endif // VIDEO_H

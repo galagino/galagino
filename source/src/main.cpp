@@ -151,7 +151,7 @@ void setup() {
   #endif
 
   // allocate memory for a single tile/character row
-  frame_buffer = (unsigned short*)malloc(240 * 8 * 2);
+  frame_buffer = (unsigned short*)malloc(VIDEO_MAX_W * 8 * 2);
   sprite_buffer = (sprite_S*)malloc(128 * sizeof(sprite_S));
   memory = (uint8_t *)malloc(RAMSIZE);
   currentMachine = machines[0];
@@ -198,7 +198,7 @@ void updateAudioVideo(void) {
     if (menu.startMachine()) {
       currentMachine = machines[menu.machineIndexSelected()];
       audio.start(currentMachine);
-      video.flip(currentMachine->videoFlipY(), currentMachine->videoFlipX());
+      video.flip(currentMachine->videoFlipY(), currentMachine->videoFlipX(), currentMachine->isLandscape());
 
       // start new machine
       emulation_start();
@@ -209,10 +209,11 @@ void updateAudioVideo(void) {
   if (doReset || menu.attract_gameTimeout()) {
     // stop current machine
     emulation_stop();
-    video.flipReset(currentMachine->videoFlipY(), currentMachine->videoFlipX());
+    video.flipReset(currentMachine->videoFlipY(), currentMachine->videoFlipX(), currentMachine->isLandscape());
 
     menu.show_menu();
     doReset = false;
+    return;
   }
 
   bool videoHalfRate = true;
@@ -221,11 +222,13 @@ void updateAudioVideo(void) {
 #endif
   const int renderWidth = !isMenu ? currentMachine->renderWidth() : 224;
   const int renderWrite = renderWidth << 3;
+  const int renderRows = video.renderRows;
+  const int renderRowsHalf = video.renderRows/2;
   video.setViewport(renderWidth);
 
   if (!videoHalfRate) {
     // render and transmit screen at once as the display running at 80Mhz can update at full 60 hz game frame
-    for(int c = 0; c < 36; c += 6) {
+    for(int c = 0; c < renderRows; c += 6) {
       for (int i = 0; i < 6; i++) {
         renderRow(c + i, isMenu); video.write(frame_buffer, renderWrite);
       }
@@ -249,7 +252,7 @@ void updateAudioVideo(void) {
   else {
     // render and transmit screen in two halfs as the display running at 40Mhz can only update every second 60 hz game frame
     for(int half = 0; half < 2; half++) {
-      for(int c = 18 * half; c < 18 * (half + 1); c += 3) {
+      for(int c = renderRowsHalf * half; c < renderRowsHalf * (half + 1); c += 3) {
         renderRow(c + 0, isMenu); video.write(frame_buffer, renderWrite);
         renderRow(c + 1, isMenu); video.write(frame_buffer, renderWrite);
         renderRow(c + 2, isMenu); video.write(frame_buffer, renderWrite);

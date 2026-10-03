@@ -1854,7 +1854,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
     if (line < 0 || line >= MPATROL_VIS_W)
       continue;
     int x = MPATROL_VIS_X0 + MPATROL_VIS_W - 1 - line;
-    unsigned short *fb = frame_buffer + r * 224;
+    unsigned short *fb = frame_buffer + r * 240;
 
     // screen_update: bitmap.fill(sp palette pen 0), then the backgrounds -
     // the fill and backgrounds are skipped where an opaque tile row covers
@@ -1862,9 +1862,9 @@ void IRAM_ATTR mpatrol::render_row(short row)
     // (ty = (Y0 + c - 16) & 255; opaque when ty >> 3 <= 6)
     const unsigned short back = mp_sp_pal[0];
     {
-      for (int cc = 0; cc < 224; cc++)
+      for (int cc = 0; cc < 256; cc++)
       {
-        int ty = (MPATROL_Y0 + cc - 16) & 255;
+        int ty = (MPATROL_Y0 + cc) & 255;
         if ((ty >> 3) > 6)
           fb[cc] = back;
       }
@@ -1882,7 +1882,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
       const unsigned char *img = &mp_bg[image][0][ix];
       int c0 = ypos - MPATROL_Y0;             // column of image row 0
       int a = c0 < 0 ? 0 : c0;
-      int b = c0 + 64 < 224 ? c0 + 64 : 224;
+      int b = c0 + 64 < 240 ? c0 + 64 : 240;
       for (int cc = a; cc < b; cc++)
       {
         unsigned char pen = img[(cc - c0) * 256];
@@ -1890,7 +1890,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
           fb[cc] = pal[pen];
       }
       a = c0 + 64 < 0 ? 0 : c0 + 64;
-      b = c0 + 256 < 224 ? c0 + 256 : 224;
+      b = c0 + 256 < 240 ? c0 + 256 : 240;
       const unsigned short p3 = pal[3];
       for (int cc = a; cc < b; cc++)
         fb[cc] = p3;
@@ -1902,12 +1902,12 @@ void IRAM_ATTR mpatrol::render_row(short row)
     // (up to 8 columns of one tile) at a time; a run whose pixels are all
     // pen 0 in this column is skipped (mp_tx_colmask).
     int c = 0;
-    while (c < 224)
+    while (c < 240)
     {
       int ty = (MPATROL_Y0 + c - 16) & 255;
       int run = 8 - (ty & 7);
-      if (run > 224 - c)
-        run = 224 - c;
+      //if (run > 240 - c)
+      //  run = 240 - c;
       int tx = (x - ((ty >> 6) == 3 ? value_row3 : value_static)) & 255;
       int idx = (ty >> 3) * 32 + (tx >> 3);
       unsigned char color = s.cram[idx];
@@ -1944,7 +1944,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
       const unsigned short *pal = &mp_sp_pal[color * 8];
       int j0 = MPATROL_Y0 - sy;                     // first j on screen
       if (j0 < 0) j0 = 0;
-      int j1 = 224 + MPATROL_Y0 - sy;               // first j below the screen
+      int j1 = 240 + MPATROL_Y0 - sy;               // first j below the screen
       if (j1 > 16) j1 = 16;
       for (int j = j0; j < j1; j++)
       {

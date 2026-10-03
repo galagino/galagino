@@ -63,7 +63,7 @@ spi_bus_config_t bus_cfg{
     .mosi_io_num = TFT_MOSI,
     .miso_io_num = TFT_MISO,
     .sclk_io_num = TFT_SCLK,
-    .max_transfer_sz = 240 * 8 * 2, // one complete 8x8 tile row at 16 bpp
+    .max_transfer_sz = VIDEO_MAX_W * 8 * 2, // one complete 8x8 tile row at 16 bpp
     .flags = SPICOMMON_BUSFLAG_MASTER,
 };
 
@@ -139,7 +139,7 @@ Video::Video() {
   digitalWrite(TFT_DC, HIGH); // Data mode
 
   // allocate a background buffer which is kept untouched during DMA transfer
-  dma_buffer = (unsigned char*)heap_caps_malloc(240*8*2, MALLOC_CAP_DMA);
+  dma_buffer = (unsigned char*)heap_caps_malloc(VIDEO_MAX_W*8*2, MALLOC_CAP_DMA);
 
   // 40Mhz is max possible rate with esp32
   // 40Mhz = 2.5MPix/s. A frame has 64512 pixels
@@ -187,18 +187,19 @@ void Video::begin(void) {
 
   // write 320x240 16 bit words to zero (black)
   digitalWrite(TFT_CS, LOW);
-  setAddrWindow(0, 0, 240, 320);
+  setAddrWindow(0, 0, TFT_MAX_X, TFT_MAX_Y);
 
-  memset(dma_buffer, 0, 240*4*2);   // 4 lines per transfer, bytes must be less than 224*8*2
-  for(int i=0;i<320/4;i++) {
+  memset(dma_buffer, 0, TFT_MAX_X*4*2);   // 4 lines per transfer, bytes must be less than 224*8*2
+  for(int i=0;i<TFT_MAX_Y/4;i++) {
     transaction.flags = 0;
-    transaction.length = 240*4*16; // Length in bits
+    transaction.length = TFT_MAX_X*4*16; // Length in bits
     transaction.tx_buffer = (const void *)dma_buffer;
     spi_device_transmit(handle, &transaction);
   }
 
   // set active screen area to centered 224x288 pixels
-  setAddrWindow(TFT_X_OFFSET, TFT_Y_OFFSET, 224, 288);
+  //setAddrWindow(TFT_X_OFFSET, TFT_Y_OFFSET, 224, 288);
+  setAddrWindow(TFT_X_OFFSET, TFT_Y_OFFSET, TFT_MAX_X - 2*TFT_X_OFFSET, TFT_MAX_Y - 2*TFT_Y_OFFSET);
 
   // enable backlight if pin is specified
 #ifdef TFT_BL
@@ -210,38 +211,78 @@ void Video::begin(void) {
   printf("madctl = 0x%02x\n", madctl_last);
 }
 
-void Video::flip(char flipY, char flipX) {
+#define MAD_MASK_MY  0x80 // 0 - top to bottom         | 1 - bottom to top
+#define MAD_MASK_MX  0x40 // 0 - Left to right         | 1 - Right to left
+#define MAD_MASK_MV  0x20 // 0 - Portrait              | 1 - Landscape
+#define MAD_MASK_ML  0x10 // 0 - refresh top to bottom | 1 - refresh bottom to top
+#define MAD_MASK_BGR 0x08 // 0 - RBG                   | 1 - BGR
+#define MAD_MASK_MH  0x04 // 0 - refresh left to right | 1 - refresh right to left
+
+void Video::flip(char flipY, char flipX, char landscape) {
   uint8_t madctl = MADCTL_DEFAULT;
 
-  if (flipY) madctl ^= 0xc0; // flip the MY bit
-  if (flipX) madctl ^= 0x40; // flip the MX bit
+  if (flipY) madctl     ^= 0xc0; // flip the MY bit
+  if (flipX) madctl     ^= 0x40; // flip the MX bit
+  if (landscape) madctl ^= 0x20; // flip the MV bit portrait / landscape 
 
   if (madctl_last == madctl)
     return;
 
-  printf("madctl: flipY=%d flipX=%d last=0x%02x new=0x%02x\n", flipY, flipX, madctl_last, madctl);
+  printf("madctl: flipY=%d flipX=%d landscape=%d last=0x%02x new=0x%02x\n", flipY, flipX, landscape, madctl_last, madctl);
 
   if (dma_active)
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
+
+  clearScreen();
 
   writeCommand(CMD_MADCTL);
   write8(madctl);
   writeCommand(CMD_RAMWR);
 
+  if (isLandscape)
+    setAddrWindow((TFT_MAX_X_L - viewport_width) / 2, 0, viewport_width, 240);
+  else
+    setAddrWindow((TFT_MAX_X - viewport_width) / 2, TFT_Y_OFFSET, viewport_width, 288);
+
   madctl_last = madctl;
+  isLandscape = landscape;
+  renderRows = isLandscape ? 30 : 36; // 240/8 | 288/8
 
   dma_active = 0;
 }
 
-void Video::flipReset(char flipY, char flipX) {
-  flip(0, 0);
+void Video::flipReset(char flipY, char flipX, char landscape) {
+  flip(0, 0, 0);
+}
+
+void Video::clearScreen() {
+  if (isLandscape) {
+    memset(dma_buffer, 0x00, 320*2);
+    setAddrWindow(0, 0, 320, 240);
+    for(int i=0;i<240;i++) {
+      transaction.flags = 0;
+      transaction.length = 320*16; // Length in bits
+      transaction.tx_buffer = (const void *)dma_buffer;
+      spi_device_transmit(handle, &transaction);
+    }
+  }
+  else {
+    memset(dma_buffer, 0x00, 240*2);
+    setAddrWindow(0, 0, 240, 320);
+    for(int i=0;i<320;i++) {
+      transaction.flags = 0;
+      transaction.length = 240*16; // Length in bits
+      transaction.tx_buffer = (const void *)dma_buffer;
+      spi_device_transmit(handle, &transaction);
+    }
+  }
 }
 
 void Video::write(uint16_t *colors, uint32_t len) {
   if(dma_active) {
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
   }
- 
+
   memcpy(dma_buffer, colors, 2 * len);
   transaction.flags = 0;
   transaction.length = 16 * len; // Length in bits
@@ -253,27 +294,15 @@ void Video::write(uint16_t *colors, uint32_t len) {
 }
 
 void Video::setViewport(uint16_t width) {
-  if(width != 240) width = 224;
   if(width == viewport_width) return;
 
   if(dma_active)
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
 
-  if(viewport_width == 240 && width == 224) {
-    memset(dma_buffer, 0, 8 * 8 * 2);
-    const uint16_t side_x[2] = { 0, 232 };
-    for(int side = 0; side < 2; side++) {
-      setAddrWindow(side_x[side], TFT_Y_OFFSET, 8, 288);
-      for(int strip = 0; strip < 36; strip++) {
-        transaction.flags = 0;
-        transaction.length = 8 * 8 * 16;
-        transaction.tx_buffer = dma_buffer;
-        spi_device_transmit(handle, &transaction);
-      }
-    }
-  }
-
-  setAddrWindow((240 - width) / 2, TFT_Y_OFFSET, width, 288);
+  if (isLandscape)
+    setAddrWindow((TFT_MAX_X_L - width) / 2, 0, width, 240);
+  else
+    setAddrWindow((TFT_MAX_X - width) / 2, TFT_Y_OFFSET, width, 288);
   viewport_width = width;
   dma_active = 0;
 }
@@ -301,7 +330,7 @@ void Video::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
   write16(y);
   write16(y + h - 1);
 
-  writeCommand(0x2C); // Write to RAM, same command for ili9341 and st7789
+  writeCommand(CMD_RAMWR); // Write to RAM, same command for ili9341 and st7789
 }
 
 void Video::write16(uint16_t data) {

@@ -142,8 +142,9 @@ public:
     }
 
     virtual signed char machineType() { return MCH_MENU; } 
-    virtual signed char videoFlipY() { return 0; } 
-    virtual signed char videoFlipX() { return 0; }
+    virtual signed char videoFlipY()  { return 0; } 
+    virtual signed char videoFlipX()  { return 0; }
+    virtual signed char isLandscape() { return 0; }
     virtual signed char useVideoHalfRate() { return 0; } 
 
     virtual const int   renderWidth() { return 224; }

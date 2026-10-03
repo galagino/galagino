@@ -1,6 +1,19 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+// VIDEO_MAX_W
+#define VIDEO_MAX_W 320
+// Portrait X 0 239 Y 0 319
+#define TFT_MAX_X 240
+#define TFT_MAX_Y 320
+// Landscape
+#define TFT_MAX_X_L TFT_MAX_Y
+#define TFT_MAX_Y_L TFT_MAX_X
+
+// x and y offset of 224x288 pixels inside the 240x320 screen
+#define TFT_X_OFFSET  8
+#define TFT_Y_OFFSET 16
+
 // game config
 #define MASTER_ATTRACT_MENU_TIMEOUT  20000      // start games while sitting idle in menu for 20 seconds, undefine to disable
 #define MASTER_ATTRACT_GAME_TIMEOUT  60000 * 5  // restart after 5 minutes 
@@ -21,10 +34,6 @@
 #if TFT_SPICLK < 80000000
   #define VIDEO_HALF_RATE
 #endif
-
-// x and y offset of 224x288 pixels inside the 240x320 screen
-#define TFT_X_OFFSET      8
-#define TFT_Y_OFFSET      16
 
 // led config
 //#define LED_PIN           18 // pin used for optional WS2812 stripe
