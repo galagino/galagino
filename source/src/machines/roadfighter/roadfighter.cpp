@@ -44,7 +44,7 @@ uint8_t roadfighter::m6809_read(m6809_state *s, uint16_t addr) {
     return roadfighter_rom_main_raw[addr - 0x4000];
 
   // I/O reads (PRIMA del catch-all RAM, altrimenti il gioco legge RAM stantia)
-  if (addr == 0x1600) return ROADF_DSW2;
+  if (addr == 0x1600) return ROADF_DSW2 | input->demoSoundsOff() ? 0x80 : 0x00;
   if (addr >= 0x1680 && addr <= 0x1683) {
     switch (addr & 0x03) {
       case 0: return input_system();
