@@ -1,10 +1,4 @@
-// -O2 for the emulation hot path, as arkanoid.cpp (the project builds -Os)
-#pragma GCC optimize("-O2")
-
 #include "mpatrol.h"
-#if defined(_MSC_VER)
-#include <intrin.h>
-#endif
 
 // Moon Patrol. Every behaviour below cites the MAME function it was taken
 // from - see mpatrol.h for the file list.
@@ -1801,7 +1795,7 @@ void mpatrol::publish_snapshot(void)
 
 // Landscape mapping (mpatrol.h): panel line L shows MAME column
 // x = 375 - (L - MPATROL_ROW_OFFSET), panel column c shows MAME line
-// y = MPATROL_Y0 + c. Everything below is in MAME bitmap coordinates
+// y = c. Everything below is in MAME bitmap coordinates
 // (visible x 136-375, y 22-273).
 //
 // Flip screen is NOT drawn yet: m_flip is kept (flipscreen_w) but the
@@ -1815,13 +1809,13 @@ void IRAM_ATTR mpatrol::render_row(short row)
     render_snap = snap_front;
   const snap_S &s = snap[render_snap];
 
-  int line0 = row * 8 - MPATROL_ROW_OFFSET;
-  if (line0 + 7 < 0 || line0 >= MPATROL_VIS_W)
+  int line0 = row * 8;
+  if (line0 + 7 < 0 || line0 >= 240)
     return;                                   // frame_buffer was cleared by the caller
 
   // sprites that touch this strip's 8 MAME columns, in drawing order
   // (groups of 16 from 0x3c to 0xfc, each from its highest entry down)
-  int xhi = MPATROL_VIS_X0 + MPATROL_VIS_W - 1 - line0;   // x of r = 0
+  int xhi = MPATROL_VIS_X0 + 240 - 1 - line0;   // x of r = 0
   int xlo = xhi - 7;
   unsigned char spr_list[64];
   int nspr = 0;
@@ -1846,14 +1840,14 @@ void IRAM_ATTR mpatrol::render_row(short row)
   }
 
   const int value_static = s.scroll_written ? 128 : 127;                  // 127 - 255, 127 - 0
-  const int value_row3 = s.scroll_written ? ((128 + s.scroll) & 255) : 127;
+  const int value_row3   = s.scroll_written ? ((128 + s.scroll) & 255) : 127;
 
   for (int r = 0; r < 8; r++)
   {
     int line = line0 + r;
-    if (line < 0 || line >= MPATROL_VIS_W)
+    if (line < 0 || line >= 240)
       continue;
-    int x = MPATROL_VIS_X0 + MPATROL_VIS_W - 1 - line;
+    int x = MPATROL_VIS_X0 + 240 - 1 - line;
     unsigned short *fb = frame_buffer + r * 240;
 
     // screen_update: bitmap.fill(sp palette pen 0), then the backgrounds -
@@ -1862,9 +1856,9 @@ void IRAM_ATTR mpatrol::render_row(short row)
     // (ty = (Y0 + c - 16) & 255; opaque when ty >> 3 <= 6)
     const unsigned short back = mp_sp_pal[0];
     {
-      for (int cc = 0; cc < 256; cc++)
+      for (int cc = 0; cc < 240; cc++)
       {
-        int ty = (MPATROL_Y0 + cc) & 255;
+        int ty = cc & 255;
         if ((ty >> 3) > 6)
           fb[cc] = back;
       }
@@ -1880,7 +1874,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
       int ix = (x - xpos) & 255;
       const unsigned short *pal = &mp_bg_pal[image * 4];
       const unsigned char *img = &mp_bg[image][0][ix];
-      int c0 = ypos - MPATROL_Y0;             // column of image row 0
+      int c0 = ypos;             // column of image row 0
       int a = c0 < 0 ? 0 : c0;
       int b = c0 + 64 < 240 ? c0 + 64 : 240;
       for (int cc = a; cc < b; cc++)
@@ -1904,10 +1898,10 @@ void IRAM_ATTR mpatrol::render_row(short row)
     int c = 0;
     while (c < 240)
     {
-      int ty = (MPATROL_Y0 + c - 16) & 255;
+      int ty = (c) & 255;
       int run = 8 - (ty & 7);
-      //if (run > 240 - c)
-      //  run = 240 - c;
+      if (run > 240 - c)
+        run = 240 - c;
       int tx = (x - ((ty >> 6) == 3 ? value_row3 : value_static)) & 255;
       int idx = (ty >> 3) * 32 + (tx >> 3);
       unsigned char color = s.cram[idx];
@@ -1934,7 +1928,7 @@ void IRAM_ATTR mpatrol::render_row(short row)
       int sx = s.spr[offs + 3] + 129;
       if (x < sx || x >= sx + 16)
         continue;
-      int sy = 257 - s.spr[offs];
+      int sy = 241 - s.spr[offs];
       int color = (s.spr[offs + 1] & 0x3f) & 15;   // color % colors() (16)
       bool flipx = (s.spr[offs + 1] & 0x40) != 0;
       bool flipy = (s.spr[offs + 1] & 0x80) != 0;
@@ -1942,16 +1936,16 @@ void IRAM_ATTR mpatrol::render_row(short row)
       int px = flipx ? 15 - (x - sx) : (x - sx);
       const unsigned char *clut = &mp_sp_clut[color * 8];
       const unsigned short *pal = &mp_sp_pal[color * 8];
-      int j0 = MPATROL_Y0 - sy;                     // first j on screen
+      int j0 = -sy;                     // first j on screen
       if (j0 < 0) j0 = 0;
-      int j1 = 240 + MPATROL_Y0 - sy;               // first j below the screen
+      int j1 = 240 - sy;               // first j below the screen
       if (j1 > 16) j1 = 16;
       for (int j = j0; j < j1; j++)
       {
         int py = flipy ? 15 - j : j;
         unsigned char pen = mp_spr[code][py][px];
         if (clut[pen])
-          fb[sy + j - MPATROL_Y0] = pal[pen];
+          fb[sy + j] = pal[pen];
       }
     }
   }

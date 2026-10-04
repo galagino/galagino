@@ -43,14 +43,7 @@
 // lines, 22-273) along its 224 columns. 252 lines do not fit in 224, so 28
 // are cropped: MPATROL_CROP_TOP of them at the top, the rest at the bottom.
 // 0 = keep the HUD, lose 28 lines of plain ground at the bottom.
-#ifndef MPATROL_CROP_TOP
-#define MPATROL_CROP_TOP 0
-#endif
-#define MPATROL_VIS_X0     108     // first visible MAME x
-#define MPATROL_VIS_W      240
-#define MPATROL_VIS_Y0     0       // first visible MAME y
-#define MPATROL_Y0         (MPATROL_VIS_Y0 + MPATROL_CROP_TOP)  // MAME y at panel column 0
-#define MPATROL_ROW_OFFSET ((288 - MPATROL_VIS_W) / 2)          // 24
+#define MPATROL_VIS_X0     136     // first visible MAME x
 
 // Output level: the discrete network's output (NODE_40) to audio.cpp's
 // +-512 range. 14000 puts the loudest moment of 53s of gameplay at about 430
@@ -93,7 +86,7 @@
 
 // Print the emulation time per frame over serial once a second (device only).
 #ifndef MPATROL_PROFILE
-#define MPATROL_PROFILE 1
+#define MPATROL_PROFILE 0
 #endif
 
 class mpatrol : public machineBase
