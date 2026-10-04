@@ -14,11 +14,11 @@ public:
   void setViewport(uint16_t width);
   void flip(char flipY, char flipX, char landscape);
   void flipReset(char flipY, char flipX, char landscape);
-  void clearScreen();
 
   int renderRows = 36;
 
 private:
+  void clearScreen();
   void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void sendCommand(uint8_t commandByte, uint8_t *dataBytes, uint8_t numDataBytes);
   void writeCommand(uint8_t cmd);
