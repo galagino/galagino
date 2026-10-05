@@ -33,11 +33,16 @@
 #define ROADF_SCREEN_H 256
 #define ROADF_SCREEN_W 240
 
-// Offset nel buffer condiviso memory[] (16 KB, copre CPU $0000-$3FFF)
-#define ROADF_SPRRAM_OFF  0x1000   // 0x1000-0x10BF (192 byte)
-#define ROADF_SCROLL_OFF  0x10C0   // 0x10C0-0x10FF (64 byte)
-#define ROADF_VRAM_OFF    0x2000   // 0x2000-0x27FF (2 KB)
-#define ROADF_CRAM_OFF    0x2800   // 0x2800-0x2FFF (2 KB)
+// Offsets in shared memory[]          (16 KB - CPU 0x0000-0x3FFF)
+#define ROADF_SPRRAM_OFF    0x1000   // 0x1000-0x10BF (192 byte)
+#define ROADF_SCROLL_OFF    0x10C0   // 0x10C0-0x10FF (64 byte)
+#define ROADF_VRAM_OFF      0x2000   // 0x2000-0x27FF (2 KiB)
+#define ROADF_CRAM_OFF      0x2800   // 0x2800-0x2FFF (2 KiB)
+#define ROADF_WORK_RAM_OFF  0x3000   // 0x3000-0x37FF (2 KiB)
+#define ROADF_NVRAM_OFF     0x3800   // 0x3800-0x3FFF (2 KiB)
+#define ROADF_SOUND_RAM_OFF 0x4000   // 0x4000-0x4FFF (4 KiB) - Z80
+
+static_assert(0x5000 <= RAMSIZE, "RAMSIZE too low for Road Fighter");
 
 // DIP di default da MAME INPUT_PORTS(roadf):
 //   DSW2 = 0x2D: Continue=No, Opponents=Normal, Speed=Fast, Fuel=Normal,
@@ -50,8 +55,7 @@ class roadfighter : public machineBase {
 public:
   roadfighter() { }
 
-  void init(Input *input, unsigned short *framebuffer,
-            sprite_S *spritebuffer, unsigned char *memorybuffer) override;
+  void start() override;
   void reset() override;
 
   signed char machineType()  override { return MCH_ROADFIGHTER; }
@@ -84,7 +88,8 @@ private:
   m6809_state main_cpu;
 
   // Audio Z80 state
-  unsigned char snd_ram[0x1000];   // $4000-$4FFF (4 KB)
+  //unsigned char snd_ram[0x1000];   // $4000-$4FFF (4 KB)
+  unsigned char *snd_ram;
   unsigned char sound_latch;
   unsigned char sn_latch;
   unsigned char sn_latch_reg;
@@ -110,6 +115,8 @@ private:
   unsigned char *scroll_snap;
   unsigned char *spr_snap;
   void blit_sprite_strip(short row, unsigned char s);
+
+  bool ignoreStartButton;
 };
 
 #endif // ENABLE_ROADFIGHTER

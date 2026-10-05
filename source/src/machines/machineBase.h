@@ -21,7 +21,7 @@
 #define LED_WHITE    CRGB::White
 #endif
 
-#define RAMSIZE     16384 // max usage is Xevious with 16384
+#define RAMSIZE 20480 // max usage is Road Fighter
 
 struct sprite_S {
   int x, y;

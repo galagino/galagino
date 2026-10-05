@@ -8,16 +8,15 @@
 
 #ifdef ENABLE_ROADFIGHTER
 
-void roadfighter::init(Input *input, unsigned short *framebuffer,
-                       sprite_S *spritebuffer, unsigned char *memorybuffer) {
-  machineBase::init(input, framebuffer, spritebuffer, memorybuffer);
+void roadfighter::start() {
+  ignoreStartButton = true;
 }
 
 void roadfighter::reset() {
   machineBase::reset();
 
   memset(&main_cpu, 0, sizeof(main_cpu));
-  memset(snd_ram, 0, sizeof(snd_ram));
+  snd_ram = &memory[ROADF_SOUND_RAM_OFF];
   sound_latch = 0;
   sn_latch = 0;
   sn_latch_reg = 0;
@@ -32,7 +31,9 @@ void roadfighter::reset() {
 
   current_cpu = 0;
   ResetZ80(&cpu[0]);          // audio Z80
-  m6809_reset(&main_cpu);     // legge reset vector $FFFE (via main_read -> ROM raw)
+  m6809_reset(&main_cpu);     // reads reset vector $FFFE (via main_read -> ROM raw)
+
+  ignoreStartButton = true;
 }
 
 // ============================================================
@@ -43,7 +44,7 @@ uint8_t roadfighter::m6809_read(m6809_state *s, uint16_t addr) {
   if (addr >= 0x4000)
     return roadfighter_rom_main_raw[addr - 0x4000];
 
-  // I/O reads (PRIMA del catch-all RAM, altrimenti il gioco legge RAM stantia)
+  // I/O reads (before del catch-all RAM, otherwise we read stale RAM)
   if (addr == 0x1600) return ROADF_DSW2 | input->demoSoundsOff() ? 0x80 : 0x00;
   if (addr >= 0x1680 && addr <= 0x1683) {
     switch (addr & 0x03) {
@@ -68,7 +69,7 @@ uint8_t roadfighter::m6809_read_opcode(m6809_state *s, uint16_t addr) {
 }
 
 void roadfighter::m6809_write(m6809_state *s, uint16_t addr, uint8_t val) {
-  if (addr >= 0x4000) return;        // ROM: ignora
+  if (addr >= 0x4000) return;        // ROM: ignore
 
   if (addr == 0x1400) return;        // watchdog reset: no-op
 
@@ -109,11 +110,15 @@ unsigned char roadfighter::input_system() {
   if ((keymask & BUTTON_COIN) && !coin_latch) { coin_latch = 1; coin_hold = 45; }
   if (!(keymask & BUTTON_COIN)) coin_latch = 0;
 
-  if ((keymask & BUTTON_START) && !start_latch) { start_latch = 1; start_hold = 45; }
-  if (!(keymask & BUTTON_START)) start_latch = 0;
+  if (!ignoreStartButton) {
+    if ((keymask & BUTTON_START) && !start_latch) { start_latch = 1; start_hold = 45; }
+    if (!(keymask & BUTTON_START)) start_latch = 0;
+  }
 
   if (coin_hold)  val &= ~0x01;   // COIN1
   if (start_hold) val &= ~0x08;   // START1
+
+  if (ignoreStartButton && !(keymask & BUTTON_START)) ignoreStartButton=false;
   return val;
 }
 
@@ -124,19 +129,19 @@ unsigned char roadfighter::input_p1() {
   if (keymask & BUTTON_RIGHT) val &= ~0x02;   // RIGHT
   // Toggle accelerator
   //   gear_state 0 = SLOW (BUTTON1), 1 = FAST (BUTTON2)
-  if (gear_state == 0) val &= ~0x10; // BUTTON1 = slow speed 
+  if (gear_state == 0) val &= ~0x10; // BUTTON1 = slow speed
   else                 val &= ~0x20; // BUTTON2 = fast speed
   return val;
 }
 
 // ============================================================
 // Audio Z80 map (roadf sound_map):
-//   $0000-$3FFF ROM (8 KB mirror)  
+//   $0000-$3FFF ROM (8 KB mirror)
 //   $4000-$4FFF RAM
-//   $6000 sound latch read         
+//   $6000 sound latch read
 //   $8000 timer (trackfld_audio)
-//   $E000 DAC write   
-//   $E001 SN76489A latch   
+//   $E000 DAC write
+//   $E001 SN76489A latch
 //   $E002 SN76489A strobe
 // ============================================================
 
