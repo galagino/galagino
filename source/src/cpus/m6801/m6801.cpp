@@ -2,9 +2,6 @@
 // taken from; the opcodes are MAME's own (m6801_ops.inc = 6800ops.hxx) and
 // the opcode/cycle tables are generated from m6801.cpp (m6801_tables.inc).
 
-#pragma GCC optimize("-O2")
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 #include "m6801.h"
 
 #ifdef ARDUINO

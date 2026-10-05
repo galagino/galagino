@@ -12,6 +12,10 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 * `TFT_INVERT` added to support CYD clones that show inverted colors
 
+* Support for 240 pixels portrait horizontal resolutions (Scrambled Egg / Moon Patrol / Road Fighter).
+
+* Support for landscape rendered games on portrait mounted TFT. (Moon Patrol/Road Fighter use this).
+
 * `m6809` emulation uses machineBase methods, so you can have multiple instances just like the `Z80` and `i8048`
 
 * Time Pilot sprite multiplexing
@@ -26,7 +30,7 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 * Linux `romconv` scripts.
 
-* `pengo.zip`, `pengoj.zip` romsets conversion (which is the one with the popcorn music).
+* Pengo can use `pengo.zip` or `pengoj.zip` romsets conversion (which is the one with the popcorn music).
 
 * Enabled machines selection moved to `platformio.ini`
 
@@ -34,7 +38,7 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 * Flash and PSRAM SPI configs for maximum speed available on each ESP32 version.
 
-* Many code cleanups for reduced RAM used - with 44 games around 260k free heap (Flash is the limiting factor, you need and ESP32 with 8MiB of flash).
+* Many code cleanups for reduced RAM use - with 44 games around 260k free heap (Flash is the limiting factor, you need and ESP32 with 8MiB of flash).
 
 * mos6502 emulation (WIP)
 
@@ -47,9 +51,9 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 | Board    | Link                                                            | Amazon                                  | Notes               |
 | ---      | ---                                                             | ---                                     | ---                 |
-| fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ST7789 - SPI 80MHz  |
+| fnk0103b | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/B0GVXBDFXV) | ST7789 - SPI 80MHz  |
 |          |                                                                 |                                         |                     |
-| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/)           | ILI9341 - SPI 40MHz |
+| fnk0103f | [github](https://github.com/Freenove/Freenove_ESP32_Display)    | [Amzn](https://amazon.es/dp/B0GVXSXD7Q) | ILI9341 - SPI 40MHz |
 |          |                                                                 |                                         |                     |
 | fnk0104a | [github](https://github.com/Freenove/Freenove_ESP32_S3_Display) | [Amzn](https://amazon.es/dp/B0FSQLPQ6M) | ESP32-S3 - IPS Display - External DAC |
 |          |                                                                 |                                         | ILI9341 - SPI 40MHz - 16MiB Flash     |
@@ -109,8 +113,13 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Fantasy Island (fantasyu.zip)  | ![_](/logos/fantasy.png)      | ![_](/images/fantasy.png)      |       |
 | Nibbler (nibblerp.zip)         | ![_](/logos/nibbler.png)      | ![_](/images/nibbler.png)      |       |
 | Vanguard (vanguard.zip)        | ![_](/logos/vanguard.png)     | ![_](/images/vanguard.png)     |       |
-| Scrambled Egg (scregg.zip)     | ![_](/logos/scregg.png)       | ![_](/images/scregg.png)       |                    |
-| Road Fighter (roadf2.zip)      | ![_](/logos/roadfighter.png)  | ![_](/images/roadfighter.png)  | WIP - doesn't work |                
-| Motorace USA (motorace.zip)    | ![_](/logos/motorace.png)     | ![_](/images/motorace.png)     | x.y = 256x240      |
+| Scrambled Egg (scregg.zip)     | ![_](/logos/scregg.png)       | ![_](/images/scregg.png)       | 240x240 |
+| Road Fighter (roadf2.zip)      | ![_](/logos/roadfighter.png)  | ![_](/images/roadfighter.png)  | 240x256 |
+| Moon Patrol (mpatrol.zip)      | ![_]()                        | ![_](/images/mpatrol.png)      | 240x252 |
+
+
+###  ames that don't fit portrait builds
+
+| Motorace USA (motorace.zip)    | ![_](/logos/motorace.png)     | ![_](/images/motorace.png)     | 256x240 |
 
 ### ...

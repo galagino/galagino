@@ -13,8 +13,6 @@
 // left out by the linker); set it to 0 when building mpatrol together with
 // other machines if the link reports an IRAM overflow.
 
-#pragma GCC optimize("-O2")
-
 #include <stdint.h>
 #include "../../cpus/z80/Z80.h"
 
