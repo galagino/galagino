@@ -118,8 +118,10 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Moon Patrol (mpatrol.zip)      | ![_]()                        | ![_](/images/mpatrol.png)      | 240x252 |
 
 
-###  ames that don't fit portrait builds
+### Games that don't fit portrait builds
 
+| Game                           | Marquee                       | Screenshot                     | Notes |
+| ---                            | ---                           | ---                            | ---   |
 | Motorace USA (motorace.zip)    | ![_](/logos/motorace.png)     | ![_](/images/motorace.png)     | 256x240 |
 
-### ...
+### 
