@@ -299,6 +299,9 @@ void Video::setViewport(uint16_t width) {
   if(dma_active)
     spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
 
+  if (width<viewport_width)
+    clearScreen();
+
   if (isLandscape)
     setAddrWindow((TFT_MAX_X_L - width) / 2, 0, width, 240);
   else
