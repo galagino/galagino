@@ -115,8 +115,6 @@ private:
   unsigned char *scroll_snap;
   unsigned char *spr_snap;
   void blit_sprite_strip(short row, unsigned char s);
-
-  bool ignoreStartButton;
 };
 
 #endif // ENABLE_ROADFIGHTER

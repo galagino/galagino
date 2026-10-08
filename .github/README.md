@@ -99,7 +99,7 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Phoenix (phoenix.zip)          | ![_](/logos/phoenix.png)      | ![_](/images/phoenix.png)      |       |
 | Burger Time (btime.zip)        | ![_](/logos/burgertime.png)   | ![_](/images/burgertime.png)   |       |
 | Xevious (xevious.zip)          | ![_](/logos/xevious.png)      | ![_](/images/xevious.png)      |       |
-| Bump 'n' Jump (bnj.zip)        | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
+| Bump'n Jump (bnj.zip)          | ![_](/logos/bnj.png)          | ![_](/images/bnj.png)          |       |
 | Mappy (mappy.zip)              | ![_](/logos/mappy.png)        | ![_](/images/mappy.png)        |       |
 | Gaplus (gaplus.zip)            | ![_](/logos/gaplus.png)       | ![_](/images/gaplus.png)       |       |
 | Alibaba (alibaba.zip)          | ![_](/logos/alibaba.png)      | ![_](/images/alibaba.png)      |       |

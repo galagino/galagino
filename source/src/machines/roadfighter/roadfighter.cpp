@@ -9,7 +9,9 @@
 #ifdef ENABLE_ROADFIGHTER
 
 void roadfighter::start() {
-  ignoreStartButton = true;
+  // Start latched avoid "D BAD" on boot
+  coin_latch = 1;
+  start_latch = 1;
 }
 
 void roadfighter::reset() {
@@ -32,8 +34,6 @@ void roadfighter::reset() {
   current_cpu = 0;
   ResetZ80(&cpu[0]);          // audio Z80
   m6809_reset(&main_cpu);     // reads reset vector $FFFE (via main_read -> ROM raw)
-
-  ignoreStartButton = true;
 }
 
 // ============================================================
@@ -110,15 +110,12 @@ unsigned char roadfighter::input_system() {
   if ((keymask & BUTTON_COIN) && !coin_latch) { coin_latch = 1; coin_hold = 45; }
   if (!(keymask & BUTTON_COIN)) coin_latch = 0;
 
-  if (!ignoreStartButton) {
-    if ((keymask & BUTTON_START) && !start_latch) { start_latch = 1; start_hold = 45; }
-    if (!(keymask & BUTTON_START)) start_latch = 0;
-  }
+  if ((keymask & BUTTON_START) && !start_latch) { start_latch = 1; start_hold = 45; }
+  if (!(keymask & BUTTON_START)) start_latch = 0;
 
   if (coin_hold)  val &= ~0x01;   // COIN1
   if (start_hold) val &= ~0x08;   // START1
 
-  if (ignoreStartButton && !(keymask & BUTTON_START)) ignoreStartButton=false;
   return val;
 }
 
