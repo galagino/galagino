@@ -115,7 +115,7 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Vanguard (vanguard.zip)        | ![_](/logos/vanguard.png)     | ![_](/images/vanguard.png)     |       |
 | Scrambled Egg (scregg.zip)     | ![_](/logos/scregg.png)       | ![_](/images/scregg.png)       | 240x240 |
 | Road Fighter (roadf2.zip)      | ![_](/logos/roadfighter.png)  | ![_](/images/roadfighter.png)  | 240x256 |
-| Moon Patrol (mpatrol.zip)      | ![_]()                        | ![_](/images/mpatrol.png)      | 240x252 |
+| Moon Patrol (mpatrol.zip)      | ![_](/logos/mpatrol.png)      | ![_](/images/mpatrol.png)      | 240x252 |
 
 
 ### Games that don't fit portrait builds
