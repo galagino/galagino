@@ -10,6 +10,7 @@
 #include "../machines/spaceinvaders/spaceinvaders.h"
 #include "../machines/xevious/xevious.h"
 #include "../machines/roadfighter/roadfighter.h"
+#include "../machines/zaxxon/zaxxon.h"
 #include "../config.h"
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 4)
@@ -34,10 +35,13 @@
 #define NUM_AY_CHIPS 5
 #define NUM_SN_CHIPS 3
 
+enum ZaxxonPlayMode { ZAXXON_ONE_SHOT, ZAXXON_LOOP };
+
 class Audio {
 public:
   void init();
   void start(machineBase *machineBase);
+  void stop();
   void transmit();
   void volumeUpDown(bool up, bool down);
   void mute(int m);
@@ -56,6 +60,9 @@ private:
   void dkong3_render_buffer(void);
   void vanguard_render_buffer(void);
   void boblbobl_render_buffer(void);
+  void zaxxon_render_buffer(void);
+  void zaxxonStartChannel(int ch, ZaxxonPlayMode mode);
+  void zaxxonStopChannel(int ch);
   void generateSinusWave(int32_t amplitude, short* buffer, uint16_t length);
 
   machineBase *currentMachine;
@@ -226,6 +233,18 @@ private:
   int8_t vg_adpcm_step[3] = {0, 0, 0};
   uint8_t vg_sample_repeat[3] = {0, 0, 0}, vg_sample_divider[3] = {1, 1, 1};
   uint8_t vg_speech_sequence = 0;
+
+  // Zaxxon: 12 independent PPI-triggered sample channels (zaxxon_a.cpp),
+  // Port A (soundregs[0]) is edge-decoded each render call against zx_prev,
+  // like MAME's m_sound_state. Ports B/C one-shots (ch 4..9) come from
+  // write-time edge counters; zx_trig_seen is the last counter value seen.
+  uint8_t zx_prev = 0;
+  uint8_t zx_trig_seen[6] = {0};
+  bool zx_active[12] = {false};
+  bool zx_loop[12] = {false};
+  uint32_t zx_pos[12] = {0};
+  int16_t zx_adpcm_predictor[12] = {0};
+  int8_t zx_adpcm_step[12] = {0};
 };
 
 #endif

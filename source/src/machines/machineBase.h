@@ -90,7 +90,8 @@ enum {
   MCH_NIBBLER,
   MCH_SCREGG,
   MCH_VANGUARD,
-  MCH_MPATROL
+  MCH_MPATROL,
+  MCH_ZAXXON
 };
 
 // one inst at 3Mhz ~ 500k inst/sec = 500000/60 inst per frame

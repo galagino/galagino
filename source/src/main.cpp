@@ -211,6 +211,8 @@ void updateAudioVideo(void) {
     emulation_stop();
     video.flipReset(currentMachine->videoFlipY(), currentMachine->videoFlipX(), currentMachine->isLandscape());
 
+    audio.stop();
+
     menu.show_menu();
     doReset = false;
     return;

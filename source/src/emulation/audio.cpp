@@ -4,6 +4,32 @@
 #include <es8311.h>
 #endif
 
+// Shared 4-bit IMA-ADPCM decode (Vanguard/Fantasy voice samples, Zaxxon
+// discrete sample board): one nibble in, predictor+step updated in place.
+// Table and algorithm match romconv/pyconv/adpcm.py's encoder exactly.
+namespace {
+  const int ima_step_table[89] = {
+    7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,
+    73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,
+    408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,
+    1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,
+    5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,
+    18500,20350,22385,24623,27086,29794,32767};
+  const int8_t ima_index_table[16] = {-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8};
+
+  inline void ima_adpcm_decode(int16_t &predictor, int8_t &step_index, uint8_t code) {
+    int step = ima_step_table[step_index], delta = step >> 3;
+    if (code & 1) delta += step >> 2;
+    if (code & 2) delta += step >> 1;
+    if (code & 4) delta += step;
+    int value = predictor + ((code & 8) ? -delta : delta);
+    if (value > 32767) value = 32767; else if (value < -32768) value = -32768;
+    predictor = (int16_t)value;
+    int index = step_index + ima_index_table[code];
+    step_index = (int8_t)(index < 0 ? 0 : (index > 88 ? 88 : index));
+  }
+}
+
 void Audio::init() {
 #ifdef ES8311_AUDIO
   bool isInit = i2cIsInit(0);
@@ -209,6 +235,19 @@ void Audio::start(machineBase *machineBase) {
   }
   vg_speech_sequence = currentMachine->soundregs[4];
 
+  // ZAXXON - zaxxon
+  zx_prev = 0;
+  for (int i = 0; i < 6; i++) {
+    zx_trig_seen[i] = 0;
+  }
+  for (int i = 0; i < 12; i++) {
+    zx_active[i] = false;
+    zx_loop[i] = false;
+    zx_pos[i] = 0;
+    zx_adpcm_predictor[i] = 0;
+    zx_adpcm_step[i] = 0;
+  }
+
 #ifndef WORKAROUND_I2S_APLL_PROBLEM
   // The audio CPU of donkey kong runs at 6Mhz. A full bus
   // cycle needs 15 clocks which results in 400k cycles
@@ -244,6 +283,12 @@ void Audio::mute(int m) {
   muted = m;
 }
 
+// Machine is deleted after this; stop reading its registers.
+void Audio::stop() {
+  currentMachine = nullptr;
+  memset(snd_buffer, 0, sizeof(snd_buffer));
+}
+
 void Audio::transmit() {
   // (try to) transmit as much audio data as possible. Since we
   // write data in exact the size of the DMA buffers we can be sure
@@ -255,6 +300,10 @@ void Audio::transmit() {
     i2s_write(I2S_NUM_0, snd_buffer, sizeof(snd_buffer), &bytesOut, 0);
     if (!bytesOut)
       return;
+
+    // menu: no machine, buffer stays silent
+    if (!currentMachine)
+      continue;
 
     // render the next audio chunk if data has actually been sent
     if (AY > 0)
@@ -279,6 +328,8 @@ void Audio::transmit() {
       phoenix_render_buffer();
     else if(machineType == MCH_VANGUARD || machineType == MCH_FANTASY || machineType == MCH_NIBBLER)
       vanguard_render_buffer();
+    else if(machineType == MCH_ZAXXON)
+      zaxxon_render_buffer();
     else if(machineType == MCH_MPATROL)
       boblbobl_render_buffer();
   } while(bytesOut);
@@ -438,6 +489,127 @@ void Audio::vanguard_render_buffer(void) {
     }
     if (sample > 500) sample = 500; else if (sample < -500) sample = -500;
     valueToBuffer(i, sample);
+  }
+}
+
+// Zaxxon: no tone/WSG chip at all, sound is 12 discrete circuits each
+// triggered by one i8255 PPI output bit (zaxxon_a.cpp zaxxon_sound_a/b/c_w,
+// ports A/B/C latched into soundregs[0..2] by zaxxon::wrZ80). All outputs
+// are active-low: a falling edge (bit 1->0) starts a sample, a rising edge
+// stops it for the five loop-capable channels (0/2/3/10/11); the rest play
+// to completion once triggered. Channel numbering matches MAME's
+// zaxxon_sample_names / zaxxon_sample_ptr[] in zaxxon.h exactly.
+void Audio::zaxxonStartChannel(int ch, ZaxxonPlayMode mode) {
+  zx_active[ch] = true;
+  zx_loop[ch] = (mode == ZAXXON_LOOP);
+  zx_pos[ch] = 0;
+}
+
+
+void Audio::zaxxonStopChannel(int ch) {
+  zx_active[ch] = false;
+}
+
+void Audio::zaxxon_render_buffer(void) {
+  const uint8_t a = currentMachine->soundregs[0];
+  const uint8_t diff_a = a ^ zx_prev;
+  zx_prev = a;
+
+  // Port A: player-ship engine noise volume (bits 0-1) + 6 gated sounds.
+  if ((diff_a & 0x04) && !(a & 0x04)) {
+    zaxxonStartChannel(10, ZAXXON_LOOP);
+  }
+  if ((diff_a & 0x04) && (a & 0x04)) {
+    zaxxonStopChannel(10);
+  }
+  if ((diff_a & 0x08) && !(a & 0x08)) {
+    zaxxonStartChannel(11, ZAXXON_LOOP);
+  }
+  if ((diff_a & 0x08) && (a & 0x08)) {
+    zaxxonStopChannel(11);
+  }
+  if ((diff_a & 0x10) && !(a & 0x10)) {
+    zaxxonStartChannel(0, ZAXXON_LOOP);
+  }
+  if ((diff_a & 0x10) && (a & 0x10)) {
+    zaxxonStopChannel(0);
+  }
+  if ((diff_a & 0x20) && !(a & 0x20)) {
+    zaxxonStartChannel(1, ZAXXON_ONE_SHOT);
+  }
+  if ((diff_a & 0x40) && !(a & 0x40)) {
+    zaxxonStartChannel(2, ZAXXON_LOOP);
+  }
+  if ((diff_a & 0x40) && (a & 0x40)) {
+    zaxxonStopChannel(2);
+  }
+  if ((diff_a & 0x80) && !(a & 0x80)) {
+    zaxxonStartChannel(3, ZAXXON_LOOP);
+  }
+  if ((diff_a & 0x80) && (a & 0x80)) {
+    zaxxonStopChannel(3);
+  }
+
+  // Ports B/C: explosions, cannon, shot, alarms. Pulsed by the ROM, so
+  // triggered from the edge counters zaxxon::wrZ80 keeps (ZAXXON_TRIG_BASE).
+  for (int ch = 4; ch <= 9; ch++) {
+    const uint8_t n = currentMachine->soundregs[ZAXXON_TRIG_BASE + ch];
+    if (n == zx_trig_seen[ch - 4]) {
+      continue;
+    }
+    zx_trig_seen[ch - 4] = n;
+    // M-Exp and Alarm3 don't restart while playing (MAME playing() check).
+    if ((ch == 5 || ch == 9) && zx_active[ch]) {
+      continue;
+    }
+    zaxxonStartChannel(ch, ZAXXON_ONE_SHOT);
+  }
+
+  // Engine noise (ch 10/11) volume: 2-bit level -> 0.5..0.971 gain, same
+  // formula as MAME's set_volume(10/11, 0.5 + 0.157*(data&3)).
+  const int engine_gain_q8 = 128 + 40 * (a & 0x03); // 0.5*256 .. 0.971*256
+
+  for (int i = 0; i < 64; i++) {
+    int32_t value = 0;
+
+    for (int ch = 0; ch < 12; ch++) {
+      if (!zx_active[ch]) {
+        continue;
+      }
+
+      if (zx_pos[ch] == 0) {
+        const uint8_t *enc = zaxxon_sample_ptr[ch];
+        zx_adpcm_predictor[ch] = (int16_t)(enc[0] | (enc[1] << 8));
+        zx_adpcm_step[ch] = 0;
+      } else {
+        uint32_t nibble = zx_pos[ch] - 1;
+        uint8_t packed = zaxxon_sample_ptr[ch][2 + (nibble >> 1)];
+        uint8_t code = (nibble & 1) ? (packed >> 4) : (packed & 15);
+        ima_adpcm_decode(zx_adpcm_predictor[ch], zx_adpcm_step[ch], code);
+      }
+      int32_t s = zx_adpcm_predictor[ch] >> 8;
+      if (ch == 10 || ch == 11) {
+        s = (s * engine_gain_q8) >> 8;
+      } else {
+        s = s * 2;
+      }
+      value += s;
+
+      if (++zx_pos[ch] >= zaxxon_sample_len[ch]) {
+        if (zx_loop[ch]) {
+          zx_pos[ch] = 0;
+        } else {
+          zx_active[ch] = false;
+        }
+      }
+    }
+
+    if (value > 500) {
+      value = 500;
+    } else if (value < -500) {
+      value = -500;
+    }
+    valueToBuffer(i, value);
   }
 }
 

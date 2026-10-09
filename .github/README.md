@@ -3,7 +3,7 @@ Galagino
 
 This is my custom Galagino build.
 
-It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/galagino](https://github.com/speckhoiler/galagino), from [SurvivalHacking/galagino3](https://github.com/SurvivalHacking/galagino3), [SurvivalHacking/spinnerino](https://github.com/SurvivalHacking/spinnerino), [VirtualClaudioBoy/GalaginoPlus](https://github.com/VirtualClaudioBoy/GalaginoPlus) and [BaasPierre/GalaginoPlusGoldstar](https://github.com/BaasPierre/GalaginoPlusGoldstar).
+It has Moon Cresta, Scramble and Super Cobra, the games from [galagino](https://github.com/speckhoiler/galagino), games from [galagino3](https://github.com/SurvivalHacking/galagino3), games from [spinnerino](https://github.com/SurvivalHacking/spinnerino), games from [GalaginoPlus](https://github.com/VirtualClaudioBoy/GalaginoPlus), games from [GalaginoPlusXT](https://github.com/BaasPierre/GalaginoPlusXT) and games from [galagino-max](https://github.com/jandelgado/galagino-max).
 
 
 ### Quality of Life, improvements and fixes
@@ -18,13 +18,15 @@ It has Moon Cresta, Scramble and Super Cobra and the games from [speckhoiler/gal
 
 * `m6809` emulation uses machineBase methods, so you can have multiple instances just like the `Z80` and `i8048`
 
-* Time Pilot sprite multiplexing
+* Time Pilot sprite multiplexing.
+
+* Gyruss Drums (from VirtualClaudioBoy).
 
 * Bluetooth Controller over i2c see: [galagino-controller](https://github.com/galagino/galagino-controller)
 
 * Bluetooth Controller supports multiple action/fire/bomb buttons.
 
-* Support for ESP32-S3 CYD clone with 16MiB Flash
+* Support for ESP32-S3 CYD clone with 16MiB Flash.
 
 * Support for External DAC (es8311). ESP32-S3's don't have internal DACs.
 
@@ -116,6 +118,7 @@ I've used [Gavin Knight's](https://www.hackster.io/dynamight/cyd-galagino-arcade
 | Scrambled Egg (scregg.zip)     | ![_](/logos/scregg.png)       | ![_](/images/scregg.png)       | 240x240 |
 | Road Fighter (roadf2.zip)      | ![_](/logos/roadfighter.png)  | ![_](/images/roadfighter.png)  | 240x256 |
 | Moon Patrol (mpatrol.zip)      | ![_](/logos/mpatrol.png)      | ![_](/images/mpatrol.png)      | 240x252 |
+| Zaxxon (zaxxon.zip)            | ![_](/logos/zaxxon.png)       | ![_](/images/zaxxon.png)       |         |
 
 
 ### Games that don't fit portrait builds

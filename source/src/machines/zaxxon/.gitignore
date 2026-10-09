@@ -1,0 +1,7 @@
+zaxxon_bgtiles.h
+zaxxon_chartiles.h
+zaxxon_palette.h
+zaxxon_rom_main.h
+zaxxon_sample_*.h
+zaxxon_spritetiles.h
+zaxxon_tilemap.h
