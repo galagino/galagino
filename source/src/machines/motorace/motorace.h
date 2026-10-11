@@ -6,12 +6,7 @@
 #ifdef ENABLE_MOTORACE
 
 #include "motorace_logo.h"
-#include "motorace_rom.h"
-#include "motorace_snd_rom.h"
 #include "motorace_dipswitches.h"
-#include "motorace_tilemap.h"
-#include "motorace_spritemap.h"
-#include "motorace_cmap.h"
 #include "../../cpus/m6803/m6803.h"
 
 // MotoRace USA memory layout in `memory[]` buffer (RAMSIZE=9344):
@@ -29,10 +24,17 @@ public:
   ~motorace() { }
 
   signed char machineType()    override { return MCH_MOTORACE; }
-  signed char videoFlipY()     override { return 0; }
-  signed char videoFlipX()     override { return 0; }
+  // flipY toggles both MY and MX (video.cpp); flipX undoes MX.
+  signed char videoFlipY()  override { return 1; }
+  signed char videoFlipX()  override { return 1; }
+  signed char isLandscape() override { return 1; }
+
   signed char useVideoHalfRate() override { return 0; }
   //bool hasOpaqueBG()           override { return true;  } // BG scroll opaco (no memset richiesto)
+
+  // Native raster is portrait 240x256.
+  const int   renderWidth()  override { return 256; }
+  const int   renderBuffer() override { return 256 * 2 * 8; }
 
   unsigned char rdZ80(unsigned short Addr) override;
   void          wrZ80(unsigned short Addr, unsigned char Value) override;
@@ -54,16 +56,11 @@ public:
   uint8_t snd_port_read(uint8_t port);
 
 protected:
-  // Override vuoti: SPINNERINO usa render trasposto via port_buffer + render_row
+  // Unused: render_row() draws strips directly.
   void blit_tile(short row, char col)            override { }
   void blit_sprite(short row, unsigned char s)   override { }
 
 private:
-  // Render trasposto inline per portrait su framebuffer landscape SPINNERINO:
-  //   fb_x = portrait_y - ARCADE_Y_OFFSET    (clip [0..255])
-  //   fb_y = 223 - portrait_x                (reversed)
-  // Scrittura diretta in frame_buffer (256 wide x 8 tall strip), niente
-  // buffer intermedio = molto piu' veloce (no PSRAM access con stride 224).
   void blit_scroll_strip_t(short strip_r);
   void blit_sprite_t(short strip_r, unsigned char s);
 

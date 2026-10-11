@@ -1,34 +1,24 @@
 // ============================================================================
 // SPINNERINO P4 - machines/motorace/motorace.cpp
 //
-// MotoRace USA (Irem 1983)
+// MotoRace USA (Irem 1983, Traverse USA / Zippy Race hardware)
 // CPU: Z80 @ 3.072MHz main + M6803 @ 894KHz sound + 2x AY-3-8910
-// Schermo arcade ROT270 (cabinet portrait), tile 8x8 3bpp, sprite 16x16, 64x32
-// scrollable tilemap.
-//
-// PIPELINE RENDERING (trasposto inline, no buffer intermedio):
-//   Il sorgente Galagino V3 originale scrive in framebuffer 224x288 portrait
-//   con coords gia' ROT270-applicate. SPINNERINO ha framebuffer 256x224
-//   landscape -> serve trasposizione. Versione ottimizzata: scriviamo
-//   direttamente nel frame_buffer landscape SPINNERINO senza buffer
-//   intermedio, calcolando inline le coords arcade per ogni pixel.
-//
-// Mapping inline:
-//   per render_row(strip_r), strip_r ∈ [0..27]:
-//     portrait_x = 223 - (strip_r*8 + sr)   [sr=0..7 strip-local row]
-//     fb_x ∈ [0..255]:  portrait_y = fb_x + ARCADE_Y_OFFSET (16)
-//     landscape_x_arcade = 263 - portrait_y
-//     landscape_y_arcade = portrait_x + 16
-//   Scrittura: frame_buffer[sr * 256 + fb_x] = pixel
+// MAME tags this ROT270, but the visible raster is 240x256, already
+// portrait. No rotation needed: frame_buffer column == screen x.
+// Tile 8x8 3bpp, sprite 16x16, 64x32 tilemap, horizontal scroll.
 //
 // ============================================================================
 #include "motorace.h"
-#include "../../emulation/input.h"
 
 #ifdef ENABLE_MOTORACE
 
-#define FB_W            256
-#define ARCADE_Y_OFFSET 16  // shift portrait_y -> fb_x per centrare il game
+#include "motorace_rom.h"
+#include "motorace_snd_rom.h"
+#include "motorace_tilemap.h"
+#include "motorace_spritemap.h"
+#include "motorace_cmap.h"
+
+#define FB_W 256
 
 // ── Z80 instruction fetch ──
 unsigned char motorace::opZ80(unsigned short Addr) {
@@ -227,7 +217,7 @@ void motorace::run_frame(void) {
   }
 }
 
-// ── Sprite preparation (identico al sorgente, scrive in sprite[]) ──
+// ── Sprite preparation) ──
 void motorace::prepare_frame(void) {
   active_sprites = 0;
   for (int offs = 0x1FF; offs >= 0; offs -= 4) {
@@ -248,14 +238,14 @@ void motorace::prepare_frame(void) {
 
     int sx = ((sx_raw + 8) & 0xFF) - 8;
     int sy = 240 - sy_raw;
-    if (sy > 191) continue;
+    if (sy > 191) continue; // sprites never cover the HUD
 
-    spr.x = sy - 16;
-    spr.y = 263 - sx - 15;
+    spr.x = sx;
+    spr.y = sy;
     spr.flags = (flipy ? 1 : 0) | (flipx ? 2 : 0);
 
-    if ((spr.y > -16) && (spr.y < 288) &&
-        (spr.x > -16) && (spr.x < 224)) {
+    if ((spr.y > -16) && (spr.y < 256) &&
+        (spr.x > -16) && (spr.x < 240)) {
       sprite[active_sprites++] = spr;
     }
     if (active_sprites >= 124) break;
@@ -263,36 +253,19 @@ void motorace::prepare_frame(void) {
 }
 
 // ============================================================================
-// Render BG scroll trasposto inline (zero buffer intermedio).
-// Per ogni strip_r ∈ [0..27], copre 8 valori di portrait_x (= 8 fb_y) e
-// tutti 256 fb_x. Ottimizzazione: per ogni fb_y_strip (= sr) lx_arcade resta
-// costante, quindi scroll_x e tile_col cambiano solo in funzione di fb_x.
+// strip_r equals the tile row (0..31).
+// Scroll applies to tile rows 0-23 only; rows 24-31 are the fixed HUD.
 // ============================================================================
 void motorace::blit_scroll_strip_t(short strip_r) {
   int scroll = scroll_x_low + (scroll_x_high << 8);
+  int tile_row = strip_r;
+  bool scroll_active = (tile_row < 24);
 
   for (int sr = 0; sr < 8; sr++) {
-    int portrait_x = 223 - (strip_r * 8 + sr);
-    if (portrait_x < 0 || portrait_x >= 224) continue;
-
-    // landscape_y arcade fissato per la riga corrente
-    int ly = portrait_x + 16;       // 16..239
-    int tile_row = (ly >> 3) & 31;
-    int rom_row_base = ly & 7;      // 0..7 (riga dentro al tile)
-
-    bool scroll_active = (ly < 192);
-
     unsigned short *fb_dst = frame_buffer + sr * FB_W;
 
     for (int fb_x = 0; fb_x < FB_W; fb_x++) {
-      int portrait_y = fb_x + ARCADE_Y_OFFSET;  // 16..271
-      if (portrait_y < 0 || portrait_y >= 288) {
-        fb_dst[fb_x] = 0;
-        continue;
-      }
-
-      int lx = 263 - portrait_y;                // -8..247
-      int lx_scrolled = scroll_active ? (lx + scroll) : lx;
+      int lx_scrolled = scroll_active ? (fb_x + scroll) : fb_x;
 
       int tile_col = (lx_scrolled >> 3) & 63;
       int tile_index = tile_row * 64 + tile_col;
@@ -305,7 +278,11 @@ void motorace::blit_scroll_strip_t(short strip_r) {
       int flip_x = (tile_attr >> 5) & 1;
       int flip_y = (tile_attr >> 4) & 1;
 
-      int rom_row = flip_y ? (7 - rom_row_base) : rom_row_base;
+      int rom_row = flip_y ? (7 - sr) : sr;
+      // pack_tile_row stores pixel i at nibble (7-i).
+      /*
+      int pixel_col = 7 - (lx_scrolled & 7);
+      */
       int pixel_col = lx_scrolled & 7;
       if (flip_x) pixel_col = 7 - pixel_col;
 
@@ -318,45 +295,49 @@ void motorace::blit_scroll_strip_t(short strip_r) {
 }
 
 // ============================================================================
-// Sprite trasposto: rendering nella strip se sprite tocca portrait_x range.
-// Sprite portrait coords: x ∈ [spr.x .. spr.x+15], y ∈ [spr.y .. spr.y+15]
-// Strip portrait_x range: [216-strip_r*8 .. 223-strip_r*8] (8 valori, sr-mapped)
+
 // ============================================================================
 void motorace::blit_sprite_t(short strip_r, unsigned char s) {
   int spr_x = sprite[s].x;
   int spr_y = sprite[s].y;
+  bool flipx = sprite[s].flags & 2;
+  bool flipy = sprite[s].flags & 1;
 
-  int strip_pX_lo = 216 - strip_r * 8;
-  int strip_pX_hi = strip_pX_lo + 7;
+  int strip_y_lo = strip_r * 8;
+  int strip_y_hi = strip_y_lo + 7;
 
-  // r ∈ [0..15]: offset dentro al sprite (portrait_x direction)
-  int r_min = strip_pX_lo - spr_x;
-  int r_max = strip_pX_hi - spr_x;
+  int r_min = strip_y_lo - spr_y;
+  int r_max = strip_y_hi - spr_y;
   if (r_min < 0)  r_min = 0;
   if (r_max > 15) r_max = 15;
   if (r_min > r_max) return;
 
-  int orientation = sprite[s].flags & 3;
-  const unsigned long  *spr_data = motorace_spritemap[orientation][sprite[s].code];
+  const unsigned long  *spr_data = motorace_spritemap[sprite[s].code];
   const unsigned short *colors   = motorace_spr_cmap[sprite[s].color];
 
   for (int r = r_min; r <= r_max; r++) {
-    int portrait_x = spr_x + r;
-    int sr = 223 - portrait_x - strip_r * 8;  // 0..7
+    int sr = (spr_y + r - strip_y_lo);  // 0..7
+    int src_r = flipy ? (15 - r) : r;
 
-    unsigned long row_lo = spr_data[r * 2];
-    unsigned long row_hi = spr_data[r * 2 + 1];
+    unsigned long row_lo = spr_data[src_r * 2];
+    unsigned long row_hi = spr_data[src_r * 2 + 1];
 
     unsigned short *fb_dst = frame_buffer + sr * FB_W;
 
     for (int c = 0; c < 16; c++) {
-      int portrait_y = spr_y + 15 - c;
-      int fb_x = portrait_y - ARCADE_Y_OFFSET;
+      int fb_x = spr_x + c;
       if (fb_x < 0 || fb_x >= FB_W) continue;
 
-      unsigned char px = (c < 8)
-                       ? ((row_lo >> (c * 4)) & 7)
-                       : ((row_hi >> ((c - 8) * 4)) & 7);
+      /*
+      int rc = flipx ? (15 - c) : c;
+      unsigned char px = (rc < 8)
+                       ? ((row_lo >> ((7 - rc) * 4)) & 7)
+                       : ((row_hi >> ((15 - rc) * 4)) & 7);
+      */
+      int rc = flipx ? c : 15 - c;
+      unsigned char px = (rc < 8)
+                       ? ((row_hi >> ((15 - rc) * 4)) & 7)
+                       : ((row_lo >> (( 7 - rc) * 4)) & 7);
 
       if (px) {
         fb_dst[fb_x] = colors[px];
@@ -366,17 +347,15 @@ void motorace::blit_sprite_t(short strip_r, unsigned char s) {
 }
 
 void motorace::render_row(short strip_r) {
-  if (strip_r < 0 || strip_r >= 28) return;
+  if (strip_r < 0 || strip_r > 32) return;
 
-  // BG scroll (riempie tutta la strip 256x8)
   blit_scroll_strip_t(strip_r);
 
-  // Sprite: filtraggio veloce per strip portrait_x range
-  int strip_pX_lo = 216 - strip_r * 8;
-  int strip_pX_hi = strip_pX_lo + 7;
+  int strip_y_lo = strip_r * 8;
+  int strip_y_hi = strip_y_lo + 7;
   for (unsigned char s = 0; s < active_sprites; s++) {
-    int spr_x = sprite[s].x;
-    if (((spr_x + 15) >= strip_pX_lo) && (spr_x <= strip_pX_hi)) {
+    int spr_y = sprite[s].y;
+    if (((spr_y + 15) >= strip_y_lo) && (spr_y <= strip_y_hi)) {
       blit_sprite_t(strip_r, s);
     }
   }
