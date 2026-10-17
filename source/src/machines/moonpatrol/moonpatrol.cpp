@@ -73,7 +73,7 @@ unsigned char moonpatrol::rdZ80(unsigned short Addr) {
     // Input ports
     if (Addr == 0xD000) {
         // IN0: SYSTEM — active LOW
-        unsigned char keymask = input->buttons_get();
+        unsigned int  keymask = input->buttons_get();
         unsigned char val = 0xFF;
         if (keymask & BUTTON_START)  val &= ~0x01;  // START1
         if (keymask & BUTTON_COIN)   val &= ~0x08;  // COIN1
@@ -82,13 +82,20 @@ unsigned char moonpatrol::rdZ80(unsigned short Addr) {
     if (Addr == 0xD001) {
         // IN1: P1 controls — active LOW
         // Moon Patrol: 2-way joystick (left/right) + 2 buttons (shoot, jump)
-        unsigned char keymask = input->buttons_get();
+        unsigned int  keymask = input->buttons_get();
         unsigned char val = 0xFF;
         if (keymask & BUTTON_RIGHT)  val &= ~0x01;
         if (keymask & BUTTON_LEFT)   val &= ~0x02;
-        if (keymask & BUTTON_FIRE)   val &= ~0x80;  // Button 1 (shoot)
-        if (keymask & BUTTON_UP)     val &= ~0x20;  // Button 2 (jump) mapped to UP
-        if (keymask & BUTTON_EXTRA)  val &= ~0x20;  // Button 2 (jump) mapped to EXTRA
+        #ifdef GALAGINO_CONTROLLER
+        if (keymask & BUTTON_A)    val &= ~0x80;  // Button 1 (shoot)
+        if (keymask & BUTTON_X)    val &= ~0x80;  // Button 1 (shoot)
+        if (keymask & BUTTON_B)    val &= ~0x20;  // Button 2 (jump) mapped to EXTRA
+        if (keymask & BUTTON_Y)    val &= ~0x20;  // Button 2 (jump) mapped to EXTRA
+        #else
+        if (keymask & BUTTON_FIRE)  val &= ~0x80;  // Button 1 (shoot)
+        if (keymask & BUTTON_EXTRA) val &= ~0x20;  // Button 2 (jump) mapped to EXTRA
+        #endif
+        if (keymask & BUTTON_UP)    val &= ~0x20;  // Button 2 (jump) mapped to UP
         return val;
     }
     if (Addr == 0xD002)
