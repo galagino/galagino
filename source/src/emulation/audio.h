@@ -64,7 +64,6 @@ private:
   void phoenix_render_buffer(void);
   void dkong3_render_buffer(void);
   void vanguard_render_buffer(void);
-  void boblbobl_render_buffer(void);
   void zaxxon_render_buffer(void);
   void zaxxonStartChannel(int ch, ZaxxonPlayMode mode);
   void zaxxonStopChannel(int ch);

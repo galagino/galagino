@@ -331,8 +331,6 @@ void Audio::transmit() {
       vanguard_render_buffer();
     else if(machineType == MCH_ZAXXON)
       zaxxon_render_buffer();
-    else if(machineType == MCH_MPATROL)
-      boblbobl_render_buffer();
   } while(bytesOut);
 }
 
@@ -1748,14 +1746,6 @@ void Audio::dkong3_render_buffer(void) {
     }
     valueToBuffer(i, value);
   }
-}
-
-// Bobble Bobble: the machine renders its YM2203 (FM + SSG) and YM3526 itself
-// (boblbobl.cpp / boblbobl_fm.h); renderFmSample() returns the full mix,
-// one 24kHz sample per call, already scaled to +/-512.
-void Audio::boblbobl_render_buffer(void) {
-  for (int i = 0; i < 64; i++)
-    valueToBuffer(i, currentMachine->renderFmSample());
 }
 
 void Audio::valueToBuffer(int index, short value) {
