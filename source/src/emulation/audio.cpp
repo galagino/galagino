@@ -169,6 +169,7 @@ void Audio::start(machineBase *machineBase) {
   else if (machineType == MCH_PBACTION)   { AY = 3; AY_INC = 8; AY_VOL = 4;  }
   else if (machineType == MCH_MOTORACE)   { AY = 2; AY_INC = 5; AY_VOL = 5;  }
   else if (machineType == MCH_SCREGG)     { AY = 2; AY_INC = 8; AY_VOL = 7;  }
+  else if (machineType == MCH_MOONPATROL) { AY = 2; AY_INC = 5; AY_VOL = 7; }
 
   for(char ay = 0; ay < NUM_AY_CHIPS; ay++) {
     for (int c = 0; c < 4; c++) {
@@ -739,6 +740,16 @@ void Audio::ay_render_buffer(void) {
       dc += (s - dc) >> 7;                         // media lenta = livello DC
       value += s - dc;                             // componente AC
     }
+
+#ifdef ENABLE_MOONPATROL
+    // MSM5205 ADPCM = le ESPLOSIONI dei massi (26/09). Il campione esce dalla
+    // coda di moonpatrol.cpp a 4 kHz, non dal valore istantaneo: il M6803 gira
+    // a blocchi di un quadro. /2: rispetto a un canale AY e' ~2 dB sotto il
+    // rapporto del CABINATONE (x8 contro 8190/3), per non tosare col resto.
+    if (machineType == MCH_MOONPATROL && g_moonpatrol_instance) {
+      value += g_moonpatrol_instance->msm_campione() / 2;
+    }
+#endif
 
     valueToBuffer(i, value);
   }

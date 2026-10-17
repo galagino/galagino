@@ -14,12 +14,12 @@ die() {
 
 if [[ -f ../romszip/mpatrol.zip ]]; then
   #echo Moon Patrol
-  #python3 ./logoconv.py ../logos/mpatrol.png ../source/src/machines/mpatrol/mpatrol_logo.h || die
+  #python3 ./logoconv.py ../logos/moonpatrol.png ../source/src/machines/moonpatrol/moonpatrol_logo.h || die
 
   echo "Converting Moon Patrol"
-  cd mpatrol || die
+  cd moonpatrol || die
 
-  python3 ./mpatrol_rom_convert.py || die
+  python3 ./moonpatrol_rom_convert.py || die
 
   cd ..
 else

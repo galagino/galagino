@@ -1,6 +1,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "../config.h"
 #include <driver/i2s.h>
 #include "../machines/machineBase.h"
 #include "../machines/dkong/dkong.h"
@@ -11,7 +12,11 @@
 #include "../machines/xevious/xevious.h"
 #include "../machines/roadfighter/roadfighter.h"
 #include "../machines/zaxxon/zaxxon.h"
-#include "../config.h"
+
+#ifdef ENABLE_MOONPATROL
+  #include "machines/moonpatrol/moonpatrol.h"
+  extern moonpatrol *g_moonpatrol_instance;
+#endif
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 4)
 // See https://github.com/espressif/arduino-esp32/issues/8467

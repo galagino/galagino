@@ -4,12 +4,12 @@ pushd "%~dp0"
 
 echo --------- Convert Moon Patrol ---------
 rem echo Moon Patrol Logo
-rem python ./logoconv.py ../logos/mpatrol.png ../source/src/machines/mpatrol/mpatrol_logo.h
+rem python ./logoconv.py ../logos/moonpatrol.png ../source/src/machines/moonpatrol/moonpatrol_logo.h
 rem if errorlevel 1 goto :error
 
 echo Converting Moon Patrol
-cd mpatrol
-python mpatrol_rom_convert.py
+cd moonpatrol
+python moonpatrol_rom_convert.py
 if errorlevel 1 goto :error
 cd ..
 

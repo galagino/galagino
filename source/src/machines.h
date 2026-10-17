@@ -201,12 +201,12 @@
   #include "machines/roadfighter/roadfighter.h"
 #endif
 
-#ifdef ENABLE_MPATROL
-  #include "machines/mpatrol/mpatrol.h"
-#endif
-
 #ifdef ENABLE_ZAXXON
   #include "machines/zaxxon/zaxxon.h"
+#endif
+
+#ifdef ENABLE_MOONPATROL
+  #include "machines/moonpatrol/moonpatrol.h"
 #endif
 
 // change machine order is possible here...
@@ -355,9 +355,6 @@ machineBase *machines[] = {
 #ifdef ENABLE_VANGUARD
   new vanguard(),
 #endif
-#ifdef ENABLE_MPATROL
-  new mpatrol(),
-#endif
 #ifdef ENABLE_MOTORACE
   new motorace(),
 #endif
@@ -367,6 +364,9 @@ machineBase *machines[] = {
 #ifdef ENABLE_ZAXXON
   new zaxxon(),
 #endif
+#ifdef ENABLE_MOONPATROL
+  new moonpatrol(),
+#endif 
 };
 
 template <std::size_t N, class T>
