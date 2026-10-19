@@ -1314,7 +1314,7 @@ void Audio::galaxian_render_buffer(void) {
 // il budget dell'intero core -> transmit() non riempiva mai il DMA piu' veloce
 // dell'I2S, loopTask restava nel do/while e scattava il task watchdog (reboot).
 // exp/log runtime sopravvivono solo nella correzione sub-sample dei crossing
-// (~1-3 logf per sample) e nel raro fallback di ph_exp1m.
+// (~1-3 per sample, ph_neg_log1m()) e nel raro fallback di ph_exp1m.
 // ============================================================================
 
 // Parametri precalcolati di un 555 astabile (R/C fissi per ogni istanza).
@@ -1345,6 +1345,20 @@ static ph555Params ph_make_555(float r1, float r2, float c) {
 static inline float ph_exp1m(float x) {
   if (x > 1.0f) return 1.0f - expf(-x);
   return x * (1.0f - 0.5f*x*(1.0f - 0.333333f*x*(1.0f - 0.25f*x*(1.0f - 0.2f*x))));
+}
+
+// -log(1-f) for the crossing time of the 555s below, f in [0, 0.999].
+// They cross on most samples, newlib logf() there cost more than the rest
+// of the netlist. ln(x) = e*ln2 + 2*atanh((m-1)/(m+1)), m in [1,2):
+// absolute error < 2e-6.
+static inline float ph_neg_log1m(float f) {
+  union { float f; uint32_t i; } u = { 1.0f - f };
+  const int e = (int)((u.i >> 23) & 0xff) - 127;
+  u.i = (u.i & 0x007fffff) | 0x3f800000;
+  const float t = (u.f - 1.0f) / (u.f + 1.0f);
+  const float t2 = t * t;
+  const float ln_m = 2.0f * t * (1.0f + t2 * (1.0f/3 + t2 * (1.0f/5 + t2 * (1.0f/7 + t2 * (1.0f/9)))));
+  return -(e * 0.69314718f + ln_m);
 }
 
 // -- 555 astabile (dsd_555_astbl): RC charge/discharge esatto con correzione
@@ -1384,7 +1398,8 @@ static float ph_555_step(float &cap_v, uint8_t &ff, const ph555Params &p,
         if (denom > 1e-9f) {
           float f = (v_cap_next - threshold) / denom;
           if (f > 0.999f) f = 0.999f;
-          dt = p.tau_charge * logf(1.0f / (1.0f - f));
+//        dt = p.tau_charge * logf(1.0f / (1.0f - f));
+          dt = p.tau_charge * ph_neg_log1m(f);
         }
         x_time = dt;
         v_cap_next = threshold;
@@ -1400,7 +1415,8 @@ static float ph_555_step(float &cap_v, uint8_t &ff, const ph555Params &p,
         if (v_cap_next < trigger && v_cap > 1e-9f) {
           float f = (trigger - v_cap_next) / v_cap;
           if (f > 0.999f) f = 0.999f;
-          dt = p.tau_discharge * logf(1.0f / (1.0f - f));
+//        dt = p.tau_discharge * logf(1.0f / (1.0f - f));
+          dt = p.tau_discharge * ph_neg_log1m(f);
         }
         x_time = dt;
         v_cap_next = trigger;
@@ -1478,10 +1494,14 @@ static inline float ph_rcfilter_step(float &v_out, float vin, float exponent) {
 // -- Noise generator NE555 + doppio inviluppo RC (porting diretto di update_c24/
 // update_c25/noise da phoenix_a.cpp, invariato). Pilotato da bit 6/7 del sound A latch.
 static int32_t ph_update_c24(int32_t &level, long &counter, bool bit40) {
-  static const double C24 = 6.8e-6, R49 = 1000, R51 = 330, R52 = 20000;
+//static const double C24 = 6.8e-6, R49 = 1000, R51 = 330, R52 = 20000;
+  static const float C24 = 6.8e-6f, R49 = 1000, R51 = 330, R52 = 20000;
+  static const float RATE_DOWN = 1.0f / (R52 * C24);
+  static const float RATE_UP = 1.0f / ((R51 + R49) * C24);
   if (bit40) {
     if (level > 0) {
-      counter -= (long)((level - 0) / (R52 * C24));
+//    counter -= (long)((level - 0) / (R52 * C24));
+      counter -= (long)((level - 0) * RATE_DOWN);    
       if (counter <= 0) {
         long n = -counter / 24000 + 1;
         counter += n * 24000;
@@ -1490,7 +1510,8 @@ static int32_t ph_update_c24(int32_t &level, long &counter, bool bit40) {
     }
   } else {
     if (level < 32767) {
-      counter -= (long)((32767 - level) / ((R51 + R49) * C24));
+//    counter -= (long)((32767 - level) / ((R51 + R49) * C24));
+      counter -= (long)((32767 - level) * RATE_UP);
       if (counter <= 0) {
         long n = -counter / 24000 + 1;
         counter += n * 24000;
@@ -1502,10 +1523,14 @@ static int32_t ph_update_c24(int32_t &level, long &counter, bool bit40) {
 }
 
 static int32_t ph_update_c25(int32_t &level, long &counter, bool bit80) {
-  static const double C25 = 6.8e-6, R50 = 1000, R53 = 330, R54 = 47000;
+//static const double C25 = 6.8e-6, R50 = 1000, R53 = 330, R54 = 47000;
+  static const float C25 = 6.8e-6f, R50 = 1000, R53 = 330, R54 = 47000;
+  static const float RATE_UP = 1.0f / ((R50 + R53) * C25);
+  static const float RATE_DOWN = 1.0f / (R54 * C25);
   if (bit80) {
     if (level < 32767) {
-      counter -= (long)((32767 - level) / ((R50 + R53) * C25));
+//    counter -= (long)((32767 - level) / ((R50 + R53) * C25));
+      counter -= (long)((32767 - level) * RATE_UP);
       if (counter <= 0) {
         long n = -counter / 24000 + 1;
         counter += n * 24000;
@@ -1514,7 +1539,8 @@ static int32_t ph_update_c25(int32_t &level, long &counter, bool bit80) {
     }
   } else {
     if (level > 0) {
-      counter -= (long)((level - 0) / (R54 * C25));
+//    counter -= (long)((level - 0) / (R54 * C25));
+      counter -= (long)((level - 0) * RATE_DOWN);    
       if (counter <= 0) {
         long n = -counter / 24000 + 1;
         counter += n * 24000;
@@ -1643,6 +1669,10 @@ void Audio::phoenix_render_buffer(void) {
   static const float exp_mix2   = 1.0f - expf(-dt / (7500.0f  * 10e-6f));   // canale Effect2
   static const float exp_camp   = 1.0f - expf(-dt / (6628.0f  * 10e-6f));   // cAmp finale
 
+  // Millman denominators as reciprocals: no hardware float division
+  static const float MILLMAN35 = 1.0f / (1.0f/10000.0f + 1.0f/10200.0f + 1.0f/5000.0f);
+  static const float MILLMAN38 = 1.0f / (1.0f/10000.0f + 1.0f/5100.0f + 1.0f/5000.0f);
+
   for (int i = 0; i < 64; i++) {
     // ── Rumore NE555 (bit 6-7 sound A) ──
     int32_t vc24 = ph_update_c24(ph_c24_level, ph_c24_counter, noise_b40);
@@ -1681,12 +1711,15 @@ void Audio::phoenix_render_buffer(void) {
                                 5.0f, 5.0f, -1.0f, true, 4.0f);
     float node34 = ph_555_step(ph_e2_555b_cap, ph_e2_555b_ff, p_e2_555b,
                                 5.0f, 5.0f, -1.0f, true, 4.0f);
-    float node35 = (node33/10000.0f + node34/10200.0f + 5.0f/5000.0f) /
+/*  float node35 = (node33/10000.0f + node34/10200.0f + 5.0f/5000.0f) /
                     (1.0f/10000.0f + 1.0f/10200.0f + 1.0f/5000.0f);
-    float node36 = (node34 + node35) / 2.0f;   // mixer2, R45=R46 -> media semplice
+    float node36 = (node34 + node35) / 2.0f;   // mixer2, R45=R46 -> media semplice */
+    float node35 = (node33 * (1.0f/10000.0f) + node34 * (1.0f/10200.0f) + 5.0f/5000.0f) * MILLMAN35;
+    float node36 = (node34 + node35) * 0.5f;   // mixer2, R45=R46 -> media semplice
     float node37 = ph_rcfilter_step(ph_e2_rcfilt, node36, exp_node37);
-    float node38 = (node33/10000.0f + node37/5100.0f + 5.0f/5000.0f) /
-                    (1.0f/10000.0f + 1.0f/5100.0f + 1.0f/5000.0f);
+/*  float node38 = (node33/10000.0f + node37/5100.0f + 5.0f/5000.0f) /
+                    (1.0f/10000.0f + 1.0f/5100.0f + 1.0f/5000.0f); */
+    float node38 = (node33 * (1.0f/10000.0f) + node37 * (1.0f/5100.0f) + 5.0f/5000.0f) * MILLMAN38;
     float node39 = ph_555_step(ph_e2_555cv_cap, ph_e2_555cv_ff, p_e2_555cv,
                                 5.0f, 5.0f, node38, false, 0.0f);
     float node40 = ph_note_step(ph_e2_note_c1, ph_e2_note_c2, node39, e2_data);
@@ -1695,7 +1728,8 @@ void Audio::phoenix_render_buffer(void) {
     // ── Mixer finale (DISCRETE_MIXER4): DC-block per canale + Millman + cAmp + gain ──
     float vt1 = effect1_snd; ph_mix_vcap1 += (vt1 - ph_mix_vcap1) * exp_mix1; vt1 -= ph_mix_vcap1;
     float vt2 = effect2_snd; ph_mix_vcap2 += (vt2 - ph_mix_vcap2) * exp_mix2; vt2 -= ph_mix_vcap2;
-    float mix_i = vt1/57000.0f + vt2/30000.0f;
+//  float mix_i = vt1/57000.0f + vt2/30000.0f;
+    float mix_i = vt1 * (1.0f/57000.0f) + vt2 * (1.0f/30000.0f);
     float mix_v = mix_i * 6628.0f;
     ph_mix_vcamp += (mix_v - ph_mix_vcamp) * exp_camp;
     mix_v -= ph_mix_vcamp;
