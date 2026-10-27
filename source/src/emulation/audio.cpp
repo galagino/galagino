@@ -143,7 +143,48 @@ void Audio::init() {
 // ESP32-S3 doesn't have an internal DAC, so...
 #endif
 
+  rampToSilence();
+
   generateSinusWave(256, sinusWaveBuffer, sizeof(sinusWaveBuffer)  / 2 );
+}
+
+// Fill all DMA buffers with silence. Without transmit() calls (self-test,
+// machine load) the DMA replays them in a loop: old content hums.
+void Audio::flushSilence(void) {
+  for (uint16_t i = 0; i < sizeof(snd_buffer) / sizeof(snd_buffer[0]); i++) {
+    snd_buffer[i] = SILENCE;
+  }
+
+  for (int i = 0; i < DMA_BUF_COUNT; i++) {
+    writeBlocking();
+  }
+}
+
+// Queue snd_buffer once, waiting for a free DMA buffer.
+void Audio::writeBlocking(void) {
+  size_t bytesOut = 0;
+  i2s_write(I2S_NUM_0, snd_buffer, sizeof(snd_buffer), &bytesOut, portMAX_DELAY);
+}
+
+// Output sits at 0 after boot. Move it to SILENCE slowly: a jump clicks.
+void Audio::rampToSilence(void) {
+  const uint32_t entries = sizeof(snd_buffer) / sizeof(snd_buffer[0]);
+  const uint32_t steps = RAMP_CHUNKS * entries;
+
+  for (uint32_t chunk = 0; chunk < RAMP_CHUNKS; chunk++) {
+    for (uint32_t i = 0; i < entries; i++) {
+      const uint32_t level = SILENCE * (chunk * entries + i) / steps;
+#ifdef ES8311_AUDIO
+      // signed codec: SILENCE is -32768, ramp 0 down to it
+      snd_buffer[i] = (uint16_t)(0x10000 - level);
+#else
+      snd_buffer[i] = (uint16_t)level;
+#endif
+    }
+    writeBlocking();
+  }
+
+  flushSilence();
 }
 
 void Audio::start(machineBase *machineBase) {
@@ -287,7 +328,7 @@ void Audio::mute(int m) {
 // Machine is deleted after this; stop reading its registers.
 void Audio::stop() {
   currentMachine = nullptr;
-  memset(snd_buffer, 0, sizeof(snd_buffer));
+  flushSilence();
 }
 
 void Audio::transmit() {
@@ -934,7 +975,7 @@ void Audio::namco_render_buffer(void) {
 // = sample rate galagino: 1 tick per campione, counter a 15 bit frazionari
 // -> posizione onda = (cnt >> 15) & 0x1f (32 campioni per forma).
 void Audio::namco_15xx_render_buffer(void) {
-  bool enabled = currentMachine->namcoSoundEnabled();
+  const bool enabled = currentMachine->namcoSoundEnabled();
 
   for (char ch = 0; ch < 8; ch++) {
     snd15_wave[ch] = currentMachine->waveRom((currentMachine->soundregs[ch * 8 + 6] >> 4) & 0x07);

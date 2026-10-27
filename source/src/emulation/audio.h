@@ -52,6 +52,17 @@ public:
   void mute(int m);
 
 private:
+  // Idle output level. Built-in DAC is unsigned: 0x0000 = 0 V, 0x8000 =
+  // VDD/2. Any other idle level steps the output on start/stop: click.
+  static const uint16_t SILENCE = 0x8000;
+  static const int DMA_BUF_COUNT = 4;
+  // 16 x 64 samples = 43 ms at 24 kHz
+  static const int RAMP_CHUNKS = 16;
+
+  void flushSilence(void);
+  void writeBlocking(void);
+  void rampToSilence(void);
+
   void namco_render_buffer(void);
   void namco_15xx_render_buffer(void);
   void ay_render_buffer(void);
