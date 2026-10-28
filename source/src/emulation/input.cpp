@@ -133,9 +133,9 @@ unsigned int Input::buttons_get(void) {
   }
 
   if (!singleMachine) {
-    bool buttonExtraRisingEdge = (input_states && BUTTON_EXTRA) && !(input_states_last && BUTTON_EXTRA); 
-    bool buttonUpRisingEdge = (input_states && BUTTON_UP) && !(input_states_last && BUTTON_UP); 
-    bool buttonDownRisingEdge = (input_states && BUTTON_DOWN) && !(input_states_last && BUTTON_DOWN); 
+    bool buttonExtraRisingEdge = (input_states & BUTTON_EXTRA) && !(input_states_last & BUTTON_EXTRA); 
+    bool buttonUpRisingEdge    = (input_states & BUTTON_UP)    && !(input_states_last & BUTTON_UP); 
+    bool buttonDownRisingEdge  = (input_states & BUTTON_DOWN)  && !(input_states_last & BUTTON_DOWN); 
 
     // joystick up/down (menu) or extra disables attract mode
     if (buttonUpRisingEdge | buttonDownRisingEdge | buttonExtraRisingEdge ) {
@@ -168,7 +168,7 @@ unsigned int Input::buttons_get(void) {
     input_states_last = input_states;
   }
 
-  if (firePressedAtStart && input_states & BUTTON_FIRE) {
+  if (firePressedAtStart && (input_states & BUTTON_FIRE)) {
     printf("Wait for release fire button...\n");
     input_states = 0;
   }
@@ -194,9 +194,4 @@ Input &Input::onDoReset(THandlerDoReset fn) {
 Input &Input::onDoAttractReset(THandlerDoAttractReset fn) {
   _doAttractReset_callback = fn;
   return *this;
-}
-
-// galagino3 - used by Tutankham - needs fixing
-bool Input::button_y_pressed(void) {
-  return false;
 }

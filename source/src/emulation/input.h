@@ -35,7 +35,6 @@ public:
   void enable();
   void disable();
   unsigned int buttons_get(void);
-  bool button_y_pressed(void);
   unsigned int fire_raw(void) { return fire_raw_state; }
   bool demoSoundsOff();
 
